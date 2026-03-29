@@ -2,10 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { X, Play, Plus, ThumbsUp, Check } from 'lucide-react';
 import { Dialog, DialogContent } from './ui/dialog';
 import { Button } from './ui/button';
+import { Separator } from './ui/separator';
 import { getImageUrl, getDetails, getVideos } from '../services/tmdb';
 import { Badge } from './ui/badge';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../hooks/use-toast';
+import RatingsReviews from './RatingsReviews';
+import ShareButtons from './ShareButtons';
 
 const ContentModal = ({ content, isOpen, onClose, onPlayTrailer }) => {
   const [details, setDetails] = useState(null);
@@ -199,6 +202,17 @@ const ContentModal = ({ content, isOpen, onClose, onPlayTrailer }) => {
                 </span>
               </div>
             )}
+
+            {/* Social Sharing */}
+            <div className="pt-4">
+              <p className="text-white/70 text-sm mb-3">Share with friends:</p>
+              <ShareButtons content={content} />
+            </div>
+
+            <Separator className="bg-white/10 my-6" />
+
+            {/* Ratings & Reviews Section (Rotten Tomatoes Style) */}
+            <RatingsReviews contentId={content.id} contentTitle={title} />
 
             {details?.similar?.results && details.similar.results.length > 0 && (
               <div className="pt-4">

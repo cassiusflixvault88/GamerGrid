@@ -1,13 +1,17 @@
 import React, { useState } from 'react';
 import { getImageUrl } from '../services/tmdb';
-import { Play } from 'lucide-react';
+import { Play, Star } from 'lucide-react';
 
-const ContentCard = ({ content, onClick }) => {
+const ContentCard = ({ content, onClick, rating }) => {
   const [imageLoaded, setImageLoaded] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
   const title = content.title || content.name;
   const posterPath = content.poster_path;
+  
+  // Use provided rating or default to vote_average
+  const displayRating = rating?.average || content.vote_average || 0;
+  const ratingCount = rating?.count || 0;
 
   return (
     <div
@@ -33,6 +37,19 @@ const ContentCard = ({ content, onClick }) => {
           {!imageLoaded && (
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="w-8 h-8 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+            </div>
+          )}
+          
+          {/* Rating Badge (Rotten Tomatoes style) */}
+          {displayRating > 0 && (
+            <div className="absolute top-2 left-2 bg-black/80 backdrop-blur-sm rounded-md px-2 py-1 flex items-center space-x-1">
+              <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+              <span className="text-white font-bold text-sm">
+                {displayRating.toFixed(1)}
+              </span>
+              {ratingCount > 0 && (
+                <span className="text-white/60 text-xs">({ratingCount})</span>
+              )}
             </div>
           )}
           
