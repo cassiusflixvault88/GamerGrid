@@ -54,6 +54,15 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('token');
     setToken(null);
     setUser(null);
+    
+    // Clear service worker cache to prevent stale data in PWA
+    if ('caches' in window) {
+      caches.keys().then(names => {
+        names.forEach(name => {
+          caches.delete(name);
+        });
+      });
+    }
   };
 
   const addToWatchlist = async (content) => {

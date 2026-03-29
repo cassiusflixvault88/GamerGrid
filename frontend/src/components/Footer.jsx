@@ -38,10 +38,10 @@ const Footer = () => {
               About FlixVault
             </button>
             <a 
-              href="mailto:Cassius@FlixVault.com" 
+              href="mailto:cassiusflixvault@gmail.com" 
               className="hover:text-white transition-colors"
             >
-              Contact & Support
+              📧 Help & Support
             </a>
             <button 
               onClick={() => setShowInstructions(true)}
