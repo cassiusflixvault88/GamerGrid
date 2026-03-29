@@ -89,3 +89,25 @@ code {
     @apply bg-background text-foreground;
     }
 }
+
+/* Fix for Emergent preview iframe overlay blocking inputs */
+input,
+textarea,
+button,
+select,
+a {
+  pointer-events: auto !important;
+}
+
+/* Ensure form elements are always interactive */
+form input,
+form textarea,
+form button,
+form select {
+  pointer-events: auto !important;
+  cursor: text !important;
+}
+
+form button {
+  cursor: pointer !important;
+}

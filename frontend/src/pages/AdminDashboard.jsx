@@ -22,11 +22,41 @@ const AdminDashboard = () => {
   const [replyingTo, setReplyingTo] = useState(null);
   const [replyText, setReplyText] = useState('');
   
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const loadDashboardData = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      
+      const [statsRes, reviewsRes, usersRes] = await Promise.all([
+        axios.get(`${API}/admin/stats`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API}/admin/reviews`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API}/admin/users`, { headers: { Authorization: `Bearer ${token}` } })
+      ]);
+
+      setStats(statsRes.data);
+      setReviews(reviewsRes.data);
+      setUsers(usersRes.data);
+    } catch (error) {
+      console.error('Failed to load dashboard data:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load dashboard data',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [toast]);
+
   const checkAdminStatus = useCallback(async () => {
+    // Wait for auth to finish loading before checking
+    if (authLoading) {
+      return;
+    }
+
     if (!user) {
       navigate('/');
       return;
@@ -53,36 +83,7 @@ const AdminDashboard = () => {
       console.error('Admin check failed:', error);
       navigate('/');
     }
-  }, [user, navigate, toast]);
-
-  useEffect(() => {
-    checkAdminStatus();
-  }, [checkAdminStatus]);
-
-  const loadDashboardData = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      
-      const [statsRes, reviewsRes, usersRes] = await Promise.all([
-        axios.get(`${API}/admin/stats`, { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get(`${API}/admin/reviews`, { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get(`${API}/admin/users`, { headers: { Authorization: `Bearer ${token}` } })
-      ]);
-
-      setStats(statsRes.data);
-      setReviews(reviewsRes.data);
-      setUsers(usersRes.data);
-    } catch (error) {
-      console.error('Failed to load dashboard data:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load dashboard data',
-        variant: 'destructive',
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [user, authLoading, navigate, toast, loadDashboardData]);
 
   const handleDeleteReview = async (reviewId) => {
     try {
@@ -134,12 +135,15 @@ const AdminDashboard = () => {
     }
   };
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
       <div className="min-h-screen bg-black">
         <Navbar />
-        <div className="pt-20 text-center text-white">
-          <p>Loading admin dashboard...</p>
+        <div className="pt-20 flex items-center justify-center">
+          <div className="text-center text-white">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+            <p>Loading admin dashboard...</p>
+          </div>
         </div>
       </div>
     );

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Share2, Facebook, Twitter, Link as LinkIcon } from 'lucide-react';
+import { Share2, Facebook, Twitter, Link as LinkIcon, Instagram, Send } from 'lucide-react';
 import { Button } from './ui/button';
 import { useToast } from '../hooks/use-toast';
 
@@ -26,6 +26,21 @@ const ShareButtons = ({ content }) => {
     const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
     window.open(url, '_blank');
   };
+
+  const handleTelegramShare = () => {
+    const text = `Check out "${title}" on FlixVault! 🎬`;
+    const url = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank', 'width=600,height=400');
+  };
+
+  const handleInstagramCopy = () => {
+    navigator.clipboard.writeText(shareUrl);
+    toast({
+      title: 'Link copied for Instagram!',
+      description: 'Paste this link in your Instagram story or bio',
+      duration: 4000,
+    });
+  };
   
   const handleCopyLink = () => {
     navigator.clipboard.writeText(shareUrl);
@@ -36,7 +51,7 @@ const ShareButtons = ({ content }) => {
   };
   
   return (
-    <div className="flex items-center space-x-2">
+    <div className="flex items-center flex-wrap gap-2">
       <Button
         onClick={handleFacebookShare}
         variant="outline"
@@ -65,6 +80,26 @@ const ShareButtons = ({ content }) => {
       >
         <Share2 className="w-4 h-4 mr-1" />
         WhatsApp
+      </Button>
+
+      <Button
+        onClick={handleTelegramShare}
+        variant="outline"
+        size="sm"
+        className="bg-blue-500 hover:bg-blue-600 text-white border-0"
+      >
+        <Send className="w-4 h-4 mr-1" />
+        Telegram
+      </Button>
+
+      <Button
+        onClick={handleInstagramCopy}
+        variant="outline"
+        size="sm"
+        className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white border-0"
+      >
+        <Instagram className="w-4 h-4 mr-1" />
+        Instagram
       </Button>
       
       <Button
