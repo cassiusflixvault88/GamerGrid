@@ -5,8 +5,15 @@ from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import os
+import secrets
 
-SECRET_KEY = os.environ.get("JWT_SECRET_KEY", "streamflix-secret-key-change-in-production-2024")
+# Generate secure secret if not in env
+SECRET_KEY = os.environ.get("JWT_SECRET_KEY")
+if not SECRET_KEY:
+    # Generate a secure random secret for development
+    SECRET_KEY = secrets.token_urlsafe(32)
+    print("⚠️  WARNING: Using generated JWT secret. Set JWT_SECRET_KEY in production!")
+
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_DAYS = 30
 

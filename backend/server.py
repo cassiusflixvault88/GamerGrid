@@ -52,8 +52,11 @@ class StatusCheckCreate(BaseModel):
 
 @api_router.post("/auth/signup", response_model=Token)
 async def signup(user_data: UserCreate):
-    # Check if user exists
-    existing_user = await db.users.find_one({"email": user_data.email})
+    # Check if user exists (optimized query - only fetch _id)
+    existing_user = await db.users.find_one(
+        {"email": user_data.email},
+        {"_id": 1}
+    )
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -82,7 +85,11 @@ async def signup(user_data: UserCreate):
 
 @api_router.post("/auth/login", response_model=Token)
 async def login(credentials: UserLogin):
-    user = await db.users.find_one({"email": credentials.email})
+    # Optimized query - only fetch needed fields
+    user = await db.users.find_one(
+        {"email": credentials.email},
+        {"email": 1, "id": 1, "username": 1, "hashed_password": 1, "created_at": 1, "watchlist": 1, "favorites": 1}
+    )
     if not user or not verify_password(credentials.password, user["hashed_password"]):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -100,7 +107,11 @@ async def login(credentials: UserLogin):
 
 @api_router.get("/auth/me", response_model=UserResponse)
 async def get_current_user(token_data: dict = Depends(verify_token)):
-    user = await db.users.find_one({"id": token_data["user_id"]})
+    # Optimized query - only fetch needed fields
+    user = await db.users.find_one(
+        {"id": token_data["user_id"]},
+        {"id": 1, "email": 1, "username": 1, "created_at": 1, "watchlist": 1, "favorites": 1}
+    )
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return UserResponse(**user)
@@ -110,7 +121,11 @@ async def get_current_user(token_data: dict = Depends(verify_token)):
 
 @api_router.post("/watchlist/add")
 async def add_to_watchlist(item: WatchlistItem, token_data: dict = Depends(verify_token)):
-    user = await db.users.find_one({"id": token_data["user_id"]})
+    # Optimized query - only fetch watchlist
+    user = await db.users.find_one(
+        {"id": token_data["user_id"]},
+        {"watchlist": 1}
+    )
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
@@ -131,7 +146,11 @@ async def add_to_watchlist(item: WatchlistItem, token_data: dict = Depends(verif
 
 @api_router.delete("/watchlist/remove/{content_id}")
 async def remove_from_watchlist(content_id: int, token_data: dict = Depends(verify_token)):
-    user = await db.users.find_one({"id": token_data["user_id"]})
+    # Optimized query - only fetch watchlist
+    user = await db.users.find_one(
+        {"id": token_data["user_id"]},
+        {"watchlist": 1}
+    )
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
@@ -148,7 +167,11 @@ async def remove_from_watchlist(content_id: int, token_data: dict = Depends(veri
 
 @api_router.get("/watchlist")
 async def get_watchlist(token_data: dict = Depends(verify_token)):
-    user = await db.users.find_one({"id": token_data["user_id"]})
+    # Optimized query - only fetch watchlist
+    user = await db.users.find_one(
+        {"id": token_data["user_id"]},
+        {"watchlist": 1}
+    )
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return {"watchlist": user.get("watchlist", [])}
