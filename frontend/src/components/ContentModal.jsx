@@ -1,14 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { X, Play, Plus, ThumbsUp, Volume2, VolumeX } from 'lucide-react';
+import { X, Play, Plus, ThumbsUp, Check } from 'lucide-react';
 import { Dialog, DialogContent } from './ui/dialog';
 import { Button } from './ui/button';
 import { getImageUrl, getDetails, getVideos } from '../services/tmdb';
 import { Badge } from './ui/badge';
+import { useAuth } from '../context/AuthContext';
+import { useToast } from '../hooks/use-toast';
 
 const ContentModal = ({ content, isOpen, onClose, onPlayTrailer }) => {
   const [details, setDetails] = useState(null);
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [liked, setLiked] = useState(false);
+  
+  const { user, addToWatchlist, removeFromWatchlist, isInWatchlist } = useAuth();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (content && isOpen) {
@@ -35,12 +41,65 @@ const ContentModal = ({ content, isOpen, onClose, onPlayTrailer }) => {
     }
   };
 
+  const handleWatchlistToggle = async () => {
+    if (!user) {
+      toast({
+        title: 'Sign in required',
+        description: 'Please sign in to add items to your watchlist',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      const inWatchlist = isInWatchlist(content.id);
+      
+      if (inWatchlist) {
+        await removeFromWatchlist(content.id);
+        toast({
+          title: 'Removed from watchlist',
+          description: `${title} has been removed from your watchlist`,
+        });
+      } else {
+        await addToWatchlist(content);
+        toast({
+          title: 'Added to watchlist',
+          description: `${title} has been added to your watchlist`,
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: error.response?.data?.detail || 'Failed to update watchlist',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleLike = () => {
+    if (!user) {
+      toast({
+        title: 'Sign in required',
+        description: 'Please sign in to like content',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setLiked(!liked);
+    toast({
+      title: liked ? 'Removed like' : 'Liked!',
+      description: liked ? `You unliked ${title}` : `You liked ${title}`,
+    });
+  };
+
   if (!content) return null;
 
   const title = content.title || content.name;
   const trailer = videos.find((v) => v.type === 'Trailer' && v.site === 'YouTube');
   const releaseYear = (content.release_date || content.first_air_date || '').split('-')[0];
   const runtime = details?.runtime || details?.episode_run_time?.[0];
+  const inWatchlist = user && isInWatchlist(content.id);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -72,11 +131,31 @@ const ContentModal = ({ content, isOpen, onClose, onPlayTrailer }) => {
                   <Play className="w-5 h-5 mr-2 fill-current" />
                   Play
                 </Button>
-                <button className="bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full p-2 border border-white/40 transition-colors">
-                  <Plus className="w-6 h-6 text-white" />
+                <button 
+                  onClick={handleWatchlistToggle}
+                  className={`backdrop-blur-sm rounded-full p-2 border transition-all ${
+                    inWatchlist 
+                      ? 'bg-white text-black border-white' 
+                      : 'bg-white/20 hover:bg-white/30 text-white border-white/40'
+                  }`}
+                  title={inWatchlist ? 'Remove from watchlist' : 'Add to watchlist'}
+                >
+                  {inWatchlist ? (
+                    <Check className="w-6 h-6" />
+                  ) : (
+                    <Plus className="w-6 h-6" />
+                  )}
                 </button>
-                <button className="bg-white/20 hover:bg-white/30 backdrop-blur-sm rounded-full p-2 border border-white/40 transition-colors">
-                  <ThumbsUp className="w-6 h-6 text-white" />
+                <button 
+                  onClick={handleLike}
+                  className={`backdrop-blur-sm rounded-full p-2 border transition-all ${
+                    liked 
+                      ? 'bg-white text-black border-white' 
+                      : 'bg-white/20 hover:bg-white/30 text-white border-white/40'
+                  }`}
+                  title={liked ? 'Unlike' : 'Like'}
+                >
+                  <ThumbsUp className={`w-6 h-6 ${liked ? 'fill-current' : ''}`} />
                 </button>
               </div>
             </div>
