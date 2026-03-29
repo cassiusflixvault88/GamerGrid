@@ -25,6 +25,7 @@ const ContentModal = ({ content, isOpen, onClose, onPlayTrailer }) => {
       setShowFullOverview(false); // Reset when opening new content
       loadDetails();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [content, isOpen]);
 
   const loadDetails = async () => {

@@ -24,6 +24,7 @@ const RatingsReviews = ({ contentId, contentTitle }) => {
     if (user) {
       loadUserRating();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contentId, user]);
 
   const loadRatings = async () => {

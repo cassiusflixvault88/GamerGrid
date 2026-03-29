@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Shield, Users, Star, Film, MessageSquare, CheckCircle, XCircle, Home } from 'lucide-react';
@@ -26,11 +26,7 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  useEffect(() => {
-    checkAdminStatus();
-  }, [user]);
-
-  const checkAdminStatus = async () => {
+  const checkAdminStatus = useCallback(async () => {
     if (!user) {
       navigate('/');
       return;
@@ -57,7 +53,11 @@ const AdminDashboard = () => {
       console.error('Admin check failed:', error);
       navigate('/');
     }
-  };
+  }, [user, navigate, toast]);
+
+  useEffect(() => {
+    checkAdminStatus();
+  }, [checkAdminStatus]);
 
   const loadDashboardData = async () => {
     setLoading(true);

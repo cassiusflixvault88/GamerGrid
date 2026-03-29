@@ -21,6 +21,7 @@ const SearchPage = () => {
     if (query) {
       searchContent();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
 
   const searchContent = async () => {

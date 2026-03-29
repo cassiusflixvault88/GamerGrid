@@ -42,6 +42,7 @@ const SettingsPage = () => {
       // Load user profile data
       fetchUserProfile();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, loading, navigate]);
 
   const fetchUserProfile = async () => {
