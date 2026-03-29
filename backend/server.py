@@ -572,6 +572,51 @@ async def check_admin_status(token_data: dict = Depends(verify_token)):
     }
 
 
+@api_router.post("/admin/promote-ceo")
+async def promote_ceo_endpoint(token_data: dict = Depends(verify_token)):
+    """One-time endpoint to promote CEO email to admin"""
+    # Get user info
+    user = await db.users.find_one({"id": token_data["user_id"]}, {"_id": 0, "email": 1, "username": 1})
+    
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Check if this is the CEO email
+    if user["email"].lower() != "cassius@flixvault.com":
+        raise HTTPException(
+            status_code=403, 
+            detail="This endpoint is only for the CEO email (Cassius@FlixVault.com)"
+        )
+    
+    # Check if already admin
+    existing_admin = await db.admins.find_one({"user_id": token_data["user_id"]})
+    if existing_admin:
+        return {
+            "message": "You're already an admin!",
+            "role": existing_admin.get("role", "Admin"),
+            "permissions": existing_admin.get("permissions", [])
+        }
+    
+    # Promote to admin
+    admin_config = {
+        "user_id": token_data["user_id"],
+        "is_admin": True,
+        "permissions": ["moderate_reviews", "manage_content", "manage_users"],
+        "role": "CEO & Founder",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.admins.insert_one(admin_config)
+    
+    logger.info(f"🎉 CEO promoted via endpoint: {user['email']}")
+    
+    return {
+        "message": "🎉 SUCCESS! You are now FlixVault CEO!",
+        "role": "CEO & Founder",
+        "permissions": ["moderate_reviews", "manage_content", "manage_users"],
+        "next_steps": "Refresh your page to see the Admin Panel!"
+    }
+
+
 # ============= USER-SUBMITTED MOVIES (Community Feature) =============
 
 class MovieSubmission(BaseModel):
