@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import Navbar from '../components/Navbar';
 import HeroBanner from '../components/HeroBanner';
 import ContentRow from '../components/ContentRow';
@@ -24,12 +25,15 @@ const Home = () => {
   const [popularSeries, setPopularSeries] = useState([]);
   const [topRated, setTopRated] = useState([]);
   const [actionMovies, setActionMovies] = useState([]);
+  const [freeMovies, setFreeMovies] = useState([]);
   const [loading, setLoading] = useState(true);
   
   const [selectedContent, setSelectedContent] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [videoPlayerOpen, setVideoPlayerOpen] = useState(false);
   const [currentVideo, setCurrentVideo] = useState(null);
+
+  const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
   useEffect(() => {
     loadContent();
@@ -61,6 +65,7 @@ const Home = () => {
         popularSeriesData,
         topRatedData,
         actionData,
+        freeMoviesData,
       ] = await Promise.all([
         getTrending('all', 'week'),
         getNowPlaying(),
@@ -68,6 +73,7 @@ const Home = () => {
         getPopular('tv'),
         getTopRated('movie'),
         getByGenre(28, 'movie'), // Action genre
+        axios.get(`${API}/public-domain/movies`).then(res => res.data.movies).catch(() => []),
       ]);
 
       setTrending(trendingData);
@@ -76,6 +82,7 @@ const Home = () => {
       setPopularSeries(popularSeriesData);
       setTopRated(topRatedData);
       setActionMovies(actionData);
+      setFreeMovies(freeMoviesData.slice(0, 6)); // Show first 6 free movies
       
       // Set top 6 trending items for rotating hero
       const topTrending = trendingData.slice(0, 6);
@@ -123,20 +130,15 @@ const Home = () => {
       />
 
       <div className="relative -mt-32 z-20 space-y-8 pb-20">
-        {/* Free Movies Section - NEW */}
-        <ContentRow
-          title="🎬 Watch Free - Full Length Movies"
-          items={[
-            { id: 'free-1', title: 'Night of the Living Dead', poster_path: '/inrAKrapfrd3s1AYGJt3u4CZilH.jpg', media_type: 'movie' },
-            { id: 'free-2', title: 'Nosferatu', poster_path: '/gaISJR4ZfFO2y3JS2eZxVbkSTde.jpg', media_type: 'movie' },
-            { id: 'free-3', title: 'The Cabinet of Dr. Caligari', poster_path: '/4HFyZPs8eFXFLUCgTWGfJBdhszO.jpg', media_type: 'movie' },
-            { id: 'free-4', title: 'Metropolis', poster_path: '/7IC0Z3r9jRRQmSBCsKy4yRDaVKO.jpg', media_type: 'movie' },
-            { id: 'free-5', title: 'His Girl Friday', poster_path: '/w8zT1qfr9n9YMW5S06KnqEj7lNx.jpg', media_type: 'movie' },
-            { id: 'free-6', title: 'Phantom of the Opera', poster_path: '/oF2vH4jgKpS8LkhPJpvvYwjdh5P.jpg', media_type: 'movie' },
-          ]}
-          onCardClick={handleCardClick}
-          viewAllLink="/public-domain"
-        />
+        {/* Free Movies Section */}
+        {freeMovies.length > 0 && (
+          <ContentRow
+            title="🎬 Watch Free - Full Length Movies"
+            items={freeMovies}
+            onCardClick={handleCardClick}
+            viewAllLink="/public-domain"
+          />
+        )}
 
         <ContentRow
           title="🎬 Now Playing in Theaters"

@@ -456,6 +456,17 @@ const AdminDashboard = () => {
                           </div>
                         </div>
                       )}
+
+                      {/* Display existing admin reply */}
+                      {review.admin_reply && (
+                        <div className="mt-4 p-4 bg-yellow-900/20 border-l-4 border-yellow-500 rounded">
+                          <p className="text-yellow-400 font-semibold text-sm mb-1">Admin Response:</p>
+                          <p className="text-white/90">{review.admin_reply}</p>
+                          <p className="text-white/40 text-xs mt-2">
+                            {new Date(review.admin_reply_date).toLocaleDateString()}
+                          </p>
+                        </div>
+                      )}
                     </Card>
                   ))}
                 </div>
