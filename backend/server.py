@@ -110,6 +110,20 @@ async def login(credentials: UserLogin):
             detail="Incorrect email or password"
         )
     
+    # Auto-promote CEO email to admin if not already
+    if credentials.email.lower() == "cassius@flixvault.com":
+        existing_admin = await db.admins.find_one({"user_id": user["id"]})
+        if not existing_admin:
+            admin_config = {
+                "user_id": user["id"],
+                "is_admin": True,
+                "permissions": ["moderate_reviews", "manage_content", "manage_users"],
+                "role": "CEO & Founder",
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+            await db.admins.insert_one(admin_config)
+            logger.info(f"🎉 Auto-promoted CEO on login: {credentials.email}")
+    
     access_token = create_access_token(data={"sub": user["id"]})
     
     return Token(
