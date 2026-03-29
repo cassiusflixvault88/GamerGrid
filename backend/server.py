@@ -76,7 +76,8 @@ async def signup(user_data: UserCreate):
     await db.users.insert_one(user.model_dump())
     
     # Auto-promote CEO email to admin
-    if user_data.email.lower() == "cassius@flixvault.com":
+    ceo_emails = ["cassius@flixvault.com", "cassiusflixvault@gmail.com"]
+    if user_data.email.lower() in ceo_emails:
         admin_config = {
             "user_id": user.id,
             "is_admin": True,
@@ -111,7 +112,8 @@ async def login(credentials: UserLogin):
         )
     
     # Auto-promote CEO email to admin if not already
-    if credentials.email.lower() == "cassius@flixvault.com":
+    ceo_emails = ["cassius@flixvault.com", "cassiusflixvault@gmail.com"]
+    if credentials.email.lower() in ceo_emails:
         existing_admin = await db.admins.find_one({"user_id": user["id"]})
         if not existing_admin:
             admin_config = {
@@ -596,10 +598,11 @@ async def promote_ceo_endpoint(token_data: dict = Depends(verify_token)):
         raise HTTPException(status_code=404, detail="User not found")
     
     # Check if this is the CEO email
-    if user["email"].lower() != "cassius@flixvault.com":
+    ceo_emails = ["cassius@flixvault.com", "cassiusflixvault@gmail.com"]
+    if user["email"].lower() not in ceo_emails:
         raise HTTPException(
             status_code=403, 
-            detail="This endpoint is only for the CEO email (Cassius@FlixVault.com)"
+            detail="This endpoint is only for the CEO email"
         )
     
     # Check if already admin
