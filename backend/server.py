@@ -577,6 +577,41 @@ async def make_user_admin(user_id: str, token_data: dict = Depends(verify_admin)
     return {"message": f"User {user_id} is now an admin"}
 
 
+@api_router.post("/admin/reset-ceo-accounts")
+async def reset_ceo_accounts_endpoint():
+    """Emergency endpoint to delete all CEO accounts - allows fresh signup"""
+    ceo_emails = [
+        "cassius@flixvault.com",
+        "cassiusflixvault@gmail.com"
+    ]
+    
+    deleted_count = 0
+    deleted_users = []
+    
+    for email in ceo_emails:
+        user = await db.users.find_one({"email": {"$regex": f"^{email}$", "$options": "i"}}, {"_id": 0})
+        if user:
+            user_id = user['id']
+            deleted_users.append({
+                "email": user['email'],
+                "username": user.get('username', 'N/A')
+            })
+            
+            # Delete user and all related data
+            await db.users.delete_one({"id": user_id})
+            await db.admins.delete_many({"user_id": user_id})
+            await db.ratings.delete_many({"user_id": user_id})
+            await db.watch_history.delete_many({"user_id": user_id})
+            
+            deleted_count += 1
+    
+    return {
+        "message": f"✅ Deleted {deleted_count} CEO account(s)",
+        "deleted_accounts": deleted_users,
+        "next_step": "You can now sign up fresh with cassiusflixvault@gmail.com!"
+    }
+
+
 @api_router.get("/admin/check")
 async def check_admin_status(token_data: dict = Depends(verify_token)):
     """Check if current user is admin"""
