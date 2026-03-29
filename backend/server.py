@@ -10,7 +10,7 @@ from typing import List, Optional
 import uuid
 from datetime import datetime, timezone
 
-from models import User, UserCreate, UserLogin, UserResponse, WatchlistItem, Token
+from models import User, UserCreate, UserLogin, UserResponse, UserProfileUpdate, WatchlistItem, Token
 from ratings import Rating, RatingCreate, RatingResponse, WatchHistory, WatchHistoryCreate
 from admin_models import AdminConfig, ReviewReply, ReviewReplyCreate
 from auth import (
@@ -112,11 +112,53 @@ async def get_current_user(token_data: dict = Depends(verify_token)):
     # Optimized query - only fetch needed fields
     user = await db.users.find_one(
         {"id": token_data["user_id"]},
-        {"id": 1, "email": 1, "username": 1, "created_at": 1, "watchlist": 1, "favorites": 1}
+        {"_id": 0, "id": 1, "email": 1, "username": 1, "created_at": 1, "watchlist": 1, "favorites": 1, 
+         "display_name": 1, "phone": 1, "address": 1, "profile_picture_url": 1,
+         "autoplay_trailers": 1, "email_notifications": 1, "maturity_rating": 1}
     )
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return UserResponse(**user)
+
+
+@api_router.get("/user/profile")
+async def get_user_profile(token_data: dict = Depends(verify_token)):
+    """Get user profile data"""
+    logger.info(f"Fetching profile for user_id: {token_data['user_id']}")
+    user = await db.users.find_one(
+        {"id": token_data["user_id"]},
+        {"_id": 0, "display_name": 1, "phone": 1, "address": 1, "profile_picture_url": 1,
+         "autoplay_trailers": 1, "email_notifications": 1, "maturity_rating": 1}
+    )
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    logger.info(f"Retrieved profile data: {user}")
+    return user
+
+
+@api_router.put("/user/profile")
+async def update_user_profile(profile_data: UserProfileUpdate, token_data: dict = Depends(verify_token)):
+    """Update user profile settings"""
+    # Build update dict with only provided fields
+    update_data = {k: v for k, v in profile_data.model_dump().items() if v is not None}
+    
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No data to update")
+    
+    logger.info(f"Updating profile for user_id: {token_data['user_id']}")
+    logger.info(f"Update data: {update_data}")
+    
+    result = await db.users.update_one(
+        {"id": token_data["user_id"]},
+        {"$set": update_data}
+    )
+    
+    logger.info(f"Update result - matched: {result.matched_count}, modified: {result.modified_count}")
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return {"message": "Profile updated successfully", "updated_fields": list(update_data.keys())}
 
 
 # ============= WATCHLIST ROUTES =============

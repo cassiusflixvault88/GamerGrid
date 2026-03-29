@@ -12,6 +12,15 @@ class User(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     watchlist: List[dict] = []
     favorites: List[dict] = []
+    # Profile fields
+    display_name: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    profile_picture_url: Optional[str] = None
+    # Preferences
+    autoplay_trailers: bool = True
+    email_notifications: bool = True
+    maturity_rating: str = "PG-13"
 
 
 class UserCreate(BaseModel):
@@ -32,6 +41,25 @@ class UserResponse(BaseModel):
     created_at: datetime
     watchlist: List[dict] = []
     favorites: List[dict] = []
+    # Profile fields
+    display_name: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    profile_picture_url: Optional[str] = None
+    # Preferences
+    autoplay_trailers: bool = True
+    email_notifications: bool = True
+    maturity_rating: str = "PG-13"
+
+
+class UserProfileUpdate(BaseModel):
+    display_name: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    profile_picture_url: Optional[str] = None
+    autoplay_trailers: Optional[bool] = None
+    email_notifications: Optional[bool] = None
+    maturity_rating: Optional[str] = None
 
 
 class WatchlistItem(BaseModel):
