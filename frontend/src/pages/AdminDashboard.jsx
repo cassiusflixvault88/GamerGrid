@@ -51,39 +51,42 @@ const AdminDashboard = () => {
     }
   }, [toast]);
 
-  const checkAdminStatus = useCallback(async () => {
-    // Wait for auth to finish loading before checking
-    if (authLoading) {
-      return;
-    }
-
+  useEffect(() => {
+    // Wait for auth to finish loading
+    if (authLoading) return;
+    
     if (!user) {
       navigate('/');
       return;
     }
 
-    try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`${API}/admin/check`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
-      if (response.data.is_admin) {
-        setIsAdmin(true);
-        loadDashboardData();
-      } else {
-        toast({
-          title: 'Access Denied',
-          description: 'You do not have admin privileges',
-          variant: 'destructive',
+    const checkAdmin = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await axios.get(`${API}/admin/check`, {
+          headers: { Authorization: `Bearer ${token}` }
         });
+        
+        if (response.data.is_admin) {
+          setIsAdmin(true);
+          loadDashboardData();
+        } else {
+          toast({
+            title: 'Access Denied',
+            description: 'You do not have admin privileges',
+            variant: 'destructive',
+          });
+          navigate('/');
+        }
+      } catch (error) {
+        console.error('Admin check failed:', error);
         navigate('/');
       }
-    } catch (error) {
-      console.error('Admin check failed:', error);
-      navigate('/');
-    }
-  }, [user, authLoading, navigate, toast, loadDashboardData]);
+    };
+
+    checkAdmin();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authLoading, user]);
 
   const handleDeleteReview = async (reviewId) => {
     try {
