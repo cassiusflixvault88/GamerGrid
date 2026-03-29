@@ -360,8 +360,8 @@ async def get_continue_watching(token_data: dict = Depends(verify_token)):
 
 # ============= ANALYTICS / TRENDING ROUTES =============
 
-@api_router.get("/trending/streamflix")
-async def get_streamflix_trending():
+@api_router.get("/trending/flixvault")
+async def get_flixvault_trending():
     # Get most watched content from last 7 days
     pipeline = [
         {
@@ -380,6 +380,83 @@ async def get_streamflix_trending():
     trending = await db.watch_history.aggregate(pipeline).to_list(20)
     
     return {"trending": trending}
+
+
+# ============= USER-SUBMITTED MOVIES (Community Feature) =============
+
+class MovieSubmission(BaseModel):
+    title: str
+    overview: str
+    release_year: int
+    genre: str
+    poster_url: Optional[str] = None
+    trailer_url: Optional[str] = None
+
+
+@api_router.post("/submit-movie")
+async def submit_movie(submission: MovieSubmission, token_data: dict = Depends(verify_token)):
+    """Allow users to suggest movies to add to FlixVault"""
+    user = await db.users.find_one(
+        {"id": token_data["user_id"]},
+        {"username": 1}
+    )
+    
+    movie_data = {
+        "id": str(uuid.uuid4()),
+        "title": submission.title,
+        "overview": submission.overview,
+        "release_year": submission.release_year,
+        "genre": submission.genre,
+        "poster_url": submission.poster_url,
+        "trailer_url": submission.trailer_url,
+        "submitted_by": token_data["user_id"],
+        "submitted_by_username": user["username"],
+        "status": "pending",  # pending, approved, rejected
+        "created_at": datetime.utcnow()
+    }
+    
+    await db.movie_submissions.insert_one(movie_data)
+    
+    return {"message": "Movie submitted! We'll review and add it soon.", "submission_id": movie_data["id"]}
+
+
+@api_router.get("/my-submissions")
+async def get_my_submissions(token_data: dict = Depends(verify_token)):
+    """Get user's submitted movies"""
+    submissions = await db.movie_submissions.find(
+        {"submitted_by": token_data["user_id"]}
+    ).sort("created_at", -1).to_list(100)
+    
+    return {"submissions": submissions}
+
+
+@api_router.get("/admin/submissions")
+async def get_all_submissions(token_data: dict = Depends(verify_token)):
+    """Admin: Get all pending movie submissions"""
+    # In future, add admin check here
+    submissions = await db.movie_submissions.find(
+        {"status": "pending"}
+    ).sort("created_at", -1).to_list(100)
+    
+    return {"submissions": submissions}
+
+
+@api_router.post("/admin/approve-movie/{submission_id}")
+async def approve_movie(submission_id: str, token_data: dict = Depends(verify_token)):
+    """Admin: Approve and add movie to FlixVault"""
+    # In future, add admin check here
+    submission = await db.movie_submissions.find_one({"id": submission_id})
+    
+    if not submission:
+        raise HTTPException(status_code=404, detail="Submission not found")
+    
+    # Update status
+    await db.movie_submissions.update_one(
+        {"id": submission_id},
+        {"$set": {"status": "approved", "approved_at": datetime.utcnow()}}
+    )
+    
+    return {"message": f"Movie '{submission['title']}' approved and added to FlixVault!"}
 
 
 # ============= ORIGINAL ROUTES =============

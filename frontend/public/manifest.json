@@ -1,10 +1,10 @@
 {
   "short_name": "FlixVault",
-  "name": "FlixVault - Watch Movies & TV Shows",
-  "description": "Stream movies, TV shows, and free public domain classics. Created by Cassius Fox.",
+  "name": "FlixVault - Your Premium Movie Vault",
+  "description": "Watch movies, TV shows, and classics. Rate with Vault Score. Created by Cassius Fox.",
   "icons": [
     {
-      "src": "/icon.svg",
+      "src": "/flixvault-icon.svg",
       "type": "image/svg+xml",
       "sizes": "any",
       "purpose": "any maskable"
@@ -12,7 +12,7 @@
   ],
   "start_url": "/",
   "display": "standalone",
-  "theme_color": "#8B5CF6",
+  "theme_color": "#FFD700",
   "background_color": "#000000",
   "orientation": "portrait-primary",
   "categories": ["entertainment", "video", "streaming"]
