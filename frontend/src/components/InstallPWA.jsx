@@ -58,7 +58,7 @@ const InstallPWA = () => {
             <Download className="w-6 h-6" />
           </div>
           <div className="flex-1">
-            <h3 className="font-bold text-lg mb-1">Install StreamFlix</h3>
+            <h3 className="font-bold text-lg mb-1">Install FlixVault</h3>
             <p className="text-sm text-white/90 mb-3">
               Install our app for a better experience! Works offline and feels like a native app.
             </p>

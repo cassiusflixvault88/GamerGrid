@@ -386,7 +386,7 @@ async def get_streamflix_trending():
 
 @api_router.get("/")
 async def root():
-    return {"message": "StreamFlix API - Created by Cassius Fox"}
+    return {"message": "FlixVault API - Created by Cassius Fox"}
 
 @api_router.post("/status", response_model=StatusCheck)
 async def create_status_check(input: StatusCheckCreate):

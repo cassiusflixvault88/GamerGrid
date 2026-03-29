@@ -1,4 +1,4 @@
-# StreamFlix Customization Guide
+# FlixVault Customization Guide
 ## Created by E1 for Cassius Fox
 
 ---

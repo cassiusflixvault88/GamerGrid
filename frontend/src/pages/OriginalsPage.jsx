@@ -60,8 +60,8 @@ const OriginalsPage = () => {
       <Navbar />
       
       <div className="pt-24 px-6 lg:px-12 max-w-[1920px] mx-auto pb-20">
-        <h1 className="text-4xl font-bold text-white mb-4">StreamFlix Originals</h1>
-        <p className="text-white/70 text-lg mb-8">Premium original content exclusive to StreamFlix</p>
+        <h1 className="text-4xl font-bold text-white mb-4">FlixVault Originals</h1>
+        <p className="text-white/70 text-lg mb-8">Premium original content exclusive to FlixVault</p>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
           {content.map((item) => (

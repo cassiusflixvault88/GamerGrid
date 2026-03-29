@@ -128,13 +128,16 @@ const RatingsReviews = ({ contentId, contentTitle }) => {
 
   return (
     <div className="space-y-6">
-      {/* Overall Rating Display (Rotten Tomatoes style) */}
+      {/* Overall Rating Display - FlixVault Style */}
       <div className="bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/30 rounded-lg p-6">
         <div className="flex items-center justify-between">
           <div>
-            <div className="flex items-center space-x-3">
-              <div className="text-5xl font-bold text-yellow-400">
-                {ratings.average > 0 ? ratings.average.toFixed(1) : 'N/A'}
+            <div className="flex items-center space-x-4">
+              <div className="flex flex-col items-center">
+                <div className="text-5xl font-bold text-yellow-400">
+                  {ratings.average > 0 ? ratings.average.toFixed(1) : 'N/A'}
+                </div>
+                <p className="text-yellow-400/80 text-xs font-semibold mt-1">VAULT SCORE</p>
               </div>
               <div>
                 <StarRating value={Math.round(ratings.average)} readonly />

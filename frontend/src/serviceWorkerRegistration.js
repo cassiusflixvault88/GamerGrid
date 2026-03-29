@@ -20,7 +20,7 @@ export function register(config) {
       if (isLocalhost) {
         checkValidServiceWorker(swUrl, config);
         navigator.serviceWorker.ready.then(() => {
-          console.log('StreamFlix PWA is ready for offline use.');
+          console.log('FlixVault PWA is ready for offline use.');
         });
       } else {
         registerValidSW(swUrl, config);

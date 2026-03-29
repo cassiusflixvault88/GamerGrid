@@ -11,7 +11,7 @@ const Footer = () => {
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <div className="flex items-center space-x-2">
               <span className="text-2xl font-bold bg-gradient-to-r from-purple-500 to-blue-500 bg-clip-text text-transparent">
-                StreamFlix
+                FlixVault
               </span>
             </div>
             
@@ -23,7 +23,7 @@ const Footer = () => {
                 </span>
               </p>
               <p className="text-white/40 text-xs">
-                © {new Date().getFullYear()} StreamFlix. All rights reserved.
+                © {new Date().getFullYear()} FlixVault. All rights reserved.
               </p>
             </div>
           </div>
