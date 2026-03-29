@@ -13,6 +13,7 @@ import { useToast } from '../hooks/use-toast';
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const AdminDashboard = () => {
+  const [activeTab, setActiveTab] = useState('overview'); // Add tab state
   const [stats, setStats] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [users, setUsers] = useState([]);
@@ -194,8 +195,45 @@ const AdminDashboard = () => {
           </button>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {/* Tab Navigation */}
+        <div className="flex space-x-2 mb-8 border-b border-white/10">
+          <button
+            onClick={() => setActiveTab('overview')}
+            className={`px-6 py-3 font-semibold transition-all border-b-2 ${
+              activeTab === 'overview'
+                ? 'border-yellow-400 text-yellow-400'
+                : 'border-transparent text-white/60 hover:text-white'
+            }`}
+          >
+            Overview
+          </button>
+          <button
+            onClick={() => setActiveTab('users')}
+            className={`px-6 py-3 font-semibold transition-all border-b-2 ${
+              activeTab === 'users'
+                ? 'border-yellow-400 text-yellow-400'
+                : 'border-transparent text-white/60 hover:text-white'
+            }`}
+          >
+            Users ({stats?.total_users || 0})
+          </button>
+          <button
+            onClick={() => setActiveTab('reviews')}
+            className={`px-6 py-3 font-semibold transition-all border-b-2 ${
+              activeTab === 'reviews'
+                ? 'border-yellow-400 text-yellow-400'
+                : 'border-transparent text-white/60 hover:text-white'
+            }`}
+          >
+            Reviews ({stats?.total_reviews || 0})
+          </button>
+        </div>
+
+        {/* Overview Tab */}
+        {activeTab === 'overview' && (
+          <div>
+            {/* Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <Card className="bg-gradient-to-br from-blue-600/20 to-blue-800/20 border-blue-500/30 p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -236,10 +274,54 @@ const AdminDashboard = () => {
             </div>
           </Card>
         </div>
+          </div>
+        )}
 
-        {/* Reviews Management */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-white mb-4">Manage Reviews</h2>
+        {/* Users Tab */}
+        {activeTab === 'users' && (
+          <div>
+            <h2 className="text-2xl font-bold text-white mb-4">All Users</h2>
+            <div className="bg-white/5 rounded-lg border border-white/10 overflow-hidden">
+              <table className="w-full">
+                <thead className="bg-white/10">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-white font-semibold">Username</th>
+                    <th className="px-6 py-3 text-left text-white font-semibold">Email</th>
+                    <th className="px-6 py-3 text-left text-white font-semibold">Joined</th>
+                    <th className="px-6 py-3 text-left text-white font-semibold">Watchlist</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {users.length === 0 ? (
+                    <tr>
+                      <td colSpan="4" className="px-6 py-8 text-center text-white/50">
+                        No users found
+                      </td>
+                    </tr>
+                  ) : (
+                    users.map((u, idx) => (
+                      <tr key={u.id || idx} className="border-t border-white/10 hover:bg-white/5">
+                        <td className="px-6 py-4 text-white">{u.username}</td>
+                        <td className="px-6 py-4 text-white/80">{u.email}</td>
+                        <td className="px-6 py-4 text-white/60 text-sm">
+                          {new Date(u.created_at).toLocaleDateString()}
+                        </td>
+                        <td className="px-6 py-4 text-white/60">
+                          {u.watchlist?.length || 0} items
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Reviews Tab */}
+        {activeTab === 'reviews' && (
+          <div>
+            <h2 className="text-2xl font-bold text-white mb-4">Manage Reviews</h2>
           <div className="space-y-4">
             {reviews.map((review) => (
               <Card key={review.id} className="bg-white/5 border-white/10 p-6">
