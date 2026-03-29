@@ -74,6 +74,9 @@ const SettingsPage = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       
+      // Refetch to confirm the save
+      await fetchUserProfile();
+      
       toast({
         title: 'Settings Saved',
         description: 'Your profile has been updated successfully.'
