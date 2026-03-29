@@ -20,6 +20,7 @@ from auth import (
     verify_token
 )
 from public_domain_videos import get_public_domain_movies, get_public_domain_by_id
+from archive_org_fetcher import fetch_archive_movies
 
 
 ROOT_DIR = Path(__file__).parent
@@ -251,9 +252,38 @@ async def get_watchlist(token_data: dict = Depends(verify_token)):
 
 # ============= PUBLIC DOMAIN CONTENT ROUTES =============
 
+# Cache for Archive.org movies (refresh every 24 hours)
+archive_movies_cache = {"movies": [], "last_updated": None}
+
 @api_router.get("/public-domain/movies")
 async def get_public_movies():
-    return {"movies": get_public_domain_movies()}
+    """Get all free public domain movies from multiple sources"""
+    from datetime import datetime, timedelta
+    
+    # Get curated public domain movies (original 6)
+    curated_movies = get_public_domain_movies()
+    
+    # Check if we need to refresh Archive.org cache
+    should_refresh = (
+        not archive_movies_cache["movies"] or 
+        not archive_movies_cache["last_updated"] or
+        datetime.now() - archive_movies_cache["last_updated"] > timedelta(hours=24)
+    )
+    
+    if should_refresh:
+        logger.info("Fetching fresh Archive.org movies...")
+        try:
+            archive_movies = fetch_archive_movies(limit=200)
+            archive_movies_cache["movies"] = archive_movies
+            archive_movies_cache["last_updated"] = datetime.now()
+            logger.info(f"Cached {len(archive_movies)} Archive.org movies")
+        except Exception as e:
+            logger.error(f"Failed to fetch Archive.org movies: {e}")
+    
+    # Combine curated + archive movies
+    all_movies = curated_movies + archive_movies_cache["movies"]
+    
+    return {"movies": all_movies, "total": len(all_movies)}
 
 
 @api_router.get("/public-domain/movie/{content_id}")
