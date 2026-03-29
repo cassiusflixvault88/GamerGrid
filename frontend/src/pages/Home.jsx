@@ -11,11 +11,15 @@ import {
   getPopular,
   getTopRated,
   getByGenre,
+  getNowPlaying,
 } from '../services/tmdb';
 
 const Home = () => {
   const [heroContent, setHeroContent] = useState(null);
+  const [heroIndex, setHeroIndex] = useState(0);
+  const [heroItems, setHeroItems] = useState([]);
   const [trending, setTrending] = useState([]);
+  const [nowPlaying, setNowPlaying] = useState([]);
   const [popularMovies, setPopularMovies] = useState([]);
   const [popularSeries, setPopularSeries] = useState([]);
   const [topRated, setTopRated] = useState([]);
@@ -31,16 +35,35 @@ const Home = () => {
     loadContent();
   }, []);
 
+  // Rotate hero banner every 5 seconds
+  useEffect(() => {
+    if (heroItems.length > 1) {
+      const interval = setInterval(() => {
+        setHeroIndex((prev) => (prev + 1) % heroItems.length);
+      }, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [heroItems]);
+
+  // Update hero when index changes
+  useEffect(() => {
+    if (heroItems.length > 0) {
+      setHeroContent(heroItems[heroIndex]);
+    }
+  }, [heroIndex, heroItems]);
+
   const loadContent = async () => {
     try {
       const [
         trendingData,
+        nowPlayingData,
         popularMoviesData,
         popularSeriesData,
         topRatedData,
         actionData,
       ] = await Promise.all([
         getTrending('all', 'week'),
+        getNowPlaying(),
         getPopular('movie'),
         getPopular('tv'),
         getTopRated('movie'),
@@ -48,16 +71,16 @@ const Home = () => {
       ]);
 
       setTrending(trendingData);
+      setNowPlaying(nowPlayingData);
       setPopularMovies(popularMoviesData);
       setPopularSeries(popularSeriesData);
       setTopRated(topRatedData);
       setActionMovies(actionData);
       
-      // Set random trending item as hero
-      if (trendingData.length > 0) {
-        const randomIndex = Math.floor(Math.random() * Math.min(5, trendingData.length));
-        setHeroContent(trendingData[randomIndex]);
-      }
+      // Set top 6 trending items for rotating hero
+      const topTrending = trendingData.slice(0, 6);
+      setHeroItems(topTrending);
+      setHeroContent(topTrending[0]);
     } catch (error) {
       console.error('Error loading content:', error);
     } finally {
@@ -101,7 +124,12 @@ const Home = () => {
 
       <div className="relative -mt-32 z-20 space-y-8 pb-20">
         <ContentRow
-          title="Trending Now"
+          title="🎬 Now Playing in Theaters"
+          items={nowPlaying}
+          onCardClick={handleCardClick}
+        />
+        <ContentRow
+          title="🔥 Trending Now"
           items={trending}
           onCardClick={handleCardClick}
         />

@@ -90,4 +90,9 @@ export const search = async (query) => {
   return response.data.results;
 };
 
+export const getNowPlaying = async () => {
+  const response = await tmdbApi.get('/movie/now_playing');
+  return response.data.results;
+};
+
 export default tmdbApi;

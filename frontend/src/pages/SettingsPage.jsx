@@ -96,7 +96,6 @@ const SettingsPage = () => {
   };
 
   const themeOptions = [
-    { value: 'light', icon: Sun, label: 'Light' },
     { value: 'dark', icon: Moon, label: 'Dark' },
     { value: 'system', icon: Monitor, label: 'System' }
   ];
@@ -130,7 +129,7 @@ const SettingsPage = () => {
           </h2>
           <p className="text-white/60 text-sm mb-4">Choose how FlixVault looks to you</p>
           
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             {themeOptions.map(({ value, icon: Icon, label }) => (
               <button
                 key={value}

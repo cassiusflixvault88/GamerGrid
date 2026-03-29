@@ -55,12 +55,43 @@ const AboutFlixVault = ({ isOpen, onClose }) => {
               <Zap className="w-5 h-5 text-purple-400" />
               What is FlixVault?
             </h3>
-            <p className="text-white/80 leading-relaxed">
+            <p className="text-white/80 leading-relaxed mb-4">
               FlixVault is a modern streaming platform that brings together content discovery, 
               community reviews, and personalized watchlists. Browse thousands of movies and series, 
               watch trailers, read ratings, and discover what's trending - all in one beautiful, 
               fast, and installable web app.
             </p>
+            <p className="text-white/80 leading-relaxed">
+              Built entirely from scratch by Cassius Fox, FlixVault represents the future of 
+              independent streaming platforms - powerful, user-focused, and constantly evolving.
+            </p>
+          </div>
+
+          {/* Creator Story */}
+          <div className="bg-gradient-to-br from-purple-600/20 to-blue-600/20 rounded-lg p-6 border border-purple-500/30">
+            <h3 className="text-xl font-semibold text-white mb-3">The Creator's Journey</h3>
+            <div className="space-y-3 text-white/80">
+              <p className="leading-relaxed">
+                <strong className="text-purple-300">Cassius Fox</strong>, born September 30, 1988 in Upper Sandusky, Ohio, 
+                is the 37-year-old founder and sole creator of FlixVault. What started as a vision to revolutionize 
+                how people discover and enjoy streaming content became a reality through determination and innovation.
+              </p>
+              <p className="leading-relaxed">
+                Building FlixVault was a journey of learning, iterating, and pushing boundaries. From conceptualizing 
+                the user experience to implementing every feature you see today, Cassius handled it all - design, 
+                development, testing, and deployment. Every movie card, every rating system, every smooth animation 
+                was crafted with care.
+              </p>
+              <p className="leading-relaxed">
+                The challenges were real: integrating massive movie databases, creating an intuitive interface that 
+                works seamlessly across devices, implementing review systems, building admin controls, and making it 
+                all work together flawlessly. But through persistence and a commitment to quality, FlixVault came to life.
+              </p>
+              <p className="leading-relaxed font-semibold text-purple-300">
+                This is just version 1.0. Future versions of FlixVault will bring even more groundbreaking features, 
+                all continuing the mission: making streaming better, smarter, and more enjoyable for everyone.
+              </p>
+            </div>
           </div>
 
           {/* Features Grid */}
@@ -111,14 +142,17 @@ const AboutFlixVault = ({ isOpen, onClose }) => {
 
           {/* Creator Info */}
           <div className="text-center py-4 border-t border-white/10">
-            <p className="text-white/60 text-sm">
-              Created with ❤️ by{' '}
+            <p className="text-white/60 text-sm mb-1">
+              Created by{' '}
               <span className="font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
                 Cassius Fox
               </span>
             </p>
+            <p className="text-white/50 text-xs">
+              Founder & CEO • Born September 30, 1988 • Upper Sandusky, Ohio
+            </p>
             <p className="text-white/40 text-xs mt-1">
-              CEO & Founder of FlixVault
+              "Building the future of streaming, one feature at a time."
             </p>
           </div>
         </div>
