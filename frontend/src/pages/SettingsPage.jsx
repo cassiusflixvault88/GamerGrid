@@ -84,10 +84,9 @@ const SettingsPage = () => {
         description: 'Your profile has been updated successfully.'
       });
       
-      // Wait a moment then reload profile to confirm
-      setTimeout(() => {
-        fetchUserProfile();
-      }, 500);
+      // Force reload profile after save to confirm changes
+      await new Promise(resolve => setTimeout(resolve, 800));
+      await fetchUserProfile();
       
     } catch (error) {
       console.error('Failed to save profile:', error);
