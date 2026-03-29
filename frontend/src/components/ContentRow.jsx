@@ -1,12 +1,14 @@
 import React, { useRef, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import ContentCard from './ContentCard';
 import { Button } from './ui/button';
 
-const ContentRow = ({ title, items, onCardClick }) => {
+const ContentRow = ({ title, items, onCardClick, viewAllLink }) => {
   const scrollContainerRef = useRef(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
+  const navigate = useNavigate();
 
   const scroll = (direction) => {
     const container = scrollContainerRef.current;
@@ -36,7 +38,18 @@ const ContentRow = ({ title, items, onCardClick }) => {
 
   return (
     <div className="relative group mb-12">
-      <h2 className="text-2xl font-bold text-white mb-4 px-6 lg:px-12">{title}</h2>
+      <div className="flex items-center justify-between mb-4 px-6 lg:px-12">
+        <h2 className="text-2xl font-bold text-white">{title}</h2>
+        {viewAllLink && (
+          <Button
+            onClick={() => navigate(viewAllLink)}
+            variant="ghost"
+            className="text-white/70 hover:text-white text-sm"
+          >
+            View All →
+          </Button>
+        )}
+      </div>
       
       <div className="relative px-6 lg:px-12">
         {showLeftArrow && (
