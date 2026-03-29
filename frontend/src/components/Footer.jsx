@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import InstallInstructions from './InstallInstructions';
+import AboutFlixVault from './AboutFlixVault';
 
 const Footer = () => {
   const [showInstructions, setShowInstructions] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
 
   return (
     <>
@@ -29,21 +31,38 @@ const Footer = () => {
           </div>
           
           <div className="mt-6 pt-6 border-t border-white/5 flex flex-wrap justify-center md:justify-start gap-6 text-white/50 text-sm">
-            <a href="#" className="hover:text-white transition-colors">About</a>
-            <a href="#" className="hover:text-white transition-colors">Help Center</a>
-            <a href="#" className="hover:text-white transition-colors">Terms of Use</a>
-            <a href="#" className="hover:text-white transition-colors">Privacy</a>
+            <button 
+              onClick={() => setShowAbout(true)}
+              className="hover:text-white transition-colors"
+            >
+              About FlixVault
+            </button>
+            <a 
+              href="mailto:Cassius@FlixVault.com" 
+              className="hover:text-white transition-colors"
+            >
+              Contact & Support
+            </a>
             <button 
               onClick={() => setShowInstructions(true)}
               className="hover:text-white transition-colors text-purple-400 font-semibold"
             >
-              📱 Install App Instructions
+              📱 Install App
             </button>
+            <a 
+              href="https://www.themoviedb.org/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="hover:text-white transition-colors text-xs"
+            >
+              Powered by TMDB
+            </a>
           </div>
         </div>
       </footer>
 
       <InstallInstructions isOpen={showInstructions} onClose={() => setShowInstructions(false)} />
+      <AboutFlixVault isOpen={showAbout} onClose={() => setShowAbout(false)} />
     </>
   );
 };

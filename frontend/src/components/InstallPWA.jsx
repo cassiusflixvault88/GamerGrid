@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { Download, X, HelpCircle } from 'lucide-react';
+import { Download, X, HelpCircle, Info } from 'lucide-react';
 import { Button } from './ui/button';
 import InstallInstructions from './InstallInstructions';
+import AboutFlixVault from './AboutFlixVault';
 
 const InstallPWA = () => {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showInstall, setShowInstall] = useState(false);
   const [showInstructions, setShowInstructions] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
 
   useEffect(() => {
     const handler = (e) => {
@@ -40,6 +42,7 @@ const InstallPWA = () => {
   if (!showInstall) return (
     <>
       <InstallInstructions isOpen={showInstructions} onClose={() => setShowInstructions(false)} />
+      <AboutFlixVault isOpen={showAbout} onClose={() => setShowAbout(false)} />
     </>
   );
 
@@ -60,7 +63,7 @@ const InstallPWA = () => {
           <div className="flex-1">
             <h3 className="font-bold text-lg mb-1">Install FlixVault</h3>
             <p className="text-sm text-white/90 mb-3">
-              Install our app for a better experience! Works offline and feels like a native app.
+              Install our app for offline access, faster performance, and native app experience!
             </p>
             <div className="flex space-x-2">
               <Button
@@ -70,9 +73,18 @@ const InstallPWA = () => {
                 Install Now
               </Button>
               <Button
+                onClick={() => setShowAbout(true)}
+                variant="outline"
+                className="bg-white/20 hover:bg-white/30 border-white/40 text-white"
+                title="Learn More"
+              >
+                <Info className="w-4 h-4" />
+              </Button>
+              <Button
                 onClick={handleShowInstructions}
                 variant="outline"
                 className="bg-white/20 hover:bg-white/30 border-white/40 text-white"
+                title="Install Instructions"
               >
                 <HelpCircle className="w-4 h-4" />
               </Button>
@@ -82,6 +94,7 @@ const InstallPWA = () => {
       </div>
       
       <InstallInstructions isOpen={showInstructions} onClose={() => setShowInstructions(false)} />
+      <AboutFlixVault isOpen={showAbout} onClose={() => setShowAbout(false)} />
     </>
   );
 };
