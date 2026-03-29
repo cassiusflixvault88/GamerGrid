@@ -15,6 +15,7 @@ import WatchlistPage from "./pages/WatchlistPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import SettingsPage from "./pages/SettingsPage";
 import PromoteCEO from "./pages/PromoteCEO";
+import DebugAdmin from "./pages/DebugAdmin";
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/settings" element={<SettingsPage />} />
               <Route path="/promote-ceo" element={<PromoteCEO />} />
+              <Route path="/debug-admin" element={<DebugAdmin />} />
             </Routes>
           </BrowserRouter>
           <InstallPWA />
