@@ -1,13 +1,13 @@
 import axios from 'axios';
 
 const TMDB_API_KEYS = [
-  'c8dea14dc917687ac631a52620e4f7ad',
-  '3cb41ecea3bf606c56552db3d17adefd'
-];
+  process.env.REACT_APP_TMDB_API_KEY_1,
+  process.env.REACT_APP_TMDB_API_KEY_2
+].filter(Boolean);
 
 let currentKeyIndex = 0;
 
-const getApiKey = () => TMDB_API_KEYS[currentKeyIndex];
+const getApiKey = () => TMDB_API_KEYS[currentKeyIndex] || TMDB_API_KEYS[0];
 
 const rotateApiKey = () => {
   currentKeyIndex = (currentKeyIndex + 1) % TMDB_API_KEYS.length;
