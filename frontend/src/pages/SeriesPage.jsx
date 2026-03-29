@@ -3,6 +3,7 @@ import Navbar from '../components/Navbar';
 import ContentCard from '../components/ContentCard';
 import ContentModal from '../components/ContentModal';
 import VideoPlayer from '../components/VideoPlayer';
+import Footer from '../components/Footer';
 import { getPopular, getTopRated, getByGenre } from '../services/tmdb';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs';
 
@@ -132,6 +133,8 @@ const SeriesPage = () => {
           setCurrentVideo(null);
         }}
       />
+
+      <Footer />
     </div>
   );
 };

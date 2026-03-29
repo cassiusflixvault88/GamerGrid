@@ -3,6 +3,7 @@ import Navbar from '../components/Navbar';
 import ContentCard from '../components/ContentCard';
 import ContentModal from '../components/ContentModal';
 import VideoPlayer from '../components/VideoPlayer';
+import Footer from '../components/Footer';
 import { getTopRated } from '../services/tmdb';
 
 const OriginalsPage = () => {
@@ -84,6 +85,8 @@ const OriginalsPage = () => {
           setCurrentVideo(null);
         }}
       />
+
+      <Footer />
     </div>
   );
 };

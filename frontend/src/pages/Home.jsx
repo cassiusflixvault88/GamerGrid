@@ -5,6 +5,7 @@ import HeroBanner from '../components/HeroBanner';
 import ContentRow from '../components/ContentRow';
 import ContentModal from '../components/ContentModal';
 import VideoPlayer from '../components/VideoPlayer';
+import Footer from '../components/Footer';
 import {
   getTrending,
   getPopular,
@@ -141,6 +142,8 @@ const Home = () => {
           setCurrentVideo(null);
         }}
       />
+
+      <Footer />
     </div>
   );
 };

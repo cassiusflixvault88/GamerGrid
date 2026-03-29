@@ -4,6 +4,7 @@ import Navbar from '../components/Navbar';
 import ContentCard from '../components/ContentCard';
 import ContentModal from '../components/ContentModal';
 import VideoPlayer from '../components/VideoPlayer';
+import Footer from '../components/Footer';
 import { search } from '../services/tmdb';
 
 const SearchPage = () => {
@@ -86,6 +87,8 @@ const SearchPage = () => {
           setCurrentVideo(null);
         }}
       />
+
+      <Footer />
     </div>
   );
 };
