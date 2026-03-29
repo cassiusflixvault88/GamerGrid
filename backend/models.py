@@ -53,6 +53,7 @@ class UserResponse(BaseModel):
 
 
 class UserProfileUpdate(BaseModel):
+    username: Optional[str] = None  # Allow username changes
     display_name: Optional[str] = None
     phone: Optional[str] = None
     address: Optional[str] = None

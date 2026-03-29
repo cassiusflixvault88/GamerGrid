@@ -22,6 +22,7 @@ const SettingsPage = () => {
   
   const [saving, setSaving] = useState(false);
   const [profileData, setProfileData] = useState({
+    username: '',
     display_name: '',
     phone: '',
     address: '',
@@ -52,6 +53,7 @@ const SettingsPage = () => {
       
       if (response.data) {
         setProfileData({
+          username: user?.username || '',
           display_name: response.data.display_name || '',
           phone: response.data.phone || '',
           address: response.data.address || '',
@@ -169,24 +171,26 @@ const SettingsPage = () => {
             </div>
 
             <div>
-              <Label htmlFor="username" className="text-white/80">Username</Label>
+              <Label htmlFor="username" className="text-white/80">Username (Display Name)</Label>
               <Input
                 id="username"
                 type="text"
-                value={user?.username || ''}
-                disabled
-                className="bg-white/5 border-white/20 text-white/50 cursor-not-allowed"
+                value={profileData.username}
+                onChange={(e) => setProfileData({ ...profileData, username: e.target.value })}
+                placeholder="Your display name"
+                className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
               />
+              <p className="text-xs text-white/50 mt-1">This is how others will see you</p>
             </div>
 
             <div>
-              <Label htmlFor="display_name" className="text-white/80">Display Name</Label>
+              <Label htmlFor="display_name" className="text-white/80">Full Name (Optional)</Label>
               <Input
                 id="display_name"
                 type="text"
                 value={profileData.display_name}
                 onChange={(e) => setProfileData({ ...profileData, display_name: e.target.value })}
-                placeholder="How should we call you?"
+                placeholder="Your full name"
                 className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
               />
             </div>
