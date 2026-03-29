@@ -112,8 +112,8 @@ const AdminDashboard = () => {
 
     try {
       const token = localStorage.getItem('token');
-      await axios.post(`${API}/admin/reviews/${reviewId}/reply`, 
-        { reply: replyText },
+      await axios.post(`${API}/admin/reply-to-review`, 
+        { review_id: reviewId, reply_text: replyText },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
