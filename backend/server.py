@@ -486,37 +486,69 @@ async def get_admin_dashboard(token_data: dict = Depends(verify_admin)):
     }
 
 
+@api_router.get("/admin/stats")
+async def get_admin_stats(token_data: dict = Depends(verify_admin)):
+    """Get admin dashboard statistics"""
+    # Count total users
+    total_users = await db.users.count_documents({})
+    
+    # Count total reviews
+    total_reviews = await db.ratings.count_documents({})
+    
+    # Calculate average rating
+    pipeline = [
+        {"$group": {"_id": None, "avg_rating": {"$avg": "$rating"}}}
+    ]
+    avg_result = await db.ratings.aggregate(pipeline).to_list(1)
+    avg_rating = avg_result[0]["avg_rating"] if avg_result else 0.0
+    
+    # Get admin info
+    admin = await db.admins.find_one({"user_id": token_data["user_id"]}, {"_id": 0})
+    
+    return {
+        "total_users": total_users,
+        "total_reviews": total_reviews,
+        "average_rating": round(avg_rating, 2) if avg_rating else 0.0,
+        "admin_name": token_data.get("username", "Admin"),
+        "role": admin.get("role", "Admin") if admin else "Admin"
+    }
+
+
 @api_router.get("/admin/users")
 async def get_all_users(token_data: dict = Depends(verify_admin)):
     """Get all users"""
     users = await db.users.find(
         {},
-        {"id": 1, "email": 1, "username": 1, "created_at": 1}
+        {"_id": 0, "id": 1, "email": 1, "username": 1, "created_at": 1, "watchlist": 1}
     ).sort("created_at", -1).to_list(1000)
     
-    return {"users": users}
+    return users
 
 
 @api_router.get("/admin/reviews")
 async def get_all_reviews(token_data: dict = Depends(verify_admin)):
     """Get all reviews for moderation"""
     reviews = await db.ratings.find(
-        {"review": {"$ne": None}}
+        {},
+        {"_id": 0}
     ).sort("created_at", -1).to_list(1000)
     
-    # Get usernames
-    user_ids = [r["user_id"] for r in reviews]
+    # Get usernames for reviews
+    user_ids = [r["user_id"] for r in reviews if "user_id" in r]
     users = await db.users.find(
         {"id": {"$in": user_ids}},
-        {"id": 1, "username": 1}
+        {"_id": 0, "id": 1, "username": 1}
     ).to_list(1000)
     
     user_map = {u["id"]: u["username"] for u in users}
     
     for review in reviews:
         review["username"] = user_map.get(review["user_id"], "Unknown")
+        # Rename 'review' field to 'comment' for frontend compatibility
+        if "review" in review:
+            review["comment"] = review.pop("review")
     
-    return {"reviews": reviews}
+    return reviews
 
 
 @api_router.post("/admin/reply-to-review")

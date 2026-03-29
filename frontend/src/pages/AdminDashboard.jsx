@@ -87,7 +87,7 @@ const AdminDashboard = () => {
   const handleDeleteReview = async (reviewId) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`${API}/admin/reviews/${reviewId}`, {
+      await axios.delete(`${API}/admin/delete-review/${reviewId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
