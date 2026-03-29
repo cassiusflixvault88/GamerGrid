@@ -36,7 +36,7 @@ const Navbar = () => {
         <div className="flex items-center space-x-8">
           <Link to="/" className="flex items-center">
             <div className="text-3xl font-bold bg-gradient-to-r from-purple-500 to-blue-500 bg-clip-text text-transparent">
-              MAX
+              StreamFlix
             </div>
           </Link>
           <div className="hidden md:flex items-center space-x-6">
