@@ -11,6 +11,7 @@ import uuid
 from datetime import datetime, timezone
 
 from models import User, UserCreate, UserLogin, UserResponse, WatchlistItem, Token
+from ratings import Rating, RatingCreate, RatingResponse, WatchHistory, WatchHistoryCreate
 from auth import (
     get_password_hash,
     verify_password,
@@ -190,6 +191,195 @@ async def get_public_movie(content_id: int):
     if not movie:
         raise HTTPException(status_code=404, detail="Movie not found")
     return movie
+
+
+# ============= RATINGS & REVIEWS ROUTES =============
+
+@api_router.post("/ratings", response_model=RatingResponse)
+async def add_rating(rating_data: RatingCreate, token_data: dict = Depends(verify_token)):
+    # Get user info
+    user = await db.users.find_one(
+        {"id": token_data["user_id"]},
+        {"username": 1}
+    )
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Check if user already rated this content
+    existing = await db.ratings.find_one({
+        "user_id": token_data["user_id"],
+        "content_id": rating_data.content_id
+    })
+    
+    if existing:
+        # Update existing rating
+        await db.ratings.update_one(
+            {"_id": existing["_id"]},
+            {"$set": {
+                "rating": rating_data.rating,
+                "review": rating_data.review,
+                "created_at": datetime.utcnow()
+            }}
+        )
+        rating_id = existing["id"]
+    else:
+        # Create new rating
+        rating = Rating(
+            user_id=token_data["user_id"],
+            content_id=rating_data.content_id,
+            rating=rating_data.rating,
+            review=rating_data.review
+        )
+        await db.ratings.insert_one(rating.model_dump())
+        rating_id = rating.id
+    
+    return RatingResponse(
+        id=rating_id,
+        user_id=token_data["user_id"],
+        username=user["username"],
+        content_id=rating_data.content_id,
+        rating=rating_data.rating,
+        review=rating_data.review,
+        created_at=datetime.utcnow()
+    )
+
+
+@api_router.get("/ratings/{content_id}")
+async def get_ratings(content_id: int):
+    ratings = await db.ratings.find({"content_id": content_id}).to_list(1000)
+    
+    # Get usernames for all ratings
+    user_ids = [r["user_id"] for r in ratings]
+    users = await db.users.find(
+        {"id": {"$in": user_ids}},
+        {"id": 1, "username": 1}
+    ).to_list(1000)
+    
+    user_map = {u["id"]: u["username"] for u in users}
+    
+    # Calculate average
+    avg_rating = sum(r["rating"] for r in ratings) / len(ratings) if ratings else 0
+    
+    return {
+        "average": round(avg_rating, 1),
+        "count": len(ratings),
+        "ratings": [
+            RatingResponse(
+                id=r["id"],
+                user_id=r["user_id"],
+                username=user_map.get(r["user_id"], "Unknown"),
+                content_id=r["content_id"],
+                rating=r["rating"],
+                review=r.get("review"),
+                created_at=r["created_at"]
+            ) for r in ratings
+        ]
+    }
+
+
+@api_router.get("/ratings/user/content/{content_id}")
+async def get_user_rating(content_id: int, token_data: dict = Depends(verify_token)):
+    rating = await db.ratings.find_one({
+        "user_id": token_data["user_id"],
+        "content_id": content_id
+    })
+    
+    if not rating:
+        return None
+    
+    user = await db.users.find_one({"id": token_data["user_id"]}, {"username": 1})
+    
+    return RatingResponse(
+        id=rating["id"],
+        user_id=rating["user_id"],
+        username=user["username"] if user else "Unknown",
+        content_id=rating["content_id"],
+        rating=rating["rating"],
+        review=rating.get("review"),
+        created_at=rating["created_at"]
+    )
+
+
+# ============= WATCH HISTORY / CONTINUE WATCHING ROUTES =============
+
+@api_router.post("/watch-history")
+async def update_watch_history(history_data: WatchHistoryCreate, token_data: dict = Depends(verify_token)):
+    # Check if entry exists
+    existing = await db.watch_history.find_one({
+        "user_id": token_data["user_id"],
+        "content_id": history_data.content_id
+    })
+    
+    if existing:
+        # Update existing entry
+        await db.watch_history.update_one(
+            {"_id": existing["_id"]},
+            {"$set": {
+                "progress": history_data.progress,
+                "last_watched": datetime.utcnow()
+            }}
+        )
+    else:
+        # Create new entry
+        history = WatchHistory(
+            user_id=token_data["user_id"],
+            content_id=history_data.content_id,
+            content_title=history_data.content_title,
+            poster_path=history_data.poster_path,
+            media_type=history_data.media_type,
+            progress=history_data.progress
+        )
+        await db.watch_history.insert_one(history.model_dump())
+    
+    return {"message": "Watch history updated"}
+
+
+@api_router.get("/watch-history")
+async def get_watch_history(token_data: dict = Depends(verify_token)):
+    history = await db.watch_history.find(
+        {"user_id": token_data["user_id"]},
+        {"user_id": 1, "content_id": 1, "content_title": 1, "poster_path": 1, "media_type": 1, "progress": 1, "last_watched": 1}
+    ).sort("last_watched", -1).to_list(50)
+    
+    return {"history": history}
+
+
+@api_router.get("/continue-watching")
+async def get_continue_watching(token_data: dict = Depends(verify_token)):
+    # Get items that are in progress (not completed)
+    history = await db.watch_history.find(
+        {
+            "user_id": token_data["user_id"],
+            "progress": {"$gt": 5, "$lt": 95}  # Between 5% and 95%
+        },
+        {"user_id": 1, "content_id": 1, "content_title": 1, "poster_path": 1, "media_type": 1, "progress": 1, "last_watched": 1}
+    ).sort("last_watched", -1).limit(10).to_list(10)
+    
+    return {"continue_watching": history}
+
+
+# ============= ANALYTICS / TRENDING ROUTES =============
+
+@api_router.get("/trending/streamflix")
+async def get_streamflix_trending():
+    # Get most watched content from last 7 days
+    pipeline = [
+        {
+            "$group": {
+                "_id": "$content_id",
+                "count": {"$sum": 1},
+                "content_title": {"$first": "$content_title"},
+                "poster_path": {"$first": "$poster_path"},
+                "media_type": {"$first": "$media_type"}
+            }
+        },
+        {"$sort": {"count": -1}},
+        {"$limit": 20}
+    ]
+    
+    trending = await db.watch_history.aggregate(pipeline).to_list(20)
+    
+    return {"trending": trending}
 
 
 # ============= ORIGINAL ROUTES =============

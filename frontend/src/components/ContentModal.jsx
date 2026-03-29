@@ -207,7 +207,14 @@ const ContentModal = ({ content, isOpen, onClose, onPlayTrailer }) => {
                   {details.similar.results.slice(0, 6).map((item) => (
                     <div
                       key={item.id}
-                      className="relative aspect-video rounded-md overflow-hidden cursor-pointer hover:scale-105 transition-transform"
+                      onClick={() => {
+                        onClose();
+                        setTimeout(() => {
+                          setSelectedContent(item);
+                          setModalOpen(true);
+                        }, 300);
+                      }}
+                      className="relative aspect-video rounded-md overflow-hidden cursor-pointer hover:scale-105 hover:ring-2 hover:ring-white/40 transition-all"
                     >
                       <img
                         src={getImageUrl(item.backdrop_path || item.poster_path, 'w500')}
