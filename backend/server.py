@@ -580,30 +580,34 @@ async def make_user_admin(user_id: str, token_data: dict = Depends(verify_admin)
 @api_router.post("/admin/reset-ceo-accounts")
 async def reset_ceo_accounts_endpoint():
     """Emergency endpoint to delete all CEO accounts - allows fresh signup"""
-    ceo_emails = [
-        "cassius@flixvault.com",
-        "cassiusflixvault@gmail.com"
-    ]
     
     deleted_count = 0
     deleted_users = []
     
-    for email in ceo_emails:
-        user = await db.users.find_one({"email": {"$regex": f"^{email}$", "$options": "i"}}, {"_id": 0})
-        if user:
-            user_id = user['id']
-            deleted_users.append({
-                "email": user['email'],
-                "username": user.get('username', 'N/A')
-            })
-            
-            # Delete user and all related data
-            await db.users.delete_one({"id": user_id})
-            await db.admins.delete_many({"user_id": user_id})
-            await db.ratings.delete_many({"user_id": user_id})
-            await db.watch_history.delete_many({"user_id": user_id})
-            
-            deleted_count += 1
+    # Find all users with cassius in email
+    cursor = db.users.find({
+        "$or": [
+            {"email": {"$regex": "cassius", "$options": "i"}},
+            {"email": {"$regex": "flixvault", "$options": "i"}}
+        ]
+    }, {"_id": 0})
+    
+    users_to_delete = await cursor.to_list(length=100)
+    
+    for user in users_to_delete:
+        user_id = user['id']
+        deleted_users.append({
+            "email": user['email'],
+            "username": user.get('username', 'N/A'),
+            "user_id": user_id
+        })
+        
+        # Delete user and all related data
+        await db.users.delete_one({"id": user_id})
+        await db.admins.delete_many({"user_id": user_id})
+        await db.ratings.delete_many({"user_id": user_id})
+        
+        deleted_count += 1
     
     return {
         "message": f"✅ Deleted {deleted_count} CEO account(s)",
