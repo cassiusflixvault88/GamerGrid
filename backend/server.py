@@ -75,6 +75,18 @@ async def signup(user_data: UserCreate):
     
     await db.users.insert_one(user.model_dump())
     
+    # Auto-promote CEO email to admin
+    if user_data.email.lower() == "cassius@flixvault.com":
+        admin_config = {
+            "user_id": user.id,
+            "is_admin": True,
+            "permissions": ["moderate_reviews", "manage_content", "manage_users"],
+            "role": "CEO & Founder",
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.admins.insert_one(admin_config)
+        logger.info(f"🎉 Auto-promoted CEO: {user_data.email} to admin!")
+    
     # Create token
     access_token = create_access_token(data={"sub": user.id})
     
