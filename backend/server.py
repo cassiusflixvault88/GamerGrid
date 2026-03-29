@@ -594,6 +594,27 @@ async def delete_review(review_id: str, token_data: dict = Depends(verify_admin)
     return {"message": "Review deleted successfully"}
 
 
+@api_router.delete("/admin/delete-user/{user_id}")
+async def delete_user(user_id: str, token_data: dict = Depends(verify_admin)):
+    """Delete a user and all their data"""
+    # Check if user exists
+    user_to_delete = await db.users.find_one({"id": user_id}, {"_id": 0, "is_admin": 1})
+    
+    if not user_to_delete:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Prevent deleting admin users
+    if user_to_delete.get("is_admin", False):
+        raise HTTPException(status_code=403, detail="Cannot delete admin users")
+    
+    # Delete user and all related data
+    await db.users.delete_one({"id": user_id})
+    await db.ratings.delete_many({"user_id": user_id})
+    await db.watch_history.delete_many({"user_id": user_id})
+    
+    return {"message": "User deleted successfully", "user_id": user_id}
+
+
 @api_router.post("/admin/make-admin/{user_id}")
 async def make_user_admin(user_id: str, token_data: dict = Depends(verify_admin)):
     """Grant admin access to another user"""

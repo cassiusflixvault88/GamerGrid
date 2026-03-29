@@ -107,6 +107,32 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleDeleteUser = async (userId) => {
+    if (!window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`${API}/admin/delete-user/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      setUsers(users.filter(u => u.id !== userId));
+      toast({
+        title: 'Success',
+        description: 'User deleted successfully'
+      });
+    } catch (error) {
+      console.error('Failed to delete user:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete user',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const handleReplyToReview = async (reviewId) => {
     if (!replyText.trim()) return;
 
@@ -296,12 +322,13 @@ const AdminDashboard = () => {
                         <th className="px-6 py-4 text-left text-white font-semibold">Email</th>
                         <th className="px-6 py-4 text-left text-white font-semibold">Joined</th>
                         <th className="px-6 py-4 text-left text-white font-semibold">Watchlist</th>
+                        <th className="px-6 py-4 text-left text-white font-semibold">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
                       {users.length === 0 ? (
                         <tr>
-                          <td colSpan="4" className="px-6 py-12 text-center text-white/50">
+                          <td colSpan="5" className="px-6 py-12 text-center text-white/50">
                             No users found. Share FlixVault to get your first users!
                           </td>
                         </tr>
@@ -310,6 +337,9 @@ const AdminDashboard = () => {
                           <tr key={u.id || idx} className="border-t border-white/10 hover:bg-white/5 transition-colors">
                             <td className="px-6 py-4">
                               <p className="text-white font-medium">{u.username}</p>
+                              {u.is_admin && (
+                                <span className="text-xs text-yellow-400">• Admin</span>
+                              )}
                             </td>
                             <td className="px-6 py-4 text-white/80 text-sm">{u.email}</td>
                             <td className="px-6 py-4 text-white/60 text-sm">
@@ -323,6 +353,17 @@ const AdminDashboard = () => {
                               <span className="px-3 py-1 bg-purple-600/20 text-purple-300 rounded-full text-sm">
                                 {u.watchlist?.length || 0} items
                               </span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <Button
+                                onClick={() => handleDeleteUser(u.id)}
+                                variant="destructive"
+                                size="sm"
+                                disabled={u.is_admin}
+                                className="bg-red-600 hover:bg-red-700"
+                              >
+                                {u.is_admin ? 'Protected' : 'Delete'}
+                              </Button>
                             </td>
                           </tr>
                         ))

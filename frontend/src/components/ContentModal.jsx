@@ -16,6 +16,7 @@ const ContentModal = ({ content, isOpen, onClose, onPlayTrailer }) => {
   const [loading, setLoading] = useState(true);
   const [liked, setLiked] = useState(false);
   const [showFullOverview, setShowFullOverview] = useState(false);
+  const [localInWatchlist, setLocalInWatchlist] = useState(false);
   
   const { user, addToWatchlist, removeFromWatchlist, isInWatchlist } = useAuth();
   const { toast } = useToast();
@@ -23,10 +24,11 @@ const ContentModal = ({ content, isOpen, onClose, onPlayTrailer }) => {
   useEffect(() => {
     if (content && isOpen) {
       setShowFullOverview(false); // Reset when opening new content
+      setLocalInWatchlist(user && isInWatchlist(content.id)); // Update local state
       loadDetails();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [content, isOpen]);
+  }, [content, isOpen, user]);
 
   const loadDetails = async () => {
     if (!content) return;
@@ -58,16 +60,18 @@ const ContentModal = ({ content, isOpen, onClose, onPlayTrailer }) => {
     }
 
     try {
-      const inWatchlist = isInWatchlist(content.id);
+      const currentlyInWatchlist = isInWatchlist(content.id);
       
-      if (inWatchlist) {
+      if (currentlyInWatchlist) {
         await removeFromWatchlist(content.id);
+        setLocalInWatchlist(false); // Update local state immediately
         toast({
           title: 'Removed from watchlist',
           description: `${title} has been removed from your watchlist`,
         });
       } else {
         await addToWatchlist(content);
+        setLocalInWatchlist(true); // Update local state immediately
         toast({
           title: 'Added to watchlist',
           description: `${title} has been added to your watchlist`,
@@ -105,7 +109,6 @@ const ContentModal = ({ content, isOpen, onClose, onPlayTrailer }) => {
   const trailer = videos.find((v) => v.type === 'Trailer' && v.site === 'YouTube');
   const releaseYear = (content.release_date || content.first_air_date || '').split('-')[0];
   const runtime = details?.runtime || details?.episode_run_time?.[0];
-  const inWatchlist = user && isInWatchlist(content.id);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -148,13 +151,13 @@ const ContentModal = ({ content, isOpen, onClose, onPlayTrailer }) => {
                 <button 
                   onClick={handleWatchlistToggle}
                   className={`backdrop-blur-sm rounded-full p-2 border transition-all ${
-                    inWatchlist 
+                    localInWatchlist 
                       ? 'bg-white text-black border-white' 
                       : 'bg-white/20 hover:bg-white/30 text-white border-white/40'
                   }`}
-                  title={inWatchlist ? 'Remove from watchlist' : 'Add to watchlist'}
+                  title={localInWatchlist ? 'Remove from watchlist' : 'Add to watchlist'}
                 >
-                  {inWatchlist ? (
+                  {localInWatchlist ? (
                     <Check className="w-6 h-6" />
                   ) : (
                     <Plus className="w-6 h-6" />
