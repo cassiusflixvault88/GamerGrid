@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, User, LogOut, List } from 'lucide-react';
+import { Search, User, LogOut, List, Shield } from 'lucide-react';
 import { Input } from './ui/input';
 import { useAuth } from '../context/AuthContext';
 import AuthModal from './AuthModal';
@@ -33,6 +33,11 @@ const Navbar = () => {
 
   const handleLogout = () => {
     logout();
+    setShowUserMenu(false);
+  };
+
+  const goToAdmin = () => {
+    navigate('/admin');
     setShowUserMenu(false);
   };
 
@@ -128,6 +133,13 @@ const Navbar = () => {
                       <List className="w-4 h-4" />
                       <span>My Watchlist</span>
                     </Link>
+                    <button
+                      onClick={goToAdmin}
+                      className="flex items-center space-x-2 w-full px-4 py-2 text-yellow-400 hover:bg-white/10 transition-colors"
+                    >
+                      <Shield className="w-4 h-4" />
+                      <span>Admin Panel</span>
+                    </button>
                     <button
                       onClick={handleLogout}
                       className="flex items-center space-x-2 w-full px-4 py-2 text-white/90 hover:bg-white/10 transition-colors"

@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 
 from models import User, UserCreate, UserLogin, UserResponse, WatchlistItem, Token
 from ratings import Rating, RatingCreate, RatingResponse, WatchHistory, WatchHistoryCreate
+from admin_models import AdminConfig, ReviewReply, ReviewReplyCreate
 from auth import (
     get_password_hash,
     verify_password,
@@ -380,6 +381,141 @@ async def get_flixvault_trending():
     trending = await db.watch_history.aggregate(pipeline).to_list(20)
     
     return {"trending": trending}
+
+
+# ============= ADMIN MIDDLEWARE =============
+
+async def verify_admin(token_data: dict = Depends(verify_token)):
+    """Verify user is an admin"""
+    admin = await db.admins.find_one({"user_id": token_data["user_id"]})
+    if not admin or not admin.get("is_admin"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin access required"
+        )
+    return token_data
+
+
+# ============= ADMIN ROUTES =============
+
+@api_router.get("/admin/dashboard")
+async def get_admin_dashboard(token_data: dict = Depends(verify_admin)):
+    """Get admin dashboard stats"""
+    total_users = await db.users.count_documents({})
+    total_ratings = await db.ratings.count_documents({})
+    total_reviews = await db.ratings.count_documents({"review": {"$ne": None}})
+    pending_submissions = await db.movie_submissions.count_documents({"status": "pending"})
+    
+    return {
+        "total_users": total_users,
+        "total_ratings": total_ratings,
+        "total_reviews": total_reviews,
+        "pending_submissions": pending_submissions,
+        "admin_name": "Cassius Fox",
+        "role": "CEO & Founder"
+    }
+
+
+@api_router.get("/admin/users")
+async def get_all_users(token_data: dict = Depends(verify_admin)):
+    """Get all users"""
+    users = await db.users.find(
+        {},
+        {"id": 1, "email": 1, "username": 1, "created_at": 1}
+    ).sort("created_at", -1).to_list(1000)
+    
+    return {"users": users}
+
+
+@api_router.get("/admin/reviews")
+async def get_all_reviews(token_data: dict = Depends(verify_admin)):
+    """Get all reviews for moderation"""
+    reviews = await db.ratings.find(
+        {"review": {"$ne": None}}
+    ).sort("created_at", -1).to_list(1000)
+    
+    # Get usernames
+    user_ids = [r["user_id"] for r in reviews]
+    users = await db.users.find(
+        {"id": {"$in": user_ids}},
+        {"id": 1, "username": 1}
+    ).to_list(1000)
+    
+    user_map = {u["id"]: u["username"] for u in users}
+    
+    for review in reviews:
+        review["username"] = user_map.get(review["user_id"], "Unknown")
+    
+    return {"reviews": reviews}
+
+
+@api_router.post("/admin/reply-to-review")
+async def reply_to_review(reply_data: ReviewReplyCreate, token_data: dict = Depends(verify_admin)):
+    """Admin reply to a user review"""
+    user = await db.users.find_one(
+        {"id": token_data["user_id"]},
+        {"username": 1}
+    )
+    
+    reply = ReviewReply(
+        id=str(uuid.uuid4()),
+        review_id=reply_data.review_id,
+        admin_id=token_data["user_id"],
+        admin_username=user["username"],
+        reply_text=reply_data.reply_text,
+        created_at=datetime.utcnow()
+    )
+    
+    await db.review_replies.insert_one(reply.model_dump())
+    
+    return {"message": "Reply posted successfully", "reply": reply}
+
+
+@api_router.get("/admin/review-replies/{review_id}")
+async def get_review_replies(review_id: str):
+    """Get admin replies for a review"""
+    replies = await db.review_replies.find(
+        {"review_id": review_id}
+    ).sort("created_at", 1).to_list(100)
+    
+    return {"replies": replies}
+
+
+@api_router.delete("/admin/delete-review/{review_id}")
+async def delete_review(review_id: str, token_data: dict = Depends(verify_admin)):
+    """Delete inappropriate review"""
+    result = await db.ratings.delete_one({"id": review_id})
+    
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Review not found")
+    
+    return {"message": "Review deleted successfully"}
+
+
+@api_router.post("/admin/make-admin/{user_id}")
+async def make_user_admin(user_id: str, token_data: dict = Depends(verify_admin)):
+    """Grant admin access to another user"""
+    admin_config = AdminConfig(
+        user_id=user_id,
+        is_admin=True,
+        permissions=["moderate_reviews", "manage_content"],
+        created_at=datetime.utcnow()
+    )
+    
+    await db.admins.insert_one(admin_config.model_dump())
+    
+    return {"message": f"User {user_id} is now an admin"}
+
+
+@api_router.get("/admin/check")
+async def check_admin_status(token_data: dict = Depends(verify_token)):
+    """Check if current user is admin"""
+    admin = await db.admins.find_one({"user_id": token_data["user_id"]})
+    
+    return {
+        "is_admin": admin is not None and admin.get("is_admin", False),
+        "permissions": admin.get("permissions", []) if admin else []
+    }
 
 
 # ============= USER-SUBMITTED MOVIES (Community Feature) =============

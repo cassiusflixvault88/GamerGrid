@@ -11,6 +11,7 @@ import OriginalsPage from "./pages/OriginalsPage";
 import SearchPage from "./pages/SearchPage";
 import PublicDomainPage from "./pages/PublicDomainPage";
 import WatchlistPage from "./pages/WatchlistPage";
+import AdminDashboard from "./pages/AdminDashboard";
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
             <Route path="/search" element={<SearchPage />} />
             <Route path="/public-domain" element={<PublicDomainPage />} />
             <Route path="/watchlist" element={<WatchlistPage />} />
+            <Route path="/admin" element={<AdminDashboard />} />
           </Routes>
         </BrowserRouter>
         <InstallPWA />
