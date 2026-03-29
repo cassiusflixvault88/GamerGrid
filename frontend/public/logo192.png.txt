@@ -1,0 +1,6 @@
+This is a placeholder. In production, you would create actual PNG icons.
+For now, the PWA will work with default icons.
+To add custom icons:
+1. Create 192x192 and 512x512 PNG images with your StreamFlix logo
+2. Save as logo192.png and logo512.png in /app/frontend/public/
+3. Use a tool like https://realfavicongenerator.net/ for best results

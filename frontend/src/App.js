@@ -3,6 +3,7 @@ import "./App.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { Toaster } from "./components/ui/toaster";
+import InstallPWA from "./components/InstallPWA";
 import Home from "./pages/Home";
 import MoviesPage from "./pages/MoviesPage";
 import SeriesPage from "./pages/SeriesPage";
@@ -26,6 +27,7 @@ function App() {
             <Route path="/watchlist" element={<WatchlistPage />} />
           </Routes>
         </BrowserRouter>
+        <InstallPWA />
         <Toaster />
       </AuthProvider>
     </div>
