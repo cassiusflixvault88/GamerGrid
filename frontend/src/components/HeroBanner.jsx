@@ -42,7 +42,7 @@ const HeroBanner = ({ content, onPlayClick, onInfoClick }) => {
               className="bg-white hover:bg-white/90 text-black font-semibold px-8 py-6 text-lg rounded-md transition-all hover:scale-105"
             >
               <Play className="w-6 h-6 mr-2 fill-current" />
-              Play
+              Play Trailer
             </Button>
             <Button
               onClick={() => onInfoClick(content)}
