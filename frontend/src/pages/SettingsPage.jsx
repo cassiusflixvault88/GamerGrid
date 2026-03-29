@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sun, Moon, Monitor, Save, User as UserIcon } from 'lucide-react';
+import { Sun, Moon, Monitor, Save, User as UserIcon, Home, ArrowLeft } from 'lucide-react';
 import axios from 'axios';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -116,9 +116,18 @@ const SettingsPage = () => {
       <Navbar />
       
       <main className="pt-24 pb-12 px-6 lg:px-12 max-w-4xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">Settings</h1>
-          <p className="text-white/60">Manage your account and preferences</p>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-bold text-white mb-2">Settings</h1>
+            <p className="text-white/60">Manage your account and preferences</p>
+          </div>
+          <button
+            onClick={() => navigate('/')}
+            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg transition-colors border border-white/20"
+          >
+            <Home className="w-4 h-4" />
+            <span>Home</span>
+          </button>
         </div>
 
         {/* Theme Selection */}

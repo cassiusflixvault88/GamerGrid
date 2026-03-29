@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { Shield, Users, Star, Film, MessageSquare, CheckCircle, XCircle } from 'lucide-react';
+import { Shield, Users, Star, Film, MessageSquare, CheckCircle, XCircle, Home } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { useAuth } from '../context/AuthContext';
@@ -175,14 +175,23 @@ const AdminDashboard = () => {
       
       <div className="pt-24 px-6 lg:px-12 max-w-[1920px] mx-auto pb-20">
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center space-x-3 mb-2">
-            <Shield className="w-8 h-8 text-yellow-400" />
-            <h1 className="text-4xl font-bold text-white">Admin Dashboard</h1>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <div className="flex items-center space-x-3 mb-2">
+              <Shield className="w-8 h-8 text-yellow-400" />
+              <h1 className="text-4xl font-bold text-white">Admin Dashboard</h1>
+            </div>
+            <p className="text-white/70 text-lg">
+              Welcome back, {stats?.admin_name} - {stats?.role}
+            </p>
           </div>
-          <p className="text-white/70 text-lg">
-            Welcome back, {stats?.admin_name} - {stats?.role}
-          </p>
+          <button
+            onClick={() => navigate('/')}
+            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg transition-colors border border-white/20"
+          >
+            <Home className="w-4 h-4" />
+            <span>Home</span>
+          </button>
         </div>
 
         {/* Stats Cards */}

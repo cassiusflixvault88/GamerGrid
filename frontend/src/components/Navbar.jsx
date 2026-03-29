@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, User, LogOut, List, Shield, Settings } from 'lucide-react';
+import { Search, User, LogOut, List, Shield, Settings, Home, Mail } from 'lucide-react';
 import { Input } from './ui/input';
 import { useAuth } from '../context/AuthContext';
 import AuthModal from './AuthModal';
@@ -129,7 +129,15 @@ const Navbar = () => {
                 </button>
 
                 {showUserMenu && (
-                  <div className="absolute right-0 mt-2 w-48 bg-black/95 border border-white/20 rounded-md shadow-lg py-2">
+                  <div className="absolute right-0 mt-2 w-52 bg-black/95 border border-white/20 rounded-md shadow-lg py-2">
+                    <Link
+                      to="/"
+                      className="flex items-center space-x-2 px-4 py-2 text-white/90 hover:bg-white/10 transition-colors"
+                      onClick={() => setShowUserMenu(false)}
+                    >
+                      <Home className="w-4 h-4" />
+                      <span>Home</span>
+                    </Link>
                     <Link
                       to="/watchlist"
                       className="flex items-center space-x-2 px-4 py-2 text-white/90 hover:bg-white/10 transition-colors"
@@ -143,8 +151,17 @@ const Navbar = () => {
                       className="flex items-center space-x-2 w-full px-4 py-2 text-white/90 hover:bg-white/10 transition-colors"
                     >
                       <Settings className="w-4 h-4" />
-                      <span>Settings</span>
+                      <span>Account Settings</span>
                     </button>
+                    <a
+                      href="mailto:cassiusflixvault@gmail.com"
+                      className="flex items-center space-x-2 px-4 py-2 text-white/90 hover:bg-white/10 transition-colors"
+                      onClick={() => setShowUserMenu(false)}
+                    >
+                      <Mail className="w-4 h-4" />
+                      <span>Contact Support</span>
+                    </a>
+                    <div className="border-t border-white/10 my-2"></div>
                     <button
                       onClick={goToAdmin}
                       className="flex items-center space-x-2 w-full px-4 py-2 text-yellow-400 hover:bg-white/10 transition-colors"
@@ -154,7 +171,7 @@ const Navbar = () => {
                     </button>
                     <button
                       onClick={handleLogout}
-                      className="flex items-center space-x-2 w-full px-4 py-2 text-white/90 hover:bg-white/10 transition-colors"
+                      className="flex items-center space-x-2 w-full px-4 py-2 text-red-400 hover:bg-white/10 transition-colors"
                     >
                       <LogOut className="w-4 h-4" />
                       <span>Sign Out</span>
