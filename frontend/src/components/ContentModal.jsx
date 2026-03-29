@@ -15,12 +15,14 @@ const ContentModal = ({ content, isOpen, onClose, onPlayTrailer }) => {
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [liked, setLiked] = useState(false);
+  const [showFullOverview, setShowFullOverview] = useState(false);
   
   const { user, addToWatchlist, removeFromWatchlist, isInWatchlist } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
     if (content && isOpen) {
+      setShowFullOverview(false); // Reset when opening new content
       loadDetails();
     }
   }, [content, isOpen]);
@@ -180,7 +182,24 @@ const ContentModal = ({ content, isOpen, onClose, onPlayTrailer }) => {
               </Badge>
             </div>
 
-            <p className="text-white/90 text-base leading-relaxed">{content.overview}</p>
+            {/* Movie Description with More/Less toggle */}
+            <div className="space-y-2">
+              <p className="text-white/90 text-base leading-relaxed">
+                {content.overview && content.overview.length > 180 ? (
+                  <>
+                    {showFullOverview ? content.overview : `${content.overview.slice(0, 180)}...`}
+                    <button
+                      onClick={() => setShowFullOverview(!showFullOverview)}
+                      className="ml-2 text-white font-semibold hover:underline focus:outline-none"
+                    >
+                      {showFullOverview ? 'Less' : 'More'}
+                    </button>
+                  </>
+                ) : (
+                  content.overview
+                )}
+              </p>
+            </div>
 
             {details?.genres && details.genres.length > 0 && (
               <div className="flex items-start space-x-2">
