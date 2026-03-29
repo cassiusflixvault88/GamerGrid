@@ -743,6 +743,38 @@ async def submit_movie(submission: MovieSubmission, token_data: dict = Depends(v
     return {"message": "Movie submitted! We'll review and add it soon.", "submission_id": movie_data["id"]}
 
 
+@api_router.post("/admin/force-reset-ceo-password")
+async def force_reset_ceo_password():
+    """Emergency endpoint to reset CEO password - USE ONCE then remove"""
+    ceo_email = "cassiusflixvault@gmail.com"
+    new_password = "FlixVault2026!"
+    
+    # Hash the new password
+    hashed_password = get_password_hash(new_password)
+    
+    # Update the CEO account
+    result = await db.users.update_one(
+        {"email": ceo_email},
+        {
+            "$set": {
+                "hashed_password": hashed_password,
+                "is_admin": True
+            }
+        }
+    )
+    
+    if result.matched_count > 0:
+        return {
+            "success": True,
+            "message": "CEO password reset successfully!",
+            "email": ceo_email,
+            "new_password": new_password,
+            "note": "Login now with these credentials"
+        }
+    else:
+        raise HTTPException(status_code=404, detail="CEO account not found")
+
+
 @api_router.get("/my-submissions")
 async def get_my_submissions(token_data: dict = Depends(verify_token)):
     """Get user's submitted movies"""
