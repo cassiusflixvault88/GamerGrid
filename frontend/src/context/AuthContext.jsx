@@ -67,33 +67,46 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const addToWatchlist = async (content) => {
-    const item = {
-      content_id: content.id,
-      title: content.title || content.name,
-      poster_path: content.poster_path,
-      media_type: content.media_type || (content.title ? 'movie' : 'tv'),
-    };
+  const addToWatchlist = useCallback(async (content) => {
+    try {
+      const item = {
+        content_id: content.id,
+        title: content.title || content.name,
+        poster_path: content.poster_path,
+        media_type: content.media_type || (content.title ? 'movie' : 'tv'),
+      };
 
-    await axios.post(`${API}/watchlist/add`, item, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+      await axios.post(`${API}/watchlist/add`, item, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-    await fetchCurrentUser();
-  };
+      // Update user state immediately for instant feedback
+      await fetchCurrentUser();
+      return true;
+    } catch (error) {
+      console.error('Failed to add to watchlist:', error);
+      return false;
+    }
+  }, [token, fetchCurrentUser]);
 
-  const removeFromWatchlist = async (contentId) => {
-    await axios.delete(`${API}/watchlist/remove/${contentId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+  const removeFromWatchlist = useCallback(async (contentId) => {
+    try {
+      await axios.delete(`${API}/watchlist/remove/${contentId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-    await fetchCurrentUser();
-  };
+      await fetchCurrentUser();
+      return true;
+    } catch (error) {
+      console.error('Failed to remove from watchlist:', error);
+      return false;
+    }
+  }, [token, fetchCurrentUser]);
 
-  const isInWatchlist = (contentId) => {
+  const isInWatchlist = useCallback((contentId) => {
     if (!user || !user.watchlist) return false;
     return user.watchlist.some((item) => item.content_id === contentId);
-  };
+  }, [user]);
 
   return (
     <AuthContext.Provider

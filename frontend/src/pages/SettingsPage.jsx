@@ -73,22 +73,27 @@ const SettingsPage = () => {
     setSaving(true);
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`${API}/user/profile`, profileData, {
+      const response = await axios.put(`${API}/user/profile`, profileData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
-      // Refetch to confirm the save
-      await fetchUserProfile();
+      console.log('Save response:', response.data);
       
       toast({
         title: 'Settings Saved',
         description: 'Your profile has been updated successfully.'
       });
+      
+      // Wait a moment then reload profile to confirm
+      setTimeout(() => {
+        fetchUserProfile();
+      }, 500);
+      
     } catch (error) {
       console.error('Failed to save profile:', error);
       toast({
         title: 'Error',
-        description: 'Failed to save settings. Please try again.',
+        description: error.response?.data?.detail || 'Failed to save settings. Please try again.',
         variant: 'destructive'
       });
     } finally {
