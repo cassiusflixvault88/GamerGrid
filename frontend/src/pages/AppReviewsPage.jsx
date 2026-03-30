@@ -86,7 +86,11 @@ const AppReviewsPage = () => {
 
       setUserRating(0);
       setUserReview('');
-      loadReviews();
+      
+      // Force refresh reviews
+      setTimeout(() => {
+        loadReviews();
+      }, 500);
     } catch (error) {
       toast({
         title: 'Error',
