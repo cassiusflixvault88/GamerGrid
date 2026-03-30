@@ -1,17 +1,19 @@
 """
 Free movies from multiple sources:
 1. YouTube embeddable public domain (2 working movies)
-2. Plex free streaming links (15+ movies)
+2. Plex free streaming links (15+ movies) WITH TMDB IDs for trailers
 """
 
 def get_public_domain_movies():
     """
     Return FREE movies from YouTube (embedded) + Plex (links)
+    All movies include TMDB IDs for trailer fetching
     """
     movies = [
         # === YOUTUBE EMBEDDED (Working) ===
         {
             "id": 9000001,
+            "tmdb_id": 843,
             "title": "Nosferatu",
             "overview": "The classic 1922 silent vampire film. Count Orlok brings terror to a small German town.",
             "poster_path": "/rWkf5pNUhz9p0TKNsVzjkKjKuhd.jpg",
@@ -28,6 +30,7 @@ def get_public_domain_movies():
         },
         {
             "id": 9000002,
+            "tmdb_id": 14234,
             "title": "Reefer Madness",
             "overview": "Propagandist film warning against marijuana use. 1936 cult classic now viewed as unintentional comedy.",
             "poster_path": "/5jWNc4gkHAhpqDIgOw5vPhaqGWy.jpg",
@@ -43,9 +46,9 @@ def get_public_domain_movies():
             "source": "youtube"
         },
         
-        # === PLEX FREE STREAMING (Links to Plex) ===
+        # === PLEX FREE STREAMING (Links to Plex) with TMDB IDs ===
         {
-            "id": 9000003,
+            "id": 218,
             "title": "The Terminator",
             "overview": "A cyborg assassin sent from the future to kill Sarah Connor. Classic 1984 sci-fi action.",
             "poster_path": "/qvktm0BHcnmDpul4Hz01GIazWPr.jpg",
@@ -61,7 +64,7 @@ def get_public_domain_movies():
             "source": "plex"
         },
         {
-            "id": 9000004,
+            "id": 1366,
             "title": "Rocky",
             "overview": "A small-time boxer gets a shot at the world heavyweight championship. 1976 Best Picture winner.",
             "poster_path": "/cqxg1CihGR5ge0i1wYXr4Rdeppu.jpg",
@@ -77,7 +80,7 @@ def get_public_domain_movies():
             "source": "plex"
         },
         {
-            "id": 9000005,
+            "id": 4614,
             "title": "The Blair Witch Project",
             "overview": "Three student filmmakers disappear while investigating local legends. Found footage horror classic.",
             "poster_path": "/9WCkyEZd15QBwpXgd7PVaJXAy4b.jpg",
@@ -93,7 +96,7 @@ def get_public_domain_movies():
             "source": "plex"
         },
         {
-            "id": 9000006,
+            "id": 176,
             "title": "Saw",
             "overview": "Two strangers wake up in a deadly game orchestrated by a serial killer. Horror thriller from 2004.",
             "poster_path": "/8FdVJVb6bhWxB4n2dX8JnB97OPk.jpg",
@@ -109,7 +112,7 @@ def get_public_domain_movies():
             "source": "plex"
         },
         {
-            "id": 9000007,
+            "id": 948,
             "title": "Halloween",
             "overview": "Michael Myers escapes from a mental hospital and returns to his hometown to kill. 1978 horror classic.",
             "poster_path": "/wijlZ3HaYMvlDTPqJoTCWKFkCPU.jpg",
@@ -125,7 +128,7 @@ def get_public_domain_movies():
             "source": "plex"
         },
         {
-            "id": 9000008,
+            "id": 453,
             "title": "Godzilla",
             "overview": "Nuclear tests awaken a giant prehistoric monster. Classic 1954 Japanese monster movie.",
             "poster_path": "/6B2XcQkH6LdQOg2fZEXy5Qd0wR1.jpg",
@@ -141,7 +144,7 @@ def get_public_domain_movies():
             "source": "plex"
         },
         {
-            "id": 9000009,
+            "id": 700,
             "title": "A Nightmare on Elm Street",
             "overview": "Teenagers are stalked by a killer in their dreams. Freddy Krueger horror classic from 1984.",
             "poster_path": "/3md49VL9xF4qGmh4rKbhT4i8jXM.jpg",
@@ -157,7 +160,7 @@ def get_public_domain_movies():
             "source": "plex"
         },
         {
-            "id": 9000010,
+            "id": 1493,
             "title": "The Texas Chain Saw Massacre",
             "overview": "A group of friends encounter a family of cannibals. 1974 horror masterpiece.",
             "poster_path": "/4LxGw4JRZpOxBPLQK8QO0eNT4Ii.jpg",
@@ -173,7 +176,7 @@ def get_public_domain_movies():
             "source": "plex"
         },
         {
-            "id": 9000011,
+            "id": 500,
             "title": "Reservoir Dogs",
             "overview": "After a heist goes wrong, criminals suspect one of them is a police informant. Tarantino's debut.",
             "poster_path": "/xi8Iu6qyTfyZVDVy60raIOYJJmk.jpg",
@@ -189,7 +192,7 @@ def get_public_domain_movies():
             "source": "plex"
         },
         {
-            "id": 9000012,
+            "id": 141,
             "title": "Donnie Darko",
             "overview": "A troubled teenager receives visions of a man in a rabbit suit. Cult sci-fi thriller from 2001.",
             "poster_path": "/hihMAkx2n8f6FVkFkHwsXhKI2IL.jpg",
@@ -205,7 +208,7 @@ def get_public_domain_movies():
             "source": "plex"
         },
         {
-            "id": 9000013,
+            "id": 792,
             "title": "Platoon",
             "overview": "A young recruit experiences the horrors of the Vietnam War. 1986 Best Picture winner.",
             "poster_path": "/m3mmFkPQKvPZq5exmh0bDuXlD9T.jpg",
@@ -221,7 +224,7 @@ def get_public_domain_movies():
             "source": "plex"
         },
         {
-            "id": 9000014,
+            "id": 13194,
             "title": "Friday the 13th",
             "overview": "Camp counselors are stalked by a mysterious killer. Slasher classic from 1980.",
             "poster_path": "/HzrPn1gEHWixfMOvOehOTlHROo.jpg",
@@ -237,8 +240,8 @@ def get_public_domain_movies():
             "source": "plex"
         },
         {
-            "id": 9000015,
-            "title": "Evil Dead",
+            "id": 2454,
+            "title": "The Evil Dead",
             "overview": "Five friends unleash demonic forces in a cabin in the woods. 1981 horror cult classic.",
             "poster_path": "/uYxQ6xhP3WjqPZtxyAOnZQyx7I6.jpg",
             "backdrop_path": "/uYxQ6xhP3WjqPZtxyAOnZQyx7I6.jpg",
@@ -253,7 +256,7 @@ def get_public_domain_movies():
             "source": "plex"
         },
         {
-            "id": 9000016,
+            "id": 111,
             "title": "Scarface",
             "overview": "A Cuban refugee rises to become a powerful drug lord in Miami. Crime drama from 1983.",
             "poster_path": "/zAf9U14pwlD6vKILtGW7wGSVqS4.jpg",
@@ -269,7 +272,7 @@ def get_public_domain_movies():
             "source": "plex"
         },
         {
-            "id": 9000017,
+            "id": 28,
             "title": "Apocalypse Now",
             "overview": "A captain is sent to assassinate a rogue colonel during the Vietnam War. Epic war film from 1979.",
             "poster_path": "/gQB8Y5RCMkv2zwzFHbUJX3kAhvA.jpg",
