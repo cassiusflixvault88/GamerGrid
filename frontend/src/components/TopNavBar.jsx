@@ -8,7 +8,7 @@ const TopNavBar = () => {
   const isHome = location.pathname === '/';
 
   return (
-    <div className="fixed top-16 left-0 right-0 z-40 bg-black/80 backdrop-blur-md border-b border-white/10">
+    <div className="fixed top-16 left-0 right-0 z-40">
       <div className="max-w-7xl mx-auto px-4">
         <div className="flex items-center justify-between py-2">
           {/* Left side - Back button */}
