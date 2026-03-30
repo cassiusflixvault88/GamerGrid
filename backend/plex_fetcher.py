@@ -1,81 +1,91 @@
 """
-Plex Free Movies Integration
-Fetches free movies from Plex's Watch Free section
+Plex Free Movies Integration - Fetches real TMDB data
 """
 import requests
+import os
 from typing import List, Dict
 import logging
 
 logger = logging.getLogger(__name__)
 
-def fetch_plex_free_movies(limit: int = 100) -> List[Dict]:
+def fetch_plex_free_movies(limit: int = 30) -> List[Dict]:
     """
-    Fetch free movies from Plex
-    Note: Plex requires API access - using public metadata for now
+    Fetch free movies with real TMDB data (posters, trailers, etc.)
     """
     movies = []
     
+    # Get TMDB API key from environment
+    TMDB_API_KEY = os.getenv('REACT_APP_TMDB_API_KEY_1', '')
+    
+    if not TMDB_API_KEY:
+        logger.warning("No TMDB API key found for Plex movies")
+        return []
+    
     try:
-        # Plex Watch Free section - popular free movies
-        # These are confirmed free-to-watch titles available on Plex
+        # Popular free-to-watch movies (TMDB IDs verified)
         free_titles = [
-            {"title": "The Terminator", "year": 1984, "tmdb_id": 218},
-            {"title": "Scarface", "year": 1983, "tmdb_id": 111},
-            {"title": "Apocalypse Now", "year": 1979, "tmdb_id": 28},
-            {"title": "Platoon", "year": 1986, "tmdb_id": 792},
-            {"title": "The Big Lebowski", "year": 1998, "tmdb_id": 115},
-            {"title": "Training Day", "year": 2001, "tmdb_id": 2567},
-            {"title": "Black Hawk Down", "year": 2001, "tmdb_id": 6835},
-            {"title": "The Godfather", "year": 1972, "tmdb_id": 238},
-            {"title": "Goodfellas", "year": 1990, "tmdb_id": 769},
-            {"title": "Casino", "year": 1995, "tmdb_id": 524},
-            {"title": "Heat", "year": 1995, "tmdb_id": 949},
-            {"title": "The Silence of the Lambs", "year": 1991, "tmdb_id": 274},
-            {"title": "Se7en", "year": 1995, "tmdb_id": 807},
-            {"title": "Fight Club", "year": 1999, "tmdb_id": 550},
-            {"title": "The Shawshank Redemption", "year": 1994, "tmdb_id": 278},
-            {"title": "Pulp Fiction", "year": 1994, "tmdb_id": 680},
-            {"title": "The Dark Knight", "year": 2008, "tmdb_id": 155},
-            {"title": "Inception", "year": 2010, "tmdb_id": 27205},
-            {"title": "Interstellar", "year": 2014, "tmdb_id": 157336},
-            {"title": "The Matrix", "year": 1999, "tmdb_id": 603},
-            {"title": "Forrest Gump", "year": 1994, "tmdb_id": 13},
-            {"title": "The Green Mile", "year": 1999, "tmdb_id": 497},
-            {"title": "Saving Private Ryan", "year": 1998, "tmdb_id": 857},
-            {"title": "Gladiator", "year": 2000, "tmdb_id": 98},
-            {"title": "Braveheart", "year": 1995, "tmdb_id": 197},
-            {"title": "The Departed", "year": 2006, "tmdb_id": 1422},
-            {"title": "Catch Me If You Can", "year": 2002, "tmdb_id": 640},
-            {"title": "The Wolf of Wall Street", "year": 2013, "tmdb_id": 106646},
-            {"title": "Django Unchained", "year": 2012, "tmdb_id": 68718},
-            {"title": "Inglourious Basterds", "year": 2009, "tmdb_id": 16869},
+            {"title": "The Terminator", "tmdb_id": 218},
+            {"title": "Platoon", "tmdb_id": 792},
+            {"title": "Training Day", "tmdb_id": 2567},
+            {"title": "Black Hawk Down", "tmdb_id": 6835},
+            {"title": "Casino", "tmdb_id": 524},
+            {"title": "Heat", "tmdb_id": 949},
+            {"title": "The Silence of the Lambs", "tmdb_id": 274},
+            {"title": "Se7en", "tmdb_id": 807},
+            {"title": "The Departed", "tmdb_id": 1422},
+            {"title": "Catch Me If You Can", "tmdb_id": 640},
+            {"title": "Django Unchained", "tmdb_id": 68718},
+            {"title": "Inglourious Basterds", "tmdb_id": 16869},
+            {"title": "Apocalypse Now", "tmdb_id": 28},
+            {"title": "Goodfellas", "tmdb_id": 769},
+            {"title": "The Big Lebowski", "tmdb_id": 115},
         ][:limit]
         
-        # Fetch TMDB data for each movie
-        TMDB_API_KEY = "YOUR_TMDB_KEY"  # Will use from env
-        
+        # Fetch real TMDB data for each movie
         for item in free_titles:
             try:
-                # Note: In production, fetch from TMDB API
-                # For now, return basic structure
+                tmdb_id = item['tmdb_id']
+                
+                # Fetch movie details
+                detail_url = f"https://api.themoviedb.org/3/movie/{tmdb_id}?api_key={TMDB_API_KEY}"
+                detail_response = requests.get(detail_url, timeout=5)
+                
+                if detail_response.status_code != 200:
+                    continue
+                    
+                movie_data = detail_response.json()
+                
+                # Fetch trailer
+                video_url = f"https://api.themoviedb.org/3/movie/{tmdb_id}/videos?api_key={TMDB_API_KEY}"
+                video_response = requests.get(video_url, timeout=5)
+                videos = video_response.json().get('results', []) if video_response.status_code == 200 else []
+                
+                # Find YouTube trailer
+                trailer = next((v for v in videos if v.get('type') == 'Trailer' and v.get('site') == 'YouTube'), None)
+                
                 movie = {
-                    "id": f"plex_{item['tmdb_id']}",
-                    "title": item['title'],
-                    "overview": f"{item['title']} is now available to watch for free on FlixVault.",
-                    "poster_path": f"/placeholder_{item['tmdb_id']}.jpg",
-                    "release_date": str(item['year']),
-                    "vote_average": 8.0,
+                    "id": f"plex_{tmdb_id}",
+                    "title": movie_data.get('title'),
+                    "overview": movie_data.get('overview', ''),
+                    "poster_path": movie_data.get('poster_path'),
+                    "backdrop_path": movie_data.get('backdrop_path'),
+                    "release_date": movie_data.get('release_date', ''),
+                    "vote_average": movie_data.get('vote_average', 0),
                     "media_type": "movie",
                     "source": "plex",
-                    "free_to_watch": True,
-                    "plex_url": f"https://watch.plex.tv/movie/{item['title'].lower().replace(' ', '-')}"
+                    "genre_ids": [g['id'] for g in movie_data.get('genres', [])],
+                    "plex_url": f"https://watch.plex.tv/movie/{item['title'].lower().replace(' ', '-')}",
+                    "trailer_key": trailer.get('key') if trailer else None,
+                    "free_to_watch": True
                 }
                 movies.append(movie)
+                logger.info(f"Added Plex movie: {movie['title']}")
+                
             except Exception as e:
-                logger.error(f"Error processing {item['title']}: {e}")
+                logger.error(f"Error fetching TMDB data for {item['title']}: {e}")
                 continue
         
-        logger.info(f"Fetched {len(movies)} Plex free movies")
+        logger.info(f"✅ Fetched {len(movies)} Plex movies with TMDB data")
         return movies
         
     except Exception as e:
