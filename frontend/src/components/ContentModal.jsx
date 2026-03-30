@@ -110,13 +110,16 @@ const ContentModal = ({ content, isOpen, onClose, onPlayTrailer }) => {
   const releaseYear = (content.release_date || content.first_air_date || '').split('-')[0];
   const runtime = details?.runtime || details?.episode_run_time?.[0];
   
-  // Check if this is a free movie with full video
-  const isFreeMovie = content.source === 'archive.org' || content.video_url;
-  const hasFullVideo = !!content.video_url;
+  // Check if this is a free public domain movie with full video on YouTube
+  const hasFreeFullMovie = content.is_public_domain && content.youtube_id;
+  const hasArchiveVideo = content.video_url && content.source === 'archive.org';
 
   const handlePlayFullMovie = () => {
-    if (hasFullVideo) {
-      // Open full movie in new tab or custom player
+    if (hasFreeFullMovie) {
+      // Play full movie from YouTube
+      onPlayTrailer({ key: content.youtube_id, name: `${title} - Full Movie`, type: 'Feature' });
+    } else if (hasArchiveVideo) {
+      // Play from Archive.org
       window.open(content.video_url, '_blank');
     }
   };
@@ -143,30 +146,34 @@ const ContentModal = ({ content, isOpen, onClose, onPlayTrailer }) => {
             <div className="absolute bottom-8 left-8 right-8">
               <h2 className="text-4xl font-bold text-white mb-4">{title}</h2>
               <div className="flex items-center space-x-3">
-                {hasFullVideo ? (
+                {(hasFreeFullMovie || hasArchiveVideo) ? (
                   <Button
                     onClick={handlePlayFullMovie}
                     className="bg-white hover:bg-white/90 text-black font-semibold px-6 py-2 rounded-md transition-all flex items-center gap-2"
                   >
                     <Play className="w-5 h-5 fill-current" />
                     <div className="flex flex-col items-start">
-                      <span>Play Full Movie</span>
-                      <span className="text-xs opacity-70">Free • Full Length</span>
+                      <span>Watch Full Movie FREE</span>
+                      <span className="text-xs opacity-70">Public Domain • Full Length</span>
                     </div>
                   </Button>
-                ) : (
+                ) : trailer ? (
                   <Button
-                    onClick={() => trailer && onPlayTrailer(trailer)}
-                    disabled={!trailer}
+                    onClick={() => onPlayTrailer(trailer)}
                     className="bg-white hover:bg-white/90 text-black font-semibold px-6 py-2 rounded-md transition-all flex items-center gap-2"
                   >
                     <Play className="w-5 h-5 fill-current" />
                     <div className="flex flex-col items-start">
                       <span>Play Trailer</span>
-                      {trailer && (
-                        <span className="text-xs opacity-70">~2-3 min</span>
-                      )}
+                      <span className="text-xs opacity-70">~2-3 min</span>
                     </div>
+                  </Button>
+                ) : (
+                  <Button
+                    disabled
+                    className="bg-gray-600 text-white font-semibold px-6 py-2 rounded-md opacity-50 cursor-not-allowed"
+                  >
+                    <span>No Trailer Available</span>
                   </Button>
                 )}
                 <button 
