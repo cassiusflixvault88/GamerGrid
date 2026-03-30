@@ -302,6 +302,7 @@ const SettingsPage = () => {
                 <option value="PG-13">PG-13 - Ages 13+</option>
                 <option value="R">R - Restricted</option>
                 <option value="NC-17">NC-17 - Adults Only</option>
+                <option value="TV-MA">TV-MA - Mature Audiences</option>
               </select>
             </div>
           </div>
