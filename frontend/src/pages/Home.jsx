@@ -27,6 +27,8 @@ const Home = () => {
   const [popularSeries, setPopularSeries] = useState([]);
   const [topRated, setTopRated] = useState([]);
   const [actionMovies, setActionMovies] = useState([]);
+  const [top10Movies, setTop10Movies] = useState([]);
+  const [top10Series, setTop10Series] = useState([]);
   const [documentaries, setDocumentaries] = useState([]);
   const [crimeThrillers, setCrimeThrillers] = useState([]);
   const [horrorMovies, setHorrorMovies] = useState([]);
@@ -74,6 +76,8 @@ const Home = () => {
         popularSeriesData,
         topRatedData,
         actionData,
+        top10MoviesData,
+        top10SeriesData,
         documentariesData,
         crimeData,
         horrorData,
@@ -88,6 +92,8 @@ const Home = () => {
         getPopular('tv'),
         getTopRated('movie'),
         getByGenre(28, 'movie'), // Action genre
+        getTopRated('movie').then(data => data.slice(0, 10)), // Top 10 Movies
+        getTopRated('tv').then(data => data.slice(0, 10)), // Top 10 Series
         getByGenre(99, 'movie'), // Documentary genre (99)
         getByGenre(80, 'movie'), // Crime genre (80)
         getByGenre(27, 'movie'), // Horror genre (27)
@@ -103,6 +109,8 @@ const Home = () => {
       setPopularSeries(popularSeriesData);
       setTopRated(topRatedData);
       setActionMovies(actionData);
+      setTop10Movies(top10MoviesData);
+      setTop10Series(top10SeriesData);
       setDocumentaries(documentariesData);
       setCrimeThrillers(crimeData);
       setHorrorMovies(horrorData);
@@ -165,6 +173,26 @@ const Home = () => {
             title="🔥 What's Hot"
             items={whatsHot}
             onCardClick={handleCardClick}
+          />
+        )}
+
+        {/* TOP 10 MOVIES */}
+        {top10Movies.length > 0 && (
+          <ContentRow
+            title="🏆 Top 10 Movies"
+            items={top10Movies}
+            onCardClick={handleCardClick}
+            viewAllLink="/movies"
+          />
+        )}
+        
+        {/* TOP 10 SERIES */}
+        {top10Series.length > 0 && (
+          <ContentRow
+            title="📺 Top 10 Series"
+            items={top10Series}
+            onCardClick={handleCardClick}
+            viewAllLink="/series"
           />
         )}
 

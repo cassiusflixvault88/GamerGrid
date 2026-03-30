@@ -1130,7 +1130,7 @@ class ContentRequestCreate(BaseModel):
 async def submit_content_request(request: ContentRequestCreate, current_user: dict = Depends(verify_token)):
     """Submit a content request"""
     request_dict = request.model_dump()
-    request_obj = ContentRequest(user_id=current_user['id'], **request_dict)
+    request_obj = ContentRequest(user_id=current_user['user_id'], **request_dict)
     
     doc = request_obj.model_dump()
     doc['created_at'] = doc['created_at'].isoformat()
@@ -1143,7 +1143,7 @@ async def submit_content_request(request: ContentRequestCreate, current_user: di
 async def get_my_content_requests(current_user: dict = Depends(verify_token)):
     """Get user's content requests"""
     requests = await db.content_requests.find(
-        {"user_id": current_user['id']}, 
+        {"user_id": current_user['user_id']}, 
         {"_id": 0}
     ).sort("created_at", -1).to_list(100)
     
@@ -1156,7 +1156,7 @@ async def get_my_content_requests(current_user: dict = Depends(verify_token)):
 @api_router.get("/admin/content-requests")
 async def get_all_content_requests(current_user: dict = Depends(verify_token)):
     """Admin: Get all content requests"""
-    user = await db.users.find_one({"id": current_user['id']}, {"_id": 0})
+    user = await db.users.find_one({"id": current_user['user_id']}, {"_id": 0})
     if not user or not user.get('is_admin'):
         raise HTTPException(status_code=403, detail="Admin access required")
     
@@ -1179,7 +1179,7 @@ async def respond_to_content_request(
     current_user: dict = Depends(verify_token)
 ):
     """Admin: Respond to content request"""
-    user = await db.users.find_one({"id": current_user['id']}, {"_id": 0})
+    user = await db.users.find_one({"id": current_user['user_id']}, {"_id": 0})
     if not user or not user.get('is_admin'):
         raise HTTPException(status_code=403, detail="Admin access required")
     
@@ -1209,7 +1209,7 @@ class UserProfile(BaseModel):
 @api_router.get("/user/profile")
 async def get_user_profile(current_user: dict = Depends(verify_token)):
     """Get user profile settings"""
-    user = await db.users.find_one({"id": current_user['id']}, {"_id": 0})
+    user = await db.users.find_one({"id": current_user['user_id']}, {"_id": 0})
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
@@ -1231,7 +1231,7 @@ async def update_user_profile(profile: UserProfile, current_user: dict = Depends
     update_data = profile.model_dump(exclude_unset=True)
     
     await db.users.update_one(
-        {"id": current_user['id']},
+        {"id": current_user['user_id']},
         {"$set": update_data}
     )
     
@@ -1247,7 +1247,7 @@ class AdminAction(BaseModel):
 @api_router.post("/admin/manage-admin")
 async def manage_admin_status(action: AdminAction, current_user: dict = Depends(verify_token)):
     """Admin: Promote or demote user to/from admin"""
-    admin_user = await db.users.find_one({"id": current_user['id']}, {"_id": 0})
+    admin_user = await db.users.find_one({"id": current_user['user_id']}, {"_id": 0})
     if not admin_user or not admin_user.get('is_admin'):
         raise HTTPException(status_code=403, detail="Admin access required")
     
@@ -1263,7 +1263,7 @@ async def manage_admin_status(action: AdminAction, current_user: dict = Depends(
         return {"message": f"User {target_user['username']} promoted to admin"}
     elif action.action == "demote":
         # Prevent demoting self
-        if action.user_id == current_user['id']:
+        if action.user_id == current_user['user_id']:
             raise HTTPException(status_code=400, detail="Cannot demote yourself")
         
         await db.users.update_one(
@@ -1277,7 +1277,7 @@ async def manage_admin_status(action: AdminAction, current_user: dict = Depends(
 @api_router.get("/admin/user-details/{user_id}")
 async def get_user_details(user_id: str, current_user: dict = Depends(verify_token)):
     """Admin: Get detailed user information"""
-    admin_user = await db.users.find_one({"id": current_user['id']}, {"_id": 0})
+    admin_user = await db.users.find_one({"id": current_user['user_id']}, {"_id": 0})
     if not admin_user or not admin_user.get('is_admin'):
         raise HTTPException(status_code=403, detail="Admin access required")
     
@@ -1351,7 +1351,7 @@ class FeedbackCreate(BaseModel):
 async def submit_feedback(feedback: FeedbackCreate, current_user: dict = Depends(verify_token)):
     """Submit feedback/bug report"""
     feedback_dict = feedback.model_dump()
-    feedback_obj = Feedback(user_id=current_user['id'], **feedback_dict)
+    feedback_obj = Feedback(user_id=current_user['user_id'], **feedback_dict)
     
     doc = feedback_obj.model_dump()
     doc['created_at'] = doc['created_at'].isoformat()
@@ -1364,7 +1364,7 @@ async def submit_feedback(feedback: FeedbackCreate, current_user: dict = Depends
 async def get_my_feedback(current_user: dict = Depends(verify_token)):
     """Get user's feedback submissions"""
     feedback_items = await db.feedback.find(
-        {"user_id": current_user['id']}, 
+        {"user_id": current_user['user_id']}, 
         {"_id": 0}
     ).sort("created_at", -1).to_list(100)
     
@@ -1377,7 +1377,7 @@ async def get_my_feedback(current_user: dict = Depends(verify_token)):
 @api_router.get("/admin/feedback")
 async def get_all_feedback(current_user: dict = Depends(verify_token)):
     """Admin: Get all feedback submissions"""
-    user = await db.users.find_one({"id": current_user['id']}, {"_id": 0})
+    user = await db.users.find_one({"id": current_user['user_id']}, {"_id": 0})
     if not user or not user.get('is_admin'):
         raise HTTPException(status_code=403, detail="Admin access required")
     
@@ -1400,7 +1400,7 @@ async def respond_to_feedback(
     current_user: dict = Depends(verify_token)
 ):
     """Admin: Respond to feedback"""
-    user = await db.users.find_one({"id": current_user['id']}, {"_id": 0})
+    user = await db.users.find_one({"id": current_user['user_id']}, {"_id": 0})
     if not user or not user.get('is_admin'):
         raise HTTPException(status_code=403, detail="Admin access required")
     
