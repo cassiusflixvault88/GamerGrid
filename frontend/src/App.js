@@ -22,20 +22,12 @@ import SettingsPage from "./pages/SettingsPage";
 import PromoteCEO from "./pages/PromoteCEO";
 import DebugAdmin from "./pages/DebugAdmin";
 
-// Create AutoLogout component
-const AutoLogoutWrapper = ({ children }) => {
-  const { useAutoLogout } = require('./hooks/useAutoLogout');
-  useAutoLogout();
-  return children;
-};
-
 function App() {
   return (
     <div className="App">
       <ThemeProvider>
         <AuthProvider>
-          <AutoLogoutWrapper>
-            <BrowserRouter>
+          <BrowserRouter>
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/movies" element={<MoviesPage />} />
@@ -56,7 +48,6 @@ function App() {
             <InstallPWA />
             <Toaster />
           </BrowserRouter>
-          </AutoLogoutWrapper>
         </AuthProvider>
       </ThemeProvider>
     </div>
