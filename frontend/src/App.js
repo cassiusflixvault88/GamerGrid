@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import { Toaster } from "./components/ui/toaster";
+import { useAutoLogout } from "./hooks/useAutoLogout";
 import InstallPWA from "./components/InstallPWA";
 import Home from "./pages/Home";
 import MoviesPage from "./pages/MoviesPage";
@@ -21,12 +22,20 @@ import SettingsPage from "./pages/SettingsPage";
 import PromoteCEO from "./pages/PromoteCEO";
 import DebugAdmin from "./pages/DebugAdmin";
 
+// Create AutoLogout component
+const AutoLogoutWrapper = ({ children }) => {
+  const { useAutoLogout } = require('./hooks/useAutoLogout');
+  useAutoLogout();
+  return children;
+};
+
 function App() {
   return (
     <div className="App">
       <ThemeProvider>
         <AuthProvider>
-          <BrowserRouter>
+          <AutoLogoutWrapper>
+            <BrowserRouter>
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/movies" element={<MoviesPage />} />

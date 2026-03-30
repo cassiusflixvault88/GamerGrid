@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Navbar from '../components/Navbar';
+import TopNavBar from '../components/TopNavBar';
 import HeroBanner from '../components/HeroBanner';
 import ContentRow from '../components/ContentRow';
 import ContentModal from '../components/ContentModal';
@@ -158,6 +159,7 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-black">
       <Navbar />
+      <TopNavBar />
       <Onboarding />
       
       <HeroBanner
