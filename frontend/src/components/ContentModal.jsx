@@ -28,7 +28,7 @@ const ContentModal = ({ content, isOpen, onClose, onPlayTrailer }) => {
       loadDetails();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [content, isOpen, user]);
+  }, [content, isOpen, user, user?.watchlist]);
 
   const loadDetails = async () => {
     if (!content) return;

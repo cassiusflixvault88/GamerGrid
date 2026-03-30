@@ -432,6 +432,8 @@ const AdminDashboard = () => {
                             placeholder="Write your reply as admin..."
                             className="bg-white/5 border-white/20 text-white mb-3"
                             rows={3}
+                            autoFocus
+                            style={{ touchAction: 'auto' }}
                           />
                           <div className="flex justify-end space-x-2">
                             <Button

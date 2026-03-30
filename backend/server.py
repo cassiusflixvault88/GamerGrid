@@ -20,8 +20,6 @@ from auth import (
     verify_token
 )
 from public_domain_videos_clean import get_public_domain_movies, get_public_domain_by_id
-from archive_org_fetcher import fetch_archive_movies
-from plex_fetcher import fetch_plex_free_movies
 
 
 ROOT_DIR = Path(__file__).parent
