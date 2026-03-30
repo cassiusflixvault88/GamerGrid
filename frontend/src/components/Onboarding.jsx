@@ -95,6 +95,16 @@ const Onboarding = () => {
         'Offline access',
         'Quick launch from home screen'
       ]
+    },
+    {
+      title: 'Share with Friends 🚀',
+      description: 'Love FlixVault? Share it with your friends and family!',
+      icon: <Share2 className="w-16 h-16 text-green-400" />,
+      features: [
+        'Copy link instantly',
+        'Share on social media',
+        'Help us grow the community'
+      ]
     }
   ];
 

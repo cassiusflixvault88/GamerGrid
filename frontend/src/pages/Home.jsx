@@ -8,6 +8,7 @@ import ContentRow from '../components/ContentRow';
 import ContentModal from '../components/ContentModal';
 import VideoPlayer from '../components/VideoPlayer';
 import Onboarding from '../components/Onboarding';
+import ShareButton from '../components/ShareButton';
 import Footer from '../components/Footer';
 import {
   getTrending,
@@ -290,6 +291,15 @@ const Home = () => {
             viewAllLink="/movies"
           />
         )}
+      </div>
+
+      {/* Share FlixVault Section */}
+      <div className="px-6 lg:px-12 max-w-[1920px] mx-auto pb-12">
+        <div className="bg-gradient-to-r from-purple-900/20 to-blue-900/20 border border-purple-500/30 rounded-2xl p-8 text-center">
+          <h2 className="text-3xl font-bold text-white mb-3">Love FlixVault? Share it! 🚀</h2>
+          <p className="text-white/70 mb-6">Help us grow by sharing with your friends and family</p>
+          <ShareButton size="lg" />
+        </div>
       </div>
 
       <ContentModal
