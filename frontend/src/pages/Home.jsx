@@ -34,6 +34,7 @@ const Home = () => {
   const [comedyMovies, setComedyMovies] = useState([]);
   const [freeMovies, setFreeMovies] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [initialLoad, setInitialLoad] = useState(true);
   
   const [selectedContent, setSelectedContent] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);

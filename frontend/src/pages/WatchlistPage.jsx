@@ -40,7 +40,8 @@ const WatchlistPage = () => {
     return (
       <div className="min-h-screen bg-black">
         <Navbar />
-        <div className="pt-24 px-6 lg:px-12 max-w-[1920px] mx-auto pb-20 flex flex-col items-center justify-center min-h-[70vh]">
+        <BackNavigation />
+        <div className="px-6 lg:px-12 max-w-[1920px] mx-auto pb-20 flex flex-col items-center justify-center min-h-[70vh]">
           <h1 className="text-4xl font-bold text-white mb-4">Sign In Required</h1>
           <p className="text-white/70 text-lg mb-8">Please sign in to view your watchlist</p>
           <Button
