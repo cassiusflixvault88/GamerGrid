@@ -114,7 +114,17 @@ const ContentModal = ({ content, isOpen, onClose, onPlayTrailer }) => {
   const hasFreeFullMovie = content.is_public_domain && content.youtube_id;
   const hasArchiveVideo = content.video_url && content.source === 'archive.org';
 
+  // Debug logging
+  console.log('ContentModal - Free Movie Check:', {
+    title,
+    is_public_domain: content.is_public_domain,
+    youtube_id: content.youtube_id,
+    hasFreeFullMovie,
+    hasArchiveVideo
+  });
+
   const handlePlayFullMovie = () => {
+    console.log('Playing full movie:', title, content.youtube_id);
     if (hasFreeFullMovie) {
       // Play full movie from YouTube
       onPlayTrailer({ key: content.youtube_id, name: `${title} - Full Movie`, type: 'Feature' });
