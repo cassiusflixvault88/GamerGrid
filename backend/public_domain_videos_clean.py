@@ -80,7 +80,7 @@ def get_public_domain_movies():
             "source": "plex"
         },
         {
-            "id": 4614,
+            "id": 2667,
             "title": "The Blair Witch Project",
             "overview": "Three student filmmakers disappear while investigating local legends. Found footage horror classic.",
             "poster_path": "/9WCkyEZd15QBwpXgd7PVaJXAy4b.jpg",
@@ -128,7 +128,7 @@ def get_public_domain_movies():
             "source": "plex"
         },
         {
-            "id": 453,
+            "id": 1678,
             "title": "Godzilla",
             "overview": "Nuclear tests awaken a giant prehistoric monster. Classic 1954 Japanese monster movie.",
             "poster_path": "/6B2XcQkH6LdQOg2fZEXy5Qd0wR1.jpg",
@@ -144,7 +144,7 @@ def get_public_domain_movies():
             "source": "plex"
         },
         {
-            "id": 700,
+            "id": 377,
             "title": "A Nightmare on Elm Street",
             "overview": "Teenagers are stalked by a killer in their dreams. Freddy Krueger horror classic from 1984.",
             "poster_path": "/3md49VL9xF4qGmh4rKbhT4i8jXM.jpg",
@@ -160,7 +160,7 @@ def get_public_domain_movies():
             "source": "plex"
         },
         {
-            "id": 1493,
+            "id": 30497,
             "title": "The Texas Chain Saw Massacre",
             "overview": "A group of friends encounter a family of cannibals. 1974 horror masterpiece.",
             "poster_path": "/4LxGw4JRZpOxBPLQK8QO0eNT4Ii.jpg",
@@ -224,7 +224,7 @@ def get_public_domain_movies():
             "source": "plex"
         },
         {
-            "id": 13194,
+            "id": 4488,
             "title": "Friday the 13th",
             "overview": "Camp counselors are stalked by a mysterious killer. Slasher classic from 1980.",
             "poster_path": "/HzrPn1gEHWixfMOvOehOTlHROo.jpg",
@@ -240,7 +240,7 @@ def get_public_domain_movies():
             "source": "plex"
         },
         {
-            "id": 2454,
+            "id": 764,
             "title": "The Evil Dead",
             "overview": "Five friends unleash demonic forces in a cabin in the woods. 1981 horror cult classic.",
             "poster_path": "/uYxQ6xhP3WjqPZtxyAOnZQyx7I6.jpg",
