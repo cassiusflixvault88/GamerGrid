@@ -14,8 +14,19 @@ def fetch_plex_free_movies(limit: int = 30) -> List[Dict]:
     """
     movies = []
     
-    # Get TMDB API key from environment
-    TMDB_API_KEY = os.getenv('REACT_APP_TMDB_API_KEY_1', '')
+    # Get TMDB API key from environment (check multiple possible names)
+    TMDB_API_KEY = os.getenv('TMDB_API_KEY') or os.getenv('REACT_APP_TMDB_API_KEY_1') or os.getenv('REACT_APP_TMDB_API_KEY_2')
+    
+    # Fallback: Read from frontend .env if not in backend
+    if not TMDB_API_KEY:
+        try:
+            with open('/app/frontend/.env', 'r') as f:
+                for line in f:
+                    if 'TMDB_API_KEY' in line and '=' in line:
+                        TMDB_API_KEY = line.split('=')[1].strip()
+                        break
+        except:
+            pass
     
     if not TMDB_API_KEY:
         logger.warning("No TMDB API key found for Plex movies")
