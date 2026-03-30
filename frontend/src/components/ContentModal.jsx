@@ -168,8 +168,35 @@ const ContentModal = ({ content, isOpen, onClose, onPlayTrailer }) => {
             <div className="absolute bottom-8 left-8 right-8">
               <h2 className="text-4xl font-bold text-white mb-4">{title}</h2>
               <div className="flex items-center space-x-3">
-                {/* Free Movie Button (YouTube OR Plex OR Archive) */}
-                {showFreeMovieButton ? (
+                {/* For Plex movies: Show BOTH trailer AND Plex button */}
+                {hasPlexMovie && trailer ? (
+                  <>
+                    {/* Trailer Button */}
+                    <Button
+                      onClick={() => onPlayTrailer(trailer)}
+                      className="flex-1 bg-white/20 hover:bg-white/30 text-white font-semibold px-6 py-2 rounded-md transition-all flex items-center gap-2 border border-white/40"
+                    >
+                      <Play className="w-5 h-5 fill-current" />
+                      <div className="flex flex-col items-start">
+                        <span>Play Trailer</span>
+                        <span className="text-xs opacity-70">~2-3 min</span>
+                      </div>
+                    </Button>
+                    
+                    {/* Plex Full Movie Button */}
+                    <Button
+                      onClick={handlePlayFullMovie}
+                      className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold px-6 py-2 rounded-md transition-all flex items-center gap-2"
+                    >
+                      <Play className="w-5 h-5 fill-current" />
+                      <div className="flex flex-col items-start">
+                        <span>Watch FREE on Plex ▶</span>
+                        <span className="text-xs opacity-70">Free with Ads</span>
+                      </div>
+                    </Button>
+                  </>
+                ) : showFreeMovieButton ? (
+                  /* YouTube/Archive embedded - just one button */
                   <Button
                     onClick={handlePlayFullMovie}
                     className="bg-white hover:bg-white/90 text-black font-semibold px-6 py-2 rounded-md transition-all flex items-center gap-2"
@@ -178,12 +205,10 @@ const ContentModal = ({ content, isOpen, onClose, onPlayTrailer }) => {
                     <div className="flex flex-col items-start">
                       <span>
                         {hasFreeFullMovie && 'Watch Full Movie FREE'}
-                        {hasPlexMovie && !hasFreeFullMovie && 'Watch FREE on Plex ▶'}
-                        {hasArchiveVideo && !hasFreeFullMovie && !hasPlexMovie && 'Watch Full Movie FREE'}
+                        {hasArchiveVideo && !hasFreeFullMovie && 'Watch Full Movie FREE'}
                       </span>
                       <span className="text-xs opacity-70">
                         {hasFreeFullMovie && 'Public Domain • Full Length'}
-                        {hasPlexMovie && !hasFreeFullMovie && 'Opens in Plex • Free with Ads'}
                         {hasArchiveVideo && 'Internet Archive'}
                       </span>
                     </div>
