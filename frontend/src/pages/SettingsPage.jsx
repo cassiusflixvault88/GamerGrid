@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Sun, Moon, Monitor, Save, User as UserIcon, Home, ArrowLeft } from 'lucide-react';
 import axios from 'axios';
 import Navbar from '../components/Navbar';
+import BackNavigation from '../components/BackNavigation';
 import Footer from '../components/Footer';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Navbar from '../components/Navbar';
+import BackNavigation from '../components/BackNavigation';
 import ContentCard from '../components/ContentCard';
 import ContentModal from '../components/ContentModal';
 import VideoPlayer from '../components/VideoPlayer';
@@ -53,8 +54,9 @@ const PublicDomainPage = () => {
   return (
     <div className="min-h-screen bg-black">
       <Navbar />
+      <BackNavigation />
       
-      <div className="pt-24 px-6 lg:px-12 max-w-[1920px] mx-auto pb-20">
+      <div className="px-6 lg:px-12 max-w-[1920px] mx-auto pb-20">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-white mb-4">Free Public Domain Movies</h1>
           <p className="text-white/70 text-lg">

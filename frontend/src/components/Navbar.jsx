@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, User, LogOut, List, Shield, Settings, Home, Mail } from 'lucide-react';
-import { Input } from './ui/input';
 import { useAuth } from '../context/AuthContext';
 import AuthModal from './AuthModal';
+import SearchAutocomplete from './SearchAutocomplete';
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -94,29 +94,12 @@ const Navbar = () => {
             </div>
           </div>
 
+          {/* Search Autocomplete - Desktop */}
+          <div className="hidden md:block flex-1 max-w-2xl mx-8">
+            <SearchAutocomplete />
+          </div>
+
           <div className="flex items-center space-x-4">
-            {searchOpen ? (
-              <form onSubmit={handleSearch} className="relative">
-                <Input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search..."
-                  className="bg-black/50 border-white/20 text-white placeholder:text-white/50 w-64"
-                  autoFocus
-                  onBlur={() => {
-                    if (!searchQuery) setSearchOpen(false);
-                  }}
-                />
-              </form>
-            ) : (
-              <button
-                onClick={() => setSearchOpen(true)}
-                className="p-2 text-white/90 hover:text-white transition-colors"
-              >
-                <Search className="w-5 h-5" />
-              </button>
-            )}
 
             {user ? (
               <div className="relative">

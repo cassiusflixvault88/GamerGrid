@@ -59,8 +59,9 @@ const WatchlistPage = () => {
   return (
     <div className="min-h-screen bg-black">
       <Navbar />
+      <BackNavigation />
       
-      <div className="pt-24 px-6 lg:px-12 max-w-[1920px] mx-auto pb-20">
+      <div className="px-6 lg:px-12 max-w-[1920px] mx-auto pb-20">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-white mb-4">My Watchlist</h1>
           <p className="text-white/70 text-lg">
