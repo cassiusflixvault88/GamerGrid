@@ -109,6 +109,17 @@ const ContentModal = ({ content, isOpen, onClose, onPlayTrailer }) => {
   const trailer = videos.find((v) => v.type === 'Trailer' && v.site === 'YouTube');
   const releaseYear = (content.release_date || content.first_air_date || '').split('-')[0];
   const runtime = details?.runtime || details?.episode_run_time?.[0];
+  
+  // Check if this is a free movie with full video
+  const isFreeMovie = content.source === 'archive.org' || content.video_url;
+  const hasFullVideo = !!content.video_url;
+
+  const handlePlayFullMovie = () => {
+    if (hasFullVideo) {
+      // Open full movie in new tab or custom player
+      window.open(content.video_url, '_blank');
+    }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -132,22 +143,32 @@ const ContentModal = ({ content, isOpen, onClose, onPlayTrailer }) => {
             <div className="absolute bottom-8 left-8 right-8">
               <h2 className="text-4xl font-bold text-white mb-4">{title}</h2>
               <div className="flex items-center space-x-3">
-                <Button
-                  onClick={() => trailer && onPlayTrailer(trailer)}
-                  disabled={!trailer}
-                  className="bg-white hover:bg-white/90 text-black font-semibold px-6 py-2 rounded-md transition-all flex items-center gap-2"
-                >
-                  <Play className="w-5 h-5 fill-current" />
-                  <div className="flex flex-col items-start">
-                    <span>Play Trailer</span>
-                    {trailer && (
-                      <span className="text-xs opacity-70">
-                        {/* Trailers are typically 2-3 mins */}
-                        ~2-3 min
-                      </span>
-                    )}
-                  </div>
-                </Button>
+                {hasFullVideo ? (
+                  <Button
+                    onClick={handlePlayFullMovie}
+                    className="bg-white hover:bg-white/90 text-black font-semibold px-6 py-2 rounded-md transition-all flex items-center gap-2"
+                  >
+                    <Play className="w-5 h-5 fill-current" />
+                    <div className="flex flex-col items-start">
+                      <span>Play Full Movie</span>
+                      <span className="text-xs opacity-70">Free • Full Length</span>
+                    </div>
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={() => trailer && onPlayTrailer(trailer)}
+                    disabled={!trailer}
+                    className="bg-white hover:bg-white/90 text-black font-semibold px-6 py-2 rounded-md transition-all flex items-center gap-2"
+                  >
+                    <Play className="w-5 h-5 fill-current" />
+                    <div className="flex flex-col items-start">
+                      <span>Play Trailer</span>
+                      {trailer && (
+                        <span className="text-xs opacity-70">~2-3 min</span>
+                      )}
+                    </div>
+                  </Button>
+                )}
                 <button 
                   onClick={handleWatchlistToggle}
                   className={`backdrop-blur-sm rounded-full p-2 border transition-all ${
