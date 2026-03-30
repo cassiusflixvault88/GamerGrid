@@ -53,9 +53,10 @@ function App() {
               <Route path="/promote-ceo" element={<PromoteCEO />} />
               <Route path="/debug-admin" element={<DebugAdmin />} />
             </Routes>
+            <InstallPWA />
+            <Toaster />
           </BrowserRouter>
-          <InstallPWA />
-          <Toaster />
+          </AutoLogoutWrapper>
         </AuthProvider>
       </ThemeProvider>
     </div>
