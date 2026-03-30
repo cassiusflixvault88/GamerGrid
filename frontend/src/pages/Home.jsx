@@ -20,6 +20,7 @@ const Home = () => {
   const [heroIndex, setHeroIndex] = useState(0);
   const [heroItems, setHeroItems] = useState([]);
   const [trending, setTrending] = useState([]);
+  const [whatsHot, setWhatsHot] = useState([]);
   const [nowPlaying, setNowPlaying] = useState([]);
   const [popularMovies, setPopularMovies] = useState([]);
   const [popularSeries, setPopularSeries] = useState([]);
@@ -60,6 +61,7 @@ const Home = () => {
     try {
       const [
         trendingData,
+        whatsHotData,
         nowPlayingData,
         popularMoviesData,
         popularSeriesData,
@@ -68,6 +70,7 @@ const Home = () => {
         freeMoviesData,
       ] = await Promise.all([
         getTrending('all', 'week'),
+        axios.get(`${API}/trending/whats-hot`).then(res => res.data.results).catch(() => []),
         getNowPlaying(),
         getPopular('movie'),
         getPopular('tv'),
@@ -77,6 +80,7 @@ const Home = () => {
       ]);
 
       setTrending(trendingData);
+      setWhatsHot(whatsHotData);
       setNowPlaying(nowPlayingData);
       setPopularMovies(popularMoviesData);
       setPopularSeries(popularSeriesData);
@@ -132,6 +136,15 @@ const Home = () => {
       />
 
       <div className="relative -mt-32 z-20 space-y-8 pb-20">
+        {/* What's Hot - Community Trending */}
+        {whatsHot.length > 0 && (
+          <ContentRow
+            title="🔥 What's Hot"
+            items={whatsHot}
+            onCardClick={handleCardClick}
+          />
+        )}
+
         {/* Free Movies Section */}
         {freeMovies.length > 0 && (
           <ContentRow

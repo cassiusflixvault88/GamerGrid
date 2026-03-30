@@ -275,6 +275,175 @@ async def get_public_movie(content_id: int):
     return movie
 
 
+# ============= TRENDING / WHAT'S HOT ROUTE =============
+
+@api_router.get("/trending/whats-hot")
+async def get_whats_hot():
+    """
+    Get trending content based on FlixVault community activity
+    Algorithm: Recent ratings (7d) × 2.0 + Avg rating × 1.5 + Watchlist adds (7d) × 1.5
+    """
+    from datetime import timedelta
+    import requests
+    
+    try:
+        # Calculate date 7 days ago
+        seven_days_ago = datetime.now(timezone.utc) - timedelta(days=7)
+        
+        # Get all ratings from last 7 days
+        recent_ratings = await db.ratings.find(
+            {"created_at": {"$gte": seven_days_ago.isoformat()}},
+            {"_id": 0}
+        ).to_list(1000)
+        
+        # Get all watchlist activity (approximate based on user watchlists)
+        users_with_watchlists = await db.users.find(
+            {"watchlist": {"$exists": True, "$ne": []}},
+            {"_id": 0, "watchlist": 1}
+        ).to_list(1000)
+        
+        # Calculate trending scores
+        trending_scores = {}
+        
+        # Score from recent ratings
+        for rating in recent_ratings:
+            content_id = str(rating.get("content_id"))
+            if content_id not in trending_scores:
+                trending_scores[content_id] = {
+                    "rating_count": 0,
+                    "rating_sum": 0,
+                    "watchlist_count": 0,
+                    "has_comments": 0
+                }
+            
+            trending_scores[content_id]["rating_count"] += 1
+            trending_scores[content_id]["rating_sum"] += rating.get("rating", 0)
+            
+            # Bonus for comments
+            if rating.get("comment"):
+                trending_scores[content_id]["has_comments"] += 1
+        
+        # Score from watchlists
+        for user in users_with_watchlists:
+            for item in user.get("watchlist", []):
+                content_id = str(item.get("content_id"))
+                if content_id not in trending_scores:
+                    trending_scores[content_id] = {
+                        "rating_count": 0,
+                        "rating_sum": 0,
+                        "watchlist_count": 0,
+                        "has_comments": 0
+                    }
+                trending_scores[content_id]["watchlist_count"] += 1
+        
+        # Calculate final trending score
+        scored_content = []
+        for content_id, data in trending_scores.items():
+            rating_count = data["rating_count"]
+            avg_rating = (data["rating_sum"] / rating_count) if rating_count > 0 else 0
+            watchlist_count = data["watchlist_count"]
+            
+            # Trending formula: ratings × 2.0 + avg_rating × 1.5 + watchlist × 1.5 + comments × 0.5
+            trending_score = (
+                (rating_count * 2.0) +
+                (avg_rating * 1.5) +
+                (watchlist_count * 1.5) +
+                (data["has_comments"] * 0.5)
+            )
+            
+            scored_content.append({
+                "content_id": content_id,
+                "trending_score": trending_score,
+                "rating_count": rating_count,
+                "avg_rating": avg_rating,
+                "watchlist_count": watchlist_count
+            })
+        
+        # Sort by trending score
+        scored_content.sort(key=lambda x: x["trending_score"], reverse=True)
+        
+        # Get top 12 trending
+        top_trending_ids = [item["content_id"] for item in scored_content[:12]]
+        
+        # If we don't have enough trending from community, supplement with TMDB trending
+        tmdb_key = os.environ.get('TMDB_API_KEY')
+        trending_content = []
+        
+        if len(top_trending_ids) < 12 and tmdb_key:
+            # Fetch TMDB trending to supplement
+            tmdb_response = requests.get(
+                f"https://api.themoviedb.org/3/trending/all/week?api_key={tmdb_key}"
+            )
+            if tmdb_response.status_code == 200:
+                tmdb_trending = tmdb_response.json().get("results", [])
+                
+                # Add TMDB trending items
+                for item in tmdb_trending[:12]:
+                    if str(item["id"]) not in top_trending_ids:
+                        item["trending_score"] = 0  # No community score yet
+                        item["is_tmdb_trending"] = True
+                        trending_content.append(item)
+                        if len(trending_content) + len(top_trending_ids) >= 12:
+                            break
+        
+        # Fetch details for community trending items
+        if top_trending_ids and tmdb_key:
+            for content_id in top_trending_ids:
+                # Try to get from ratings to determine media type
+                rating = await db.ratings.find_one(
+                    {"content_id": content_id},
+                    {"_id": 0, "media_type": 1}
+                )
+                
+                media_type = rating.get("media_type", "movie") if rating else "movie"
+                
+                # Fetch from TMDB
+                try:
+                    tmdb_response = requests.get(
+                        f"https://api.themoviedb.org/3/{media_type}/{content_id}?api_key={tmdb_key}"
+                    )
+                    if tmdb_response.status_code == 200:
+                        item = tmdb_response.json()
+                        item["media_type"] = media_type
+                        item["trending_score"] = next(
+                            (x["trending_score"] for x in scored_content if x["content_id"] == content_id),
+                            0
+                        )
+                        item["is_community_trending"] = True
+                        trending_content.insert(0, item)  # Community trending goes first
+                except Exception:
+                    continue
+        
+        return {
+            "results": trending_content[:12],
+            "total": len(trending_content),
+            "algorithm": "community_activity_7d",
+            "period": "last_7_days"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error calculating trending: {str(e)}")
+        # Fallback to TMDB trending
+        tmdb_key = os.environ.get('TMDB_API_KEY')
+        if tmdb_key:
+            try:
+                response = requests.get(
+                    f"https://api.themoviedb.org/3/trending/all/week?api_key={tmdb_key}"
+                )
+                if response.status_code == 200:
+                    data = response.json()
+                    return {
+                        "results": data.get("results", [])[:12],
+                        "total": len(data.get("results", [])[:12]),
+                        "algorithm": "tmdb_fallback",
+                        "period": "last_7_days"
+                    }
+            except Exception:
+                pass
+        
+        return {"results": [], "total": 0, "algorithm": "none", "period": "last_7_days"}
+
+
 # ============= RATINGS & REVIEWS ROUTES =============
 
 @api_router.post("/ratings", response_model=RatingResponse)
