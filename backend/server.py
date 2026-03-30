@@ -1195,6 +1195,49 @@ async def respond_to_content_request(
     return {"message": "Response sent successfully"}
 
 
+# ============= USER PROFILE & SETTINGS =============
+
+class UserProfile(BaseModel):
+    display_name: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    profile_picture_url: Optional[str] = None
+    autoplay_trailers: bool = True
+    email_notifications: bool = True
+    maturity_rating: str = "PG-13"
+
+@api_router.get("/user/profile")
+async def get_user_profile(current_user: dict = Depends(verify_token)):
+    """Get user profile settings"""
+    user = await db.users.find_one({"id": current_user['id']}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    return {
+        "username": user.get('username'),
+        "email": user.get('email'),
+        "display_name": user.get('display_name', ''),
+        "phone": user.get('phone', ''),
+        "address": user.get('address', ''),
+        "profile_picture_url": user.get('profile_picture_url', ''),
+        "autoplay_trailers": user.get('autoplay_trailers', True),
+        "email_notifications": user.get('email_notifications', True),
+        "maturity_rating": user.get('maturity_rating', 'PG-13')
+    }
+
+@api_router.put("/user/profile")
+async def update_user_profile(profile: UserProfile, current_user: dict = Depends(verify_token)):
+    """Update user profile settings"""
+    update_data = profile.model_dump(exclude_unset=True)
+    
+    await db.users.update_one(
+        {"id": current_user['id']},
+        {"$set": update_data}
+    )
+    
+    return {"message": "Profile updated successfully", "profile": update_data}
+
+
 # ============= ADMIN MANAGEMENT & USER DETAILS =============
 
 class AdminAction(BaseModel):
