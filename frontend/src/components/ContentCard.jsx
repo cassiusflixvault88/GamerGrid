@@ -33,6 +33,7 @@ const ContentCard = ({ content, onClick, rating }) => {
               imageLoaded ? 'opacity-100' : 'opacity-0'
             }`}
             onLoad={() => setImageLoaded(true)}
+            onError={() => setImageLoaded(true)}
           />
           {!imageLoaded && (
             <div className="absolute inset-0 flex items-center justify-center">
