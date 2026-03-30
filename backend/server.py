@@ -19,7 +19,7 @@ from auth import (
     create_access_token,
     verify_token
 )
-from public_domain_videos import get_public_domain_movies, get_public_domain_by_id
+from public_domain_videos_clean import get_public_domain_movies, get_public_domain_by_id
 from archive_org_fetcher import fetch_archive_movies
 from plex_fetcher import fetch_plex_free_movies
 
@@ -253,82 +253,19 @@ async def get_watchlist(token_data: dict = Depends(verify_token)):
 
 # ============= PUBLIC DOMAIN CONTENT ROUTES =============
 
-# Cache for free movies (refresh every 24 hours)
-archive_movies_cache = {"movies": [], "last_updated": None, "loading": False}
-plex_movies_cache = {"movies": [], "last_updated": None}
-
-async def fetch_archive_movies_background():
-    """Fetch Archive.org movies in background without blocking"""
-    from datetime import datetime
-    
-    if archive_movies_cache["loading"]:
-        return  # Already fetching
-    
-    archive_movies_cache["loading"] = True
-    logger.info("🎬 Background: Fetching Archive.org movies...")
-    
-    try:
-        # Reduce to 50 movies for faster load
-        archive_movies = fetch_archive_movies(limit=50)
-        archive_movies_cache["movies"] = archive_movies
-        archive_movies_cache["last_updated"] = datetime.now()
-        logger.info(f"✅ Background: Cached {len(archive_movies)} Archive.org movies")
-    except Exception as e:
-        logger.error(f"❌ Background: Failed to fetch Archive.org movies: {e}")
-    finally:
-        archive_movies_cache["loading"] = False
-
 @api_router.get("/public-domain/movies")
 async def get_public_movies():
-    """Get all free movies from multiple sources: curated, Archive.org, Plex"""
-    from datetime import datetime, timedelta
-    import asyncio
-    
-    # Get curated public domain movies (original 6)
-    curated_movies = get_public_domain_movies()
-    
-    # Check if we need to refresh Archive.org cache
-    should_refresh_archive = (
-        not archive_movies_cache["movies"] or 
-        not archive_movies_cache["last_updated"] or
-        datetime.now() - archive_movies_cache["last_updated"] > timedelta(hours=24)
-    )
-    
-    # Trigger background fetch if needed (don't wait for it!)
-    if should_refresh_archive and not archive_movies_cache["loading"]:
-        asyncio.create_task(fetch_archive_movies_background())
-    
-    # Check if we need to refresh Plex cache
-    should_refresh_plex = (
-        not plex_movies_cache["movies"] or 
-        not plex_movies_cache["last_updated"] or
-        datetime.now() - plex_movies_cache["last_updated"] > timedelta(hours=24)
-    )
-    
-    if should_refresh_plex:
-        logger.info("Fetching Plex free movies...")
-        try:
-            plex_movies = fetch_plex_free_movies(limit=30)
-            plex_movies_cache["movies"] = plex_movies
-            plex_movies_cache["last_updated"] = datetime.now()
-            logger.info(f"✅ Cached {len(plex_movies)} Plex movies")
-        except Exception as e:
-            logger.error(f"Failed to fetch Plex movies: {e}")
-    
-    # Combine all sources (return whatever we have immediately)
-    all_movies = curated_movies + archive_movies_cache["movies"] + plex_movies_cache["movies"]
-    
-    logger.info(f"📊 Serving {len(all_movies)} total free movies")
+    """Get curated free public domain movies - all verified working"""
+    movies = get_public_domain_movies()
     
     return {
-        "movies": all_movies, 
-        "total": len(all_movies),
+        "movies": movies, 
+        "total": len(movies),
         "sources": {
-            "curated": len(curated_movies),
-            "archive_org": len(archive_movies_cache["movies"]),
-            "plex": len(plex_movies_cache["movies"])
-        },
-        "loading_more": archive_movies_cache["loading"]
+            "curated": len(movies),
+            "archive_org": 0,
+            "plex": 0
+        }
     }
 
 
