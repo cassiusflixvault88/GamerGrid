@@ -102,23 +102,32 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Create FlixVault streaming app with Settings page (profile info, preferences) and Theme toggle (Light/Dark/System)"
+user_problem_statement: "FlixVault final polish: Expand free movies from 17 to 35+, refactor backend/frontend code for production readiness"
 
 backend:
-  - task: "User Profile API - GET /api/user/profile"
+  - task: "Free Movies Library Expansion (17 → 35 movies)"
     implemented: true
     working: true
-    file: "/app/backend/server.py"
+    file: "/app/backend/public_domain_videos_clean.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: true
         agent: "main"
-        comment: "Created GET endpoint to fetch user profile data (display_name, phone, address, profile_picture_url, autoplay_trailers, email_notifications, maturity_rating). Tested via curl - working correctly."
-      - working: true
-        agent: "testing"
-        comment: "Tested via UI - GET endpoint returns 200 OK and correctly loads user profile data (display_name: 'Test User', phone: '+1234567890', address: '123 Test St'). Working as expected."
+        comment: "Added 18 new high-quality public domain YouTube movies: Night of the Living Dead, Charade, Metropolis, His Girl Friday, The Cabinet of Dr. Caligari, Phantom of the Opera, The General, Carnival of Souls, Detour, House on Haunted Hill, Plan 9 from Outer Space, Little Shop of Horrors, It's a Wonderful Life, Battleship Potemkin, The Last Man on Earth, Dementia 13, Attack of the 50 Foot Woman, The Man Who Knew Too Much. All tested via curl (YouTube IDs validated). Total: 35 free movies (20 YouTube + 15 Plex). Need to verify UI displays all 35 correctly."
+  
+  - task: "Backend Refactoring - Break down server.py into route modules"
+    implemented: false
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "server.py is 1474 lines. Plan: Extract routes into /app/backend/routes/ modules (auth.py, movies.py, admin.py, feedback.py, reviews.py, watchlist.py). Status: NOT STARTED - awaiting testing of free movies expansion first."
 
   - task: "User Profile API - PUT /api/user/profile"
     implemented: true
@@ -151,20 +160,41 @@ backend:
         comment: "Extended User and UserResponse models to include display_name, phone, address, profile_picture_url, autoplay_trailers, email_notifications, maturity_rating. Created UserProfileUpdate model for updates."
 
 frontend:
-  - task: "Theme System Implementation"
+  - task: "Share Modal Update - PWA Instructions & Beta Warnings"
     implemented: true
     working: true
-    file: "/app/frontend/src/context/ThemeContext.jsx"
+    file: "/app/frontend/src/components/ShareButton.jsx"
     stuck_count: 0
     priority: "high"
     needs_retesting: false
     status_history:
+      - working: true
+        agent: "main"
+        comment: "Updated Share Modal with: (1) Red beta warning banner at top, (2) Collapsible PWA installation instructions for Chrome/iOS/Android, (3) Enhanced feedback CTAs with bug reporting directions, (4) Account wipe warnings. Tested via screenshot - layout looks professional, no overflow."
+  
+  - task: "Free Movies Page - Display 35 movies"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/PublicDomainPage.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Frontend successfully displays all 35 free movies on /public-domain page. Screenshot confirmed 35 movie cards rendered. Need full testing to verify modals open correctly for new YouTube movies and playback works."
+  
+  - task: "Frontend Refactoring - Break down Home.jsx"
+    implemented: false
+    working: "NA"
+    file: "/app/frontend/src/pages/Home.jsx"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
       - working: "NA"
         agent: "main"
-        comment: "Created ThemeContext with Light/Dark/System theme support. Uses localStorage for persistence and listens to system theme changes. Integrated into App.js with ThemeProvider wrapper."
-      - working: true
-        agent: "testing"
-        comment: "Tested all 3 theme options (Light/Dark/System). Theme switching works correctly - dark class is added/removed from document.documentElement. Theme persists to localStorage as 'flixvault-theme'. All theme buttons are visible and functional."
+        comment: "Home.jsx is large with multiple category rows. Plan: Extract into HeroSection.jsx and reusable CategoryRow.jsx component. Status: NOT STARTED - awaiting testing of current changes first."
 
   - task: "Settings Page UI"
     implemented: true
@@ -218,17 +248,14 @@ metadata:
   run_ui: true
 
 test_plan:
-  current_focus: []
+  current_focus:
+    - "Free Movies Library Expansion (17 → 35 movies)"
+    - "Share Modal Update - PWA Instructions & Beta Warnings"
+    - "Free Movies Page - Display 35 movies"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
 agent_communication:
   - agent: "main"
-    message: "Implemented complete Settings & Theme system. Backend: Added GET/PUT /api/user/profile endpoints with extended User model. Frontend: Created ThemeContext (Light/Dark/System), SettingsPage with profile fields and preferences, integrated into Navbar. Backend API tested via curl and working. Need frontend e2e testing for: 1) Theme switching (verify dark mode applies), 2) Settings page loads with user data, 3) Profile updates save correctly, 4) Navbar settings link works."
-  - agent: "testing"
-    message: "Completed comprehensive UI testing. RESULTS: ✅ All frontend features working (login, navigation, theme toggle, settings page UI, form inputs, preferences). ❌ CRITICAL BUG: PUT /api/user/profile returns 200 OK but data does NOT persist to database. After refresh, updated values revert to original. Backend needs investigation - the update operation appears successful but data is not being saved or is being overwritten. Added debug logging to server.py for troubleshooting."
-  - agent: "testing"
-    message: "RE-TESTED data persistence with fresh approach. Created new test account (freshtest@flixvault.com), updated all profile fields, verified persistence through multiple methods: 1) Backend logs confirm successful update (matched: 1, modified: 1), 2) MongoDB query shows correct data saved, 3) Fresh login loads correct values, 4) Page refresh maintains correct values. CONCLUSION: Data persistence is WORKING CORRECTLY. All features tested and confirmed working. No bugs found. Previous test failure was due to timing issue in test script."
-  - agent: "testing"
-    message: "USER REQUEST: Tested More/Less button functionality for movie descriptions in ContentModal. RESULTS: ✅ More/Less toggle works perfectly. Description truncates at 180 chars with '...' and 'More' button. Clicking 'More' expands to full text and shows 'Less' button. Clicking 'Less' collapses back to truncated state. Reset behavior confirmed - new movies start in truncated state. Feature is fully functional with no bugs found."
+    message: "Phase 1 COMPLETE: Expanded free movies from 17 to 35 (added 18 YouTube public domain classics). Updated ShareButton.jsx with comprehensive PWA install instructions, beta warnings, and feedback CTAs. Need testing agent to verify: (1) All 35 movies display on /public-domain page, (2) New YouTube movies open in modal correctly, (3) YouTube embeds play, (4) Share modal displays correctly. After testing passes, will proceed with Phase 2: Backend/Frontend refactoring."

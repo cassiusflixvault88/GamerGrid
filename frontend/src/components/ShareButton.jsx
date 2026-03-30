@@ -184,7 +184,7 @@ Created by Cassius Fox | FlixVault`;
                   <Film className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
                   <div>
                     <p className="font-semibold text-white">What You Can Do:</p>
-                    <p className="text-sm">Browse thousands of movies & shows, watch 17 free movies, add to watchlist, rate content, explore Top 10 rankings</p>
+                    <p className="text-sm">Browse thousands of movies & shows, watch 35+ free movies, add to watchlist, rate content, explore Top 10 rankings</p>
                   </div>
                 </div>
                 
