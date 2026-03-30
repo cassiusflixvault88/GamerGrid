@@ -21,6 +21,9 @@ from auth import (
 )
 from public_domain_videos_clean import get_public_domain_movies, get_public_domain_by_id
 
+# Import route modules
+from routes import auth_routes, watchlist_routes, movies_routes
+
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -35,6 +38,12 @@ app = FastAPI()
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
+
+# Include route modules
+api_router.include_router(auth_routes.router)
+api_router.include_router(auth_routes.profile_router)
+api_router.include_router(watchlist_routes.router)
+api_router.include_router(movies_routes.router)
 
 
 # Define Models
