@@ -38,6 +38,12 @@ const Footer = () => {
             >
               ⭐ Rate FlixVault
             </Link>
+            <Link 
+              to="/request-content"
+              className="hover:text-white transition-colors text-green-400 font-semibold"
+            >
+              🎬 Request Content
+            </Link>
             <button 
               onClick={() => setShowAbout(true)}
               className="hover:text-white transition-colors"

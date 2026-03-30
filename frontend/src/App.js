@@ -12,6 +12,7 @@ import OriginalsPage from "./pages/OriginalsPage";
 import SearchPage from "./pages/SearchPage";
 import PublicDomainPage from "./pages/PublicDomainPage";
 import AppReviewsPage from "./pages/AppReviewsPage";
+import RequestContentPage from "./pages/RequestContentPage";
 import WatchlistPage from "./pages/WatchlistPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import SettingsPage from "./pages/SettingsPage";
@@ -32,6 +33,7 @@ function App() {
               <Route path="/search" element={<SearchPage />} />
               <Route path="/public-domain" element={<PublicDomainPage />} />
               <Route path="/app-reviews" element={<AppReviewsPage />} />
+              <Route path="/request-content" element={<RequestContentPage />} />
               <Route path="/watchlist" element={<WatchlistPage />} />
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/settings" element={<SettingsPage />} />

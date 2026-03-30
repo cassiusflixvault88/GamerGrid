@@ -1105,6 +1105,96 @@ async def approve_movie(submission_id: str, token_data: dict = Depends(verify_to
     return {"message": f"Movie '{submission['title']}' approved and added to FlixVault!"}
 
 
+# ============= CONTENT REQUEST FEATURE =============
+
+class ContentRequest(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    title: str
+    content_type: str  # "movie", "series", "documentary"
+    description: Optional[str] = None
+    reason: Optional[str] = None
+    status: str = "pending"  # pending, approved, rejected
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    admin_response: Optional[str] = None
+
+class ContentRequestCreate(BaseModel):
+    title: str
+    content_type: str
+    description: Optional[str] = None
+    reason: Optional[str] = None
+
+@api_router.post("/content-requests/submit")
+async def submit_content_request(request: ContentRequestCreate, current_user: dict = Depends(verify_token)):
+    """Submit a content request"""
+    request_dict = request.model_dump()
+    request_obj = ContentRequest(user_id=current_user['id'], **request_dict)
+    
+    doc = request_obj.model_dump()
+    doc['created_at'] = doc['created_at'].isoformat()
+    
+    await db.content_requests.insert_one(doc)
+    
+    return {"message": "Your request has been submitted! We'll review it soon.", "request_id": request_obj.id}
+
+@api_router.get("/content-requests/my-requests")
+async def get_my_content_requests(current_user: dict = Depends(verify_token)):
+    """Get user's content requests"""
+    requests = await db.content_requests.find(
+        {"user_id": current_user['id']}, 
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(100)
+    
+    for req in requests:
+        if isinstance(req['created_at'], str):
+            req['created_at'] = datetime.fromisoformat(req['created_at'])
+    
+    return {"requests": requests}
+
+@api_router.get("/admin/content-requests")
+async def get_all_content_requests(current_user: dict = Depends(verify_token)):
+    """Admin: Get all content requests"""
+    user = await db.users.find_one({"id": current_user['id']}, {"_id": 0})
+    if not user or not user.get('is_admin'):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    requests = await db.content_requests.find({}, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    
+    for req in requests:
+        if isinstance(req['created_at'], str):
+            req['created_at'] = datetime.fromisoformat(req['created_at'])
+        # Get username
+        user = await db.users.find_one({"id": req['user_id']}, {"_id": 0, "username": 1})
+        req['username'] = user.get('username', 'Unknown') if user else 'Unknown'
+    
+    return {"requests": requests}
+
+@api_router.post("/admin/content-requests/{request_id}/respond")
+async def respond_to_content_request(
+    request_id: str,
+    response: str,
+    new_status: str,
+    current_user: dict = Depends(verify_token)
+):
+    """Admin: Respond to content request"""
+    user = await db.users.find_one({"id": current_user['id']}, {"_id": 0})
+    if not user or not user.get('is_admin'):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    await db.content_requests.update_one(
+        {"id": request_id},
+        {"$set": {
+            "admin_response": response,
+            "status": new_status,
+            "responded_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {"message": "Response sent successfully"}
+
+
 # ============= ORIGINAL ROUTES =============
 
 @api_router.get("/")

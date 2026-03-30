@@ -148,7 +148,7 @@ const ContentModal = ({ content, isOpen, onClose, onPlayTrailer }) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0 bg-[#141414] border-0 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
+      <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto p-0 bg-[#141414] border-0 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent touch-auto overscroll-contain">
         <div className="relative">
           <div className="relative aspect-video w-full">
             <img

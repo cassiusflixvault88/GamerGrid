@@ -6,6 +6,7 @@ import HeroBanner from '../components/HeroBanner';
 import ContentRow from '../components/ContentRow';
 import ContentModal from '../components/ContentModal';
 import VideoPlayer from '../components/VideoPlayer';
+import Onboarding from '../components/Onboarding';
 import Footer from '../components/Footer';
 import {
   getTrending,
@@ -26,6 +27,11 @@ const Home = () => {
   const [popularSeries, setPopularSeries] = useState([]);
   const [topRated, setTopRated] = useState([]);
   const [actionMovies, setActionMovies] = useState([]);
+  const [documentaries, setDocumentaries] = useState([]);
+  const [crimeThrillers, setCrimeThrillers] = useState([]);
+  const [horrorMovies, setHorrorMovies] = useState([]);
+  const [sciFiMovies, setSciFiMovies] = useState([]);
+  const [comedyMovies, setComedyMovies] = useState([]);
   const [freeMovies, setFreeMovies] = useState([]);
   const [loading, setLoading] = useState(true);
   
@@ -67,6 +73,11 @@ const Home = () => {
         popularSeriesData,
         topRatedData,
         actionData,
+        documentariesData,
+        crimeData,
+        horrorData,
+        sciFiData,
+        comedyData,
         freeMoviesData,
       ] = await Promise.all([
         getTrending('all', 'week'),
@@ -76,6 +87,11 @@ const Home = () => {
         getPopular('tv'),
         getTopRated('movie'),
         getByGenre(28, 'movie'), // Action genre
+        getByGenre(99, 'movie'), // Documentary genre (99)
+        getByGenre(80, 'movie'), // Crime genre (80)
+        getByGenre(27, 'movie'), // Horror genre (27)
+        getByGenre(878, 'movie'), // Sci-Fi genre (878)
+        getByGenre(35, 'movie'), // Comedy genre (35)
         axios.get(`${API}/public-domain/movies`).then(res => res.data.movies).catch(() => []),
       ]);
 
@@ -86,6 +102,11 @@ const Home = () => {
       setPopularSeries(popularSeriesData);
       setTopRated(topRatedData);
       setActionMovies(actionData);
+      setDocumentaries(documentariesData);
+      setCrimeThrillers(crimeData);
+      setHorrorMovies(horrorData);
+      setSciFiMovies(sciFiData);
+      setComedyMovies(comedyData);
       setFreeMovies(freeMoviesData.slice(0, 6)); // Show first 6 free movies
       console.log('🎬 Free movies loaded:', freeMoviesData.length, 'total, showing first 6');
       console.log('Free movies data:', freeMoviesData.slice(0, 3).map(m => m.title));
@@ -128,6 +149,7 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-black">
       <Navbar />
+      <Onboarding />
       
       <HeroBanner
         content={heroContent}
@@ -191,6 +213,52 @@ const Home = () => {
           onCardClick={handleCardClick}
           viewAllLink="/movies"
         />
+        
+        {/* NEW GENRE SECTIONS */}
+        {documentaries.length > 0 && (
+          <ContentRow
+            title="📽️ Documentaries - True Stories"
+            items={documentaries}
+            onCardClick={handleCardClick}
+            viewAllLink="/movies"
+          />
+        )}
+        
+        {crimeThrillers.length > 0 && (
+          <ContentRow
+            title="🔪 Crime & Thrillers"
+            items={crimeThrillers}
+            onCardClick={handleCardClick}
+            viewAllLink="/movies"
+          />
+        )}
+        
+        {horrorMovies.length > 0 && (
+          <ContentRow
+            title="👻 Horror Movies"
+            items={horrorMovies}
+            onCardClick={handleCardClick}
+            viewAllLink="/movies"
+          />
+        )}
+        
+        {sciFiMovies.length > 0 && (
+          <ContentRow
+            title="🚀 Sci-Fi & Fantasy"
+            items={sciFiMovies}
+            onCardClick={handleCardClick}
+            viewAllLink="/movies"
+          />
+        )}
+        
+        {comedyMovies.length > 0 && (
+          <ContentRow
+            title="😂 Comedy Movies"
+            items={comedyMovies}
+            onCardClick={handleCardClick}
+            viewAllLink="/movies"
+          />
+        )}
       </div>
 
       <ContentModal
