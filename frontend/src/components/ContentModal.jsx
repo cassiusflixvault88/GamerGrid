@@ -112,8 +112,11 @@ const ContentModal = ({ content, isOpen, onClose, onPlayTrailer }) => {
   
   // Check if this is a free movie (YouTube OR Plex)
   const hasFreeFullMovie = content.is_public_domain && content.youtube_id;
-  const hasPlexMovie = content.plex_url;
+  const hasPlexMovie = content.plex_url && content.source === 'plex';
   const hasArchiveVideo = content.video_url && content.source === 'archive.org';
+  
+  // Show either YouTube OR Plex button
+  const showFreeMovieButton = hasFreeFullMovie || hasPlexMovie || hasArchiveVideo;
 
   // Debug logging
   console.log('ContentModal - Free Movie Check:', {
@@ -123,7 +126,9 @@ const ContentModal = ({ content, isOpen, onClose, onPlayTrailer }) => {
     plex_url: content.plex_url,
     source: content.source,
     hasFreeFullMovie,
-    hasPlexMovie
+    hasPlexMovie,
+    hasArchiveVideo,
+    showFreeMovieButton
   });
 
   const handlePlayFullMovie = () => {
@@ -133,6 +138,7 @@ const ContentModal = ({ content, isOpen, onClose, onPlayTrailer }) => {
       onPlayTrailer({ key: content.youtube_id, name: `${title} - Full Movie`, type: 'Feature' });
     } else if (hasPlexMovie) {
       // Open in Plex
+      console.log('Opening Plex URL:', content.plex_url);
       window.open(content.plex_url, '_blank');
     } else if (hasArchiveVideo) {
       // Play from Archive.org
@@ -162,15 +168,24 @@ const ContentModal = ({ content, isOpen, onClose, onPlayTrailer }) => {
             <div className="absolute bottom-8 left-8 right-8">
               <h2 className="text-4xl font-bold text-white mb-4">{title}</h2>
               <div className="flex items-center space-x-3">
-                {(hasFreeFullMovie || hasArchiveVideo) ? (
+                {/* Free Movie Button (YouTube OR Plex OR Archive) */}
+                {showFreeMovieButton ? (
                   <Button
                     onClick={handlePlayFullMovie}
                     className="bg-white hover:bg-white/90 text-black font-semibold px-6 py-2 rounded-md transition-all flex items-center gap-2"
                   >
                     <Play className="w-5 h-5 fill-current" />
                     <div className="flex flex-col items-start">
-                      <span>Watch Full Movie FREE</span>
-                      <span className="text-xs opacity-70">Public Domain • Full Length</span>
+                      <span>
+                        {hasFreeFullMovie && 'Watch Full Movie FREE'}
+                        {hasPlexMovie && !hasFreeFullMovie && 'Watch FREE on Plex ▶'}
+                        {hasArchiveVideo && !hasFreeFullMovie && !hasPlexMovie && 'Watch Full Movie FREE'}
+                      </span>
+                      <span className="text-xs opacity-70">
+                        {hasFreeFullMovie && 'Public Domain • Full Length'}
+                        {hasPlexMovie && !hasFreeFullMovie && 'Opens in Plex • Free with Ads'}
+                        {hasArchiveVideo && 'Internet Archive'}
+                      </span>
                     </div>
                   </Button>
                 ) : trailer ? (
