@@ -365,15 +365,51 @@ const AdminDashboard = () => {
                               </span>
                             </td>
                             <td className="px-6 py-4">
-                              <Button
-                                onClick={() => handleDeleteUser(u.id)}
-                                variant="destructive"
-                                size="sm"
-                                disabled={u.is_admin}
-                                className="bg-red-600 hover:bg-red-700"
-                              >
-                                {u.is_admin ? 'Protected' : 'Delete'}
-                              </Button>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={async () => {
+                                    if (!window.confirm(`${u.is_admin ? 'Remove admin from' : 'Promote to admin'} ${u.username}?`)) return;
+                                    try {
+                                      const token = localStorage.getItem('token');
+                                      await axios.post(`${API}/admin/manage-admin`, {
+                                        user_id: u.id,
+                                        action: u.is_admin ? 'demote' : 'promote'
+                                      }, {
+                                        headers: { Authorization: `Bearer ${token}` }
+                                      });
+                                      toast({
+                                        title: 'Success',
+                                        description: `${u.username} ${u.is_admin ? 'removed from' : 'promoted to'} admin`
+                                      });
+                                      loadDashboardData();
+                                    } catch (error) {
+                                      toast({
+                                        title: 'Error',
+                                        description: error.response?.data?.detail || 'Failed',
+                                        variant: 'destructive'
+                                      });
+                                    }
+                                  }}
+                                  className={`px-2 py-1 rounded text-xs font-medium ${
+                                    u.is_admin 
+                                      ? 'bg-red-600/20 text-red-300 hover:bg-red-600/30'
+                                      : 'bg-yellow-600/20 text-yellow-300 hover:bg-yellow-600/30'
+                                  }`}
+                                  disabled={user?.user_id === u.id}
+                                >
+                                  {u.is_admin ? 'Remove Admin' : 'Make Admin'}
+                                </button>
+                                
+                                <Button
+                                  onClick={() => handleDeleteUser(u.id)}
+                                  variant="destructive"
+                                  size="sm"
+                                  disabled={u.is_admin}
+                                  className="bg-red-600 hover:bg-red-700"
+                                >
+                                  {u.is_admin ? 'Protected' : 'Delete'}
+                                </Button>
+                              </div>
                             </td>
                           </tr>
                         ))
