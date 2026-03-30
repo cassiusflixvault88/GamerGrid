@@ -15,7 +15,7 @@ const ShareButton = ({ variant = 'default', size = 'default', showText = true })
 
 ✨ Features:
 • Thousands of movies & TV shows
-• 17 FREE full-length movies
+• 35+ FREE full-length movies
 • Top 10 Rankings
 • What's Hot trending section
 • Personal watchlist
