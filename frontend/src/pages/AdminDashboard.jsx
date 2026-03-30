@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { Shield, Users, Star, MessageSquare, Home, TrendingUp } from 'lucide-react';
 import Navbar from '../components/Navbar';
+import BackNavigation from '../components/BackNavigation';
 import Footer from '../components/Footer';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/button';
@@ -185,8 +186,9 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen bg-black">
       <Navbar />
+      <BackNavigation />
       
-      <div className="pt-24 pb-12 px-6 lg:px-12 max-w-7xl mx-auto">
+      <div className="pb-12 px-6 lg:px-12 max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div>

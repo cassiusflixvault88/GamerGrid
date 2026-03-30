@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+import BackNavigation from '../components/BackNavigation';
 import ContentCard from '../components/ContentCard';
 import ContentModal from '../components/ContentModal';
 import VideoPlayer from '../components/VideoPlayer';
@@ -50,8 +51,9 @@ const SearchPage = () => {
   return (
     <div className="min-h-screen bg-black">
       <Navbar />
+      <BackNavigation />
       
-      <div className="pt-24 px-6 lg:px-12 max-w-[1920px] mx-auto">\n        <h1 className="text-3xl font-bold text-white mb-8">
+      <div className="px-6 lg:px-12 max-w-[1920px] mx-auto">\n        <h1 className="text-3xl font-bold text-white mb-8">
           {query ? `Search results for "${query}"` : 'Search'}
         </h1>
 

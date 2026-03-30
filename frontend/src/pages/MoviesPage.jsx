@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
+import BackNavigation from '../components/BackNavigation';
 import ContentCard from '../components/ContentCard';
 import ContentModal from '../components/ContentModal';
 import VideoPlayer from '../components/VideoPlayer';
@@ -64,8 +65,9 @@ const MoviesPage = () => {
   return (
     <div className="min-h-screen bg-black">
       <Navbar />
+      <BackNavigation />
       
-      <div className="pt-24 px-6 lg:px-12 max-w-[1920px] mx-auto pb-20">
+      <div className="px-6 lg:px-12 max-w-[1920px] mx-auto pb-20">
         <h1 className="text-4xl font-bold text-white mb-8">Movies</h1>
 
         <Tabs defaultValue="popular" className="w-full">
