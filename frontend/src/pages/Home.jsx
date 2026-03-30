@@ -83,6 +83,8 @@ const Home = () => {
       setTopRated(topRatedData);
       setActionMovies(actionData);
       setFreeMovies(freeMoviesData.slice(0, 6)); // Show first 6 free movies
+      console.log('🎬 Free movies loaded:', freeMoviesData.length, 'total, showing first 6');
+      console.log('Free movies data:', freeMoviesData.slice(0, 3).map(m => m.title));
       
       // Set top 6 trending items for rotating hero
       const topTrending = trendingData.slice(0, 6);
