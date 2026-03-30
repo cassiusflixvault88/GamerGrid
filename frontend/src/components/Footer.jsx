@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import InstallInstructions from './InstallInstructions';
 import AboutFlixVault from './AboutFlixVault';
 
@@ -31,6 +32,12 @@ const Footer = () => {
           </div>
           
           <div className="mt-6 pt-6 border-t border-white/5 flex flex-wrap justify-center md:justify-start gap-6 text-white/50 text-sm">
+            <Link 
+              to="/app-reviews"
+              className="hover:text-white transition-colors text-yellow-400 font-semibold"
+            >
+              ⭐ Rate FlixVault
+            </Link>
             <button 
               onClick={() => setShowAbout(true)}
               className="hover:text-white transition-colors"

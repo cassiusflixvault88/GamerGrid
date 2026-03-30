@@ -444,6 +444,96 @@ async def get_whats_hot():
         return {"results": [], "total": 0, "algorithm": "none", "period": "last_7_days"}
 
 
+# ============= APP REVIEWS (FlixVault App Itself) =============
+
+class AppReview(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    username: str
+    rating: int = Field(ge=1, le=5)
+    review: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class AppReviewCreate(BaseModel):
+    rating: int = Field(ge=1, le=5)
+    review: str
+
+@api_router.post("/app-reviews/submit")
+async def submit_app_review(review_data: AppReviewCreate, token_data: dict = Depends(verify_token)):
+    """Submit a review for the FlixVault app itself"""
+    # Get user info
+    user = await db.users.find_one(
+        {"id": token_data["user_id"]},
+        {"_id": 0, "username": 1}
+    )
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Check if user already reviewed the app
+    existing = await db.app_reviews.find_one(
+        {"user_id": token_data["user_id"]},
+        {"_id": 0}
+    )
+    
+    if existing:
+        # Update existing review
+        await db.app_reviews.update_one(
+            {"user_id": token_data["user_id"]},
+            {"$set": {
+                "rating": review_data.rating,
+                "review": review_data.review,
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }}
+        )
+        return {"message": "App review updated successfully"}
+    else:
+        # Create new review
+        app_review = AppReview(
+            user_id=token_data["user_id"],
+            username=user.get("username", "Anonymous"),
+            rating=review_data.rating,
+            review=review_data.review
+        )
+        await db.app_reviews.insert_one(app_review.model_dump())
+        return {"message": "App review submitted successfully"}
+
+@api_router.get("/app-reviews")
+async def get_app_reviews():
+    """Get all FlixVault app reviews"""
+    reviews = await db.app_reviews.find(
+        {},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(100)
+    
+    # Calculate average rating
+    if reviews:
+        avg_rating = sum(r.get("rating", 0) for r in reviews) / len(reviews)
+    else:
+        avg_rating = 0
+    
+    return {
+        "reviews": reviews,
+        "total": len(reviews),
+        "average_rating": round(avg_rating, 1)
+    }
+
+@api_router.delete("/admin/delete-app-review/{review_id}")
+async def delete_app_review(review_id: str, token_data: dict = Depends(verify_token)):
+    """Admin: Delete an app review"""
+    # Check admin status
+    admin = await db.admins.find_one({"user_id": token_data["user_id"]})
+    if not admin:
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    result = await db.app_reviews.delete_one({"id": review_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Review not found")
+    
+    return {"message": "App review deleted successfully"}
+
+
 # ============= RATINGS & REVIEWS ROUTES =============
 
 @api_router.post("/ratings", response_model=RatingResponse)
