@@ -6,7 +6,6 @@ import VideoPlayer from '../components/VideoPlayer';
 import Footer from '../components/Footer';
 import { getPopular, getTopRated, getByGenre } from '../services/tmdb';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs';
 
 const MoviesPage = () => {
   const [popular, setPopular] = useState([]);
