@@ -110,8 +110,9 @@ const ContentModal = ({ content, isOpen, onClose, onPlayTrailer }) => {
   const releaseYear = (content.release_date || content.first_air_date || '').split('-')[0];
   const runtime = details?.runtime || details?.episode_run_time?.[0];
   
-  // Check if this is a free public domain movie with full video on YouTube
+  // Check if this is a free movie (YouTube OR Plex)
   const hasFreeFullMovie = content.is_public_domain && content.youtube_id;
+  const hasPlexMovie = content.plex_url;
   const hasArchiveVideo = content.video_url && content.source === 'archive.org';
 
   // Debug logging
@@ -119,15 +120,20 @@ const ContentModal = ({ content, isOpen, onClose, onPlayTrailer }) => {
     title,
     is_public_domain: content.is_public_domain,
     youtube_id: content.youtube_id,
+    plex_url: content.plex_url,
+    source: content.source,
     hasFreeFullMovie,
-    hasArchiveVideo
+    hasPlexMovie
   });
 
   const handlePlayFullMovie = () => {
-    console.log('Playing full movie:', title, content.youtube_id);
+    console.log('Playing full movie:', title, content.youtube_id || content.plex_url);
     if (hasFreeFullMovie) {
-      // Play full movie from YouTube
+      // Play full movie from YouTube (embedded)
       onPlayTrailer({ key: content.youtube_id, name: `${title} - Full Movie`, type: 'Feature' });
+    } else if (hasPlexMovie) {
+      // Open in Plex
+      window.open(content.plex_url, '_blank');
     } else if (hasArchiveVideo) {
       // Play from Archive.org
       window.open(content.video_url, '_blank');
