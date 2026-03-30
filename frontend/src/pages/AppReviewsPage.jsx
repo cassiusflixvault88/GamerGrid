@@ -3,7 +3,6 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../hooks/use-toast';
 import Navbar from '../components/Navbar';
-import BackNavigation from '../components/BackNavigation';
 import Footer from '../components/Footer';
 import { Button } from '../components/ui/button';
 import { Textarea } from '../components/ui/textarea';
@@ -126,9 +125,8 @@ const AppReviewsPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-black via-gray-900 to-black text-white">
       <Navbar />
-      <BackNavigation />
 
-      <div className="container mx-auto px-4 pb-20">
+      <div className="container mx-auto px-4 pt-24 pb-20">
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">

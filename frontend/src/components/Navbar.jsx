@@ -94,12 +94,19 @@ const Navbar = () => {
             </div>
           </div>
 
-          {/* Search Autocomplete - Desktop */}
-          <div className="hidden md:block flex-1 max-w-2xl mx-8">
-            <SearchAutocomplete />
-          </div>
-
           <div className="flex items-center space-x-4">
+            {/* Desktop Search */}
+            <div className="hidden md:block">
+              <SearchAutocomplete />
+            </div>
+
+            {/* Mobile Search Button */}
+            <button
+              onClick={() => setSearchOpen(!searchOpen)}
+              className="md:hidden p-2 text-white/90 hover:text-white transition-colors"
+            >
+              <Search className="w-5 h-5" />
+            </button>
 
             {user ? (
               <div className="relative">
@@ -173,6 +180,21 @@ const Navbar = () => {
           </div>
         </div>
       </nav>
+
+      {/* Mobile Search Overlay */}
+      {searchOpen && (
+        <div className="md:hidden fixed inset-0 bg-black z-50 pt-20 px-4">
+          <div className="mb-4">
+            <SearchAutocomplete />
+          </div>
+          <button
+            onClick={() => setSearchOpen(false)}
+            className="absolute top-4 right-4 text-white p-2"
+          >
+            ✕ Close
+          </button>
+        </div>
+      )}
 
       <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
     </>
