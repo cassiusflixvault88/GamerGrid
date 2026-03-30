@@ -89,7 +89,7 @@ def get_public_domain_movies():
             "release_date": "1999-07-14",
             "vote_average": 6.3,
             "runtime": 81,
-            "plex_url": "https://watch.plex.tv/movie/the-blair-witch-project",
+            "plex_url": "https://watch.plex.tv/movie/the-blair-witch-project-1999",
             "is_public_domain": False,
             "genre_ids": [27],
             "free_full_movie": True,
