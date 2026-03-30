@@ -13,6 +13,8 @@ import SearchPage from "./pages/SearchPage";
 import PublicDomainPage from "./pages/PublicDomainPage";
 import AppReviewsPage from "./pages/AppReviewsPage";
 import RequestContentPage from "./pages/RequestContentPage";
+import FeedbackPage from "./pages/FeedbackPage";
+import UserDetailPage from "./pages/UserDetailPage";
 import WatchlistPage from "./pages/WatchlistPage";
 import AdminDashboard from "./pages/AdminDashboard";
 import SettingsPage from "./pages/SettingsPage";
@@ -34,6 +36,8 @@ function App() {
               <Route path="/public-domain" element={<PublicDomainPage />} />
               <Route path="/app-reviews" element={<AppReviewsPage />} />
               <Route path="/request-content" element={<RequestContentPage />} />
+              <Route path="/feedback" element={<FeedbackPage />} />
+              <Route path="/admin/user/:userId" element={<UserDetailPage />} />
               <Route path="/watchlist" element={<WatchlistPage />} />
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/settings" element={<SettingsPage />} />

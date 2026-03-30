@@ -341,9 +341,14 @@ const AdminDashboard = () => {
                         users.map((u, idx) => (
                           <tr key={u.id || idx} className="border-t border-white/10 hover:bg-white/5 transition-colors">
                             <td className="px-6 py-4">
-                              <p className="text-white font-medium">{u.username}</p>
+                              <button
+                                onClick={() => navigate(`/admin/user/${u.id}`)}
+                                className="text-white font-medium hover:text-purple-400 transition-colors text-left"
+                              >
+                                {u.username}
+                              </button>
                               {u.is_admin && (
-                                <span className="text-xs text-yellow-400">• Admin</span>
+                                <span className="text-xs text-yellow-400 ml-2">• Admin</span>
                               )}
                             </td>
                             <td className="px-6 py-4 text-white/80 text-sm">{u.email}</td>

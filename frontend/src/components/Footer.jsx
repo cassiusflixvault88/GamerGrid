@@ -44,6 +44,12 @@ const Footer = () => {
             >
               🎬 Request Content
             </Link>
+            <Link 
+              to="/feedback"
+              className="hover:text-white transition-colors text-red-400 font-semibold"
+            >
+              🐛 Report Issues
+            </Link>
             <button 
               onClick={() => setShowAbout(true)}
               className="hover:text-white transition-colors"

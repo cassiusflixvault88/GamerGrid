@@ -1195,6 +1195,189 @@ async def respond_to_content_request(
     return {"message": "Response sent successfully"}
 
 
+# ============= ADMIN MANAGEMENT & USER DETAILS =============
+
+class AdminAction(BaseModel):
+    user_id: str
+    action: str  # "promote", "demote"
+
+@api_router.post("/admin/manage-admin")
+async def manage_admin_status(action: AdminAction, current_user: dict = Depends(verify_token)):
+    """Admin: Promote or demote user to/from admin"""
+    admin_user = await db.users.find_one({"id": current_user['id']}, {"_id": 0})
+    if not admin_user or not admin_user.get('is_admin'):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    target_user = await db.users.find_one({"id": action.user_id}, {"_id": 0})
+    if not target_user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    if action.action == "promote":
+        await db.users.update_one(
+            {"id": action.user_id},
+            {"$set": {"is_admin": True}}
+        )
+        return {"message": f"User {target_user['username']} promoted to admin"}
+    elif action.action == "demote":
+        # Prevent demoting self
+        if action.user_id == current_user['id']:
+            raise HTTPException(status_code=400, detail="Cannot demote yourself")
+        
+        await db.users.update_one(
+            {"id": action.user_id},
+            {"$set": {"is_admin": False}}
+        )
+        return {"message": f"User {target_user['username']} removed from admin"}
+    else:
+        raise HTTPException(status_code=400, detail="Invalid action")
+
+@api_router.get("/admin/user-details/{user_id}")
+async def get_user_details(user_id: str, current_user: dict = Depends(verify_token)):
+    """Admin: Get detailed user information"""
+    admin_user = await db.users.find_one({"id": current_user['id']}, {"_id": 0})
+    if not admin_user or not admin_user.get('is_admin'):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    # Get user basic info
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Remove sensitive data
+    if 'hashed_password' in user:
+        del user['hashed_password']
+    
+    # Get watchlist
+    watchlist = await db.watchlists.find_one({"user_id": user_id}, {"_id": 0})
+    watchlist_count = len(watchlist.get('movie_ids', [])) if watchlist else 0
+    
+    # Get reviews count
+    reviews = await db.reviews.find({"user_id": user_id}, {"_id": 0}).to_list(1000)
+    reviews_count = len(reviews)
+    
+    # Get app reviews
+    app_reviews = await db.app_reviews.find({"user_id": user_id}, {"_id": 0}).to_list(100)
+    app_reviews_count = len(app_reviews)
+    
+    # Get content requests
+    content_requests = await db.content_requests.find({"user_id": user_id}, {"_id": 0}).to_list(100)
+    content_requests_count = len(content_requests)
+    
+    # Get feedback submissions
+    feedback = await db.feedback.find({"user_id": user_id}, {"_id": 0}).to_list(100)
+    feedback_count = len(feedback)
+    
+    return {
+        "user": user,
+        "stats": {
+            "watchlist_items": watchlist_count,
+            "reviews_count": reviews_count,
+            "app_reviews_count": app_reviews_count,
+            "content_requests_count": content_requests_count,
+            "feedback_count": feedback_count
+        },
+        "recent_reviews": reviews[:5],
+        "recent_content_requests": content_requests[:5],
+        "recent_feedback": feedback[:5]
+    }
+
+
+# ============= FEEDBACK & BUG REPORTS SYSTEM =============
+
+class Feedback(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    title: str
+    feedback_type: str  # "bug", "feature", "improvement"
+    description: str
+    priority: str = "medium"  # "low", "medium", "high", "critical"
+    status: str = "pending"  # pending, in_progress, resolved, wont_fix
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    admin_response: Optional[str] = None
+    resolved_at: Optional[datetime] = None
+
+class FeedbackCreate(BaseModel):
+    title: str
+    feedback_type: str
+    description: str
+    priority: str = "medium"
+
+@api_router.post("/feedback/submit")
+async def submit_feedback(feedback: FeedbackCreate, current_user: dict = Depends(verify_token)):
+    """Submit feedback/bug report"""
+    feedback_dict = feedback.model_dump()
+    feedback_obj = Feedback(user_id=current_user['id'], **feedback_dict)
+    
+    doc = feedback_obj.model_dump()
+    doc['created_at'] = doc['created_at'].isoformat()
+    
+    await db.feedback.insert_one(doc)
+    
+    return {"message": "Feedback submitted successfully!", "feedback_id": feedback_obj.id}
+
+@api_router.get("/feedback/my-feedback")
+async def get_my_feedback(current_user: dict = Depends(verify_token)):
+    """Get user's feedback submissions"""
+    feedback_items = await db.feedback.find(
+        {"user_id": current_user['id']}, 
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(100)
+    
+    for item in feedback_items:
+        if isinstance(item['created_at'], str):
+            item['created_at'] = datetime.fromisoformat(item['created_at'])
+    
+    return {"feedback": feedback_items}
+
+@api_router.get("/admin/feedback")
+async def get_all_feedback(current_user: dict = Depends(verify_token)):
+    """Admin: Get all feedback submissions"""
+    user = await db.users.find_one({"id": current_user['id']}, {"_id": 0})
+    if not user or not user.get('is_admin'):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    feedback_items = await db.feedback.find({}, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    
+    for item in feedback_items:
+        if isinstance(item['created_at'], str):
+            item['created_at'] = datetime.fromisoformat(item['created_at'])
+        # Get username
+        user = await db.users.find_one({"id": item['user_id']}, {"_id": 0, "username": 1})
+        item['username'] = user.get('username', 'Unknown') if user else 'Unknown'
+    
+    return {"feedback": feedback_items}
+
+@api_router.post("/admin/feedback/{feedback_id}/respond")
+async def respond_to_feedback(
+    feedback_id: str,
+    response: str,
+    new_status: str,
+    current_user: dict = Depends(verify_token)
+):
+    """Admin: Respond to feedback"""
+    user = await db.users.find_one({"id": current_user['id']}, {"_id": 0})
+    if not user or not user.get('is_admin'):
+        raise HTTPException(status_code=403, detail="Admin access required")
+    
+    update_data = {
+        "admin_response": response,
+        "status": new_status,
+        "responded_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    if new_status == "resolved":
+        update_data["resolved_at"] = datetime.now(timezone.utc).isoformat()
+    
+    await db.feedback.update_one(
+        {"id": feedback_id},
+        {"$set": update_data}
+    )
+    
+    return {"message": "Response sent successfully"}
+
+
 # ============= ORIGINAL ROUTES =============
 
 @api_router.get("/")
