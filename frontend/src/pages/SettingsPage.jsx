@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Sun, Moon, Monitor, Save, User as UserIcon, Home, ArrowLeft, Film } from 'lucide-react';
 import axios from 'axios';
 import Navbar from '../components/Navbar';
+import BackNavigation from '../components/BackNavigation';
 import Footer from '../components/Footer';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -276,8 +277,9 @@ const SettingsPage = () => {
   return (
     <div className="min-h-screen bg-black">
       <Navbar />
+      <BackNavigation />
       
-      <main className="pt-24 pb-12 px-6 lg:px-12 max-w-4xl mx-auto">
+      <main className="px-6 lg:px-12 max-w-4xl mx-auto pb-12">
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-4xl font-bold text-white mb-2">Settings</h1>
