@@ -76,6 +76,10 @@ const PublicDomainPage = () => {
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         onPlayTrailer={handlePlayTrailer}
+        onSelectContent={(content) => {
+          setSelectedContent(content);
+          setModalOpen(true);
+        }}
       />
 
       <VideoPlayer

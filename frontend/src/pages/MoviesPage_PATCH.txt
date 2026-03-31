@@ -1,0 +1,6 @@
+ADD THIS TO ContentModal in MoviesPage.jsx:
+
+onSelectContent={(content) => {
+  setSelectedContent(content);
+  setModalOpen(true);
+}}
