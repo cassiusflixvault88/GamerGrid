@@ -15,7 +15,7 @@ if not SECRET_KEY:
     print("⚠️  WARNING: Using generated JWT secret. Set JWT_SECRET_KEY in production!")
 
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_DAYS = 30
+ACCESS_TOKEN_EXPIRE_DAYS = 365  # 1 year - users stay logged in for a long time
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 security = HTTPBearer()

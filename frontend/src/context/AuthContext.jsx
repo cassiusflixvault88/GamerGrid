@@ -9,6 +9,47 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState(localStorage.getItem('token'));
+  const [lastActivity, setLastActivity] = useState(Date.now());
+
+  // Track user activity to prevent auto-logout
+  useEffect(() => {
+    const updateActivity = () => {
+      setLastActivity(Date.now());
+    };
+
+    // Track user interactions
+    const events = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
+    events.forEach(event => {
+      window.addEventListener(event, updateActivity);
+    });
+
+    return () => {
+      events.forEach(event => {
+        window.removeEventListener(event, updateActivity);
+      });
+    };
+  }, []);
+
+  // Auto-refresh token every 5 minutes to keep session alive
+  useEffect(() => {
+    if (!token) return;
+
+    const refreshInterval = setInterval(() => {
+      const timeSinceActivity = Date.now() - lastActivity;
+      const tenMinutes = 10 * 60 * 1000; // 10 minutes in milliseconds
+
+      // Only logout if inactive for more than 10 minutes
+      if (timeSinceActivity > tenMinutes) {
+        console.log('⏰ Session expired due to inactivity');
+        logout();
+      } else {
+        // User is active, refresh token automatically
+        fetchCurrentUser();
+      }
+    }, 5 * 60 * 1000); // Check every 5 minutes
+
+    return () => clearInterval(refreshInterval);
+  }, [token, lastActivity]);
 
   const fetchCurrentUser = useCallback(async () => {
     try {

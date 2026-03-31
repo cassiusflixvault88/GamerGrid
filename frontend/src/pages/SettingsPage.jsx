@@ -108,7 +108,7 @@ const SettingsPage = () => {
         return;
       }
       
-      const response = await axios.post(`${API}/auth/profile/upload-picture`, formData, {
+      const response = await axios.post(`${API}/user/upload-profile-picture`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
