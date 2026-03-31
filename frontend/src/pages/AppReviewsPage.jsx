@@ -32,12 +32,17 @@ const AppReviewsPage = () => {
 
   const loadReviews = async () => {
     try {
+      console.log('🔄 Loading app reviews...');
       const response = await axios.get(`${API}/app-reviews`);
-      setReviews(response.data.reviews);
-      setAverageRating(response.data.average_rating);
-      setTotalReviews(response.data.total);
+      console.log('✅ Loaded reviews:', response.data);
+      setReviews(response.data.reviews || []);
+      setAverageRating(response.data.average_rating || 0);
+      setTotalReviews(response.data.total || 0);
     } catch (error) {
-      console.error('Failed to load reviews:', error);
+      console.error('❌ Failed to load reviews:', error);
+      setReviews([]);
+      setAverageRating(0);
+      setTotalReviews(0);
     } finally {
       setLoading(false);
     }
@@ -98,10 +103,12 @@ const AppReviewsPage = () => {
       setUserRating(0);
       setUserReview('');
       
-      // Force refresh reviews
-      setTimeout(() => {
-        loadReviews();
-      }, 500);
+      // Immediately reload reviews - add small delay to ensure backend processed
+      console.log('🔄 Reloading reviews after submission...');
+      await new Promise(resolve => setTimeout(resolve, 800));
+      await loadReviews();
+      console.log('✅ Reviews reloaded!');
+      
     } catch (error) {
       console.error('❌ App review submission failed:', error.response || error);
       
@@ -224,9 +231,9 @@ const AppReviewsPage = () => {
               <p className="text-gray-400">No reviews yet. Be the first to review FlixVault!</p>
             </Card>
           ) : (
-            <div className="space-y-4">
-              {reviews.map((review) => (
-                <Card key={review.id} className="bg-white/5 border-white/10 p-6">
+            <div className="space-y-4" key={`reviews-${totalReviews}-${reviews.length}`}>
+              {reviews.map((review, index) => (
+                <Card key={`${review.id}-${index}`} className="bg-white/5 border-white/10 p-6">
                   <div className="flex items-start justify-between mb-3">
                     <div>
                       <p className="font-semibold text-lg">{review.username}</p>
