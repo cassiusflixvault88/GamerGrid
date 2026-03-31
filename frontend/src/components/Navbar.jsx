@@ -120,6 +120,13 @@ const Navbar = () => {
 
                 {showUserMenu && (
                   <div className="absolute right-0 mt-2 w-52 bg-black/95 border border-white/20 rounded-md shadow-lg py-2">
+                    {/* Signed in as section */}
+                    <div className="px-4 py-3 border-b border-white/10 bg-white/5">
+                      <p className="text-xs text-white/50 uppercase tracking-wide mb-1">Signed in as</p>
+                      <p className="text-sm text-white font-semibold truncate">{user?.email}</p>
+                      <p className="text-xs text-purple-400 mt-1">@{user?.username}</p>
+                    </div>
+                    
                     <Link
                       to="/"
                       className="flex items-center space-x-2 px-4 py-2 text-white/90 hover:bg-white/10 transition-colors"
