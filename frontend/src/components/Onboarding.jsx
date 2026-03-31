@@ -38,20 +38,20 @@ const Onboarding = () => {
   const steps = [
     {
       title: 'Welcome to FlixVault! 🎬',
-      description: 'Your movie discovery vault - watch trailers, rate movies, and explore thousands of films!',
+      description: 'Your movie discovery vault - watch trailers, rate movies, and explore films!',
       icon: <Film className="w-16 h-16 text-purple-400" />,
       features: [
-        '446+ movies with HD trailers',
-        '35 free full-length movies',
+        'Browse movies with HD trailers',
+        'Free full-length movies available',
         'Rate & review like IMDb'
       ]
     },
     {
       title: 'Watch Movie Trailers 🔥',
-      description: 'Browse hundreds of movies with high-quality YouTube trailers.',
+      description: 'Browse movies with high-quality YouTube trailers.',
       icon: <Star className="w-16 h-16 text-yellow-400" />,
       features: [
-        'HD trailers for 446+ movies',
+        'HD trailers for movies',
         'What\'s Hot trending section',
         'Discover by genre'
       ]
@@ -68,10 +68,10 @@ const Onboarding = () => {
     },
     {
       title: 'Bonus: Free Movies! 🎉',
-      description: 'Enjoy 35 classic public domain films completely free!',
+      description: 'Enjoy classic public domain films completely free!',
       icon: <Play className="w-16 h-16 text-green-400" />,
       features: [
-        '35 free full-length movies',
+        'Free full-length movies',
         'Classic cinema & horror',
         'No subscription needed'
       ]

@@ -7,7 +7,7 @@ const AboutFlixVault = ({ isOpen, onClose }) => {
     {
       icon: Play,
       title: 'Watch Movie Trailers',
-      description: 'Browse 446+ movies with high-quality YouTube trailers - discover what to watch next'
+      description: 'Browse movies with high-quality trailers - discover what to watch next'
     },
     {
       icon: Star,
@@ -21,7 +21,7 @@ const AboutFlixVault = ({ isOpen, onClose }) => {
     },
     {
       icon: Tv,
-      title: 'Bonus: 35 Free Full Movies',
+      title: 'Bonus: Free Full Movies',
       description: 'Occasionally watch public domain classics completely free - no subscription required'
     },
     {
@@ -57,13 +57,13 @@ const AboutFlixVault = ({ isOpen, onClose }) => {
             </h3>
             <p className="text-white/80 leading-relaxed mb-4">
               FlixVault is your <strong className="text-purple-300">movie discovery companion</strong> - like IMDb and Rotten Tomatoes combined. 
-              Browse 446+ movies with trailers, rate and review what you've watched, and build your personal watchlist. 
+              Browse movies with trailers, rate and review what you've watched, and build your personal watchlist. 
               Discover what's hot, explore by genre, and find your next favorite film - all in one beautiful, 
               fast, and installable web app.
             </p>
             <p className="text-white/80 leading-relaxed mb-4">
-              <strong className="text-blue-300">Bonus:</strong> We occasionally feature free full-length movies you can watch! 
-              Right now, enjoy 35 public domain classics and Plex-available films at no cost.
+              <strong className="text-blue-300">Bonus:</strong> We feature free full-length movies you can watch! 
+              Enjoy public domain classics and select films at no cost.
             </p>
             <p className="text-white/80 leading-relaxed">
               Built entirely from scratch by Cassius Fox, FlixVault is <strong>primarily a movie rating and trailer vault</strong> 

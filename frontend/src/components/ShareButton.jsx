@@ -14,10 +14,10 @@ const ShareButton = ({ variant = 'default', size = 'default', showText = true })
   const shareMessage = `🎬 Check out FlixVault - Movie Discovery & Trailer App!
 
 ✨ Features:
-• Watch trailers for 446+ movies
+• Watch trailers for thousands of movies
 • Rate & review like IMDb
 • Build your watchlist
-• 35+ FREE full-length movies
+• FREE full-length movies available
 • Top 10 Rankings
 • What's Hot trending section
 
@@ -62,7 +62,7 @@ Created by Cassius Fox | FlixVault`;
       try {
         await navigator.share({
           title: 'FlixVault - Movie Discovery App',
-          text: 'Check out FlixVault! Watch trailers for 446+ movies, rate & review, plus 35 free movies!',
+          text: 'Check out FlixVault! Watch movie trailers, rate & review, plus free movies available!',
           url: shareUrl,
         });
       } catch (err) {
