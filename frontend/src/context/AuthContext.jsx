@@ -15,12 +15,13 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const updateActivity = () => {
       setLastActivity(Date.now());
+      console.log('👆 User activity detected');
     };
 
     // Track user interactions
-    const events = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
+    const events = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click', 'mousemove'];
     events.forEach(event => {
-      window.addEventListener(event, updateActivity);
+      window.addEventListener(event, updateActivity, { passive: true });
     });
 
     return () => {
@@ -30,25 +31,37 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
 
-  // Auto-refresh token every 5 minutes to keep session alive
+  // Check for inactivity and validate token when app becomes visible again
   useEffect(() => {
     if (!token) return;
 
-    const refreshInterval = setInterval(() => {
-      const timeSinceActivity = Date.now() - lastActivity;
-      const tenMinutes = 10 * 60 * 1000; // 10 minutes in milliseconds
+    // Handle visibility change (when user returns to tab/app)
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible') {
+        console.log('👀 App became visible, checking session...');
+        const timeSinceActivity = Date.now() - lastActivity;
+        const tenMinutes = 10 * 60 * 1000;
 
-      // Only logout if inactive for more than 10 minutes
-      if (timeSinceActivity > tenMinutes) {
-        console.log('⏰ Session expired due to inactivity');
-        logout();
-      } else {
-        // User is active, refresh token automatically
-        fetchCurrentUser();
+        if (timeSinceActivity > tenMinutes) {
+          console.log('⏰ Session expired due to inactivity');
+          logout();
+        } else {
+          // Validate token is still valid
+          try {
+            await fetchCurrentUser();
+          } catch (error) {
+            console.error('Token invalid, logging out');
+            logout();
+          }
+        }
       }
-    }, 5 * 60 * 1000); // Check every 5 minutes
+    };
 
-    return () => clearInterval(refreshInterval);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [token, lastActivity]);
 
   const fetchCurrentUser = useCallback(async () => {
@@ -106,7 +119,9 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
+    console.log('🚪 Logging out user...');
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
     setToken(null);
     setUser(null);
     
@@ -118,6 +133,9 @@ export const AuthProvider = ({ children }) => {
         });
       });
     }
+    
+    // Force redirect to home to clear UI state
+    window.location.href = '/';
   };
 
   const addToWatchlist = useCallback(async (content) => {
