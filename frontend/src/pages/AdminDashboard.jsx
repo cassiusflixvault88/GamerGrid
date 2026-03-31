@@ -314,7 +314,7 @@ const AdminDashboard = () => {
           {activeTab === 'users' && (
             <div>
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-white">All Users (v2)</h2>
+                <h2 className="text-2xl font-bold text-white">All Users</h2>
                 <p className="text-white/60">{users.length} total users</p>
               </div>
               
