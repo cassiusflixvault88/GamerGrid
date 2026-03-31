@@ -143,7 +143,7 @@ const RatingsReviews = ({ contentId, contentTitle }) => {
               transition-opacity
             `}
             style={{ 
-              touchAction: 'none',
+              touchAction: 'manipulation',
               WebkitTapHighlightColor: 'rgba(255, 255, 255, 0.3)',
               userSelect: 'none',
               WebkitUserSelect: 'none',
@@ -230,13 +230,18 @@ const RatingsReviews = ({ contentId, contentTitle }) => {
             )}
           </div>
           
-          <div>
+          <div style={{ touchAction: 'auto' }}>
             <label className="text-white/90 text-sm mb-2 block">Your Review (Optional)</label>
             <Textarea
               value={review}
               onChange={(e) => setReview(e.target.value)}
               placeholder="Share your thoughts about this movie/show..."
               className="bg-white/10 border-white/20 text-white placeholder:text-white/50 min-h-[100px]"
+              style={{ touchAction: 'auto' }}
+              onTouchStart={(e) => {
+                // Allow default behavior for textarea
+                e.stopPropagation();
+              }}
             />
           </div>
           
