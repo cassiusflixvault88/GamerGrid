@@ -57,12 +57,16 @@ export const AuthProvider = ({ children }) => {
         headers: { Authorization: `Bearer ${token}` },
       });
       setUser(response.data);
-      console.log('✅ User data fetched:', response.data);
+      console.log('✅ User data refreshed:', response.data);
+      console.log('📸 Profile picture URL:', response.data.profile_picture_url);
     } catch (error) {
       console.error('Failed to fetch user:', error);
-      localStorage.removeItem('token');
-      setToken(null);
-      setUser(null);
+      // Don't logout on every error - only if explicitly unauthorized
+      if (error.response?.status === 401) {
+        localStorage.removeItem('token');
+        setToken(null);
+        setUser(null);
+      }
     } finally {
       setLoading(false);
     }

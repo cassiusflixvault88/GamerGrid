@@ -118,9 +118,13 @@ const SettingsPage = () => {
       // Update profile data with new image URL
       setProfileData({ ...profileData, profile_picture_url: response.data.url });
       
+      // AUTO-SAVE after upload so user doesn't have to click Save Settings
+      const updatedProfile = { ...profileData, profile_picture_url: response.data.url };
+      await saveProfileWithNewPicture(updatedProfile);
+      
       toast({
         title: 'Success',
-        description: 'Profile picture uploaded!'
+        description: 'Profile picture uploaded and saved!'
       });
     } catch (error) {
       console.error('Upload error:', error);
@@ -147,12 +151,35 @@ const SettingsPage = () => {
     }
   };
 
-  const useFlixVaultLogo = () => {
-    setProfileData({ ...profileData, profile_picture_url: '/flixvault-icon.svg' });
+  const useFlixVaultLogo = async () => {
+    const updatedProfile = { ...profileData, profile_picture_url: '/flixvault-icon.svg' };
+    setProfileData(updatedProfile);
+    
+    // AUTO-SAVE after selecting logo
+    await saveProfileWithNewPicture(updatedProfile);
+    
     toast({
       title: 'FlixVault Logo Set',
-      description: 'Using FlixVault logo as profile picture'
+      description: 'Profile picture updated and saved!'
     });
+  };
+
+  // Helper function to save profile and refresh navbar
+  const saveProfileWithNewPicture = async (updatedData) => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      
+      await axios.put(`${API}/user/profile`, updatedData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      // Refresh user context to update navbar immediately
+      await refreshUser();
+      console.log('✅ Profile saved and navbar refreshed');
+    } catch (error) {
+      console.error('Failed to auto-save:', error);
+    }
   };
 
   const handleSaveProfile = async () => {
