@@ -139,8 +139,6 @@ const Navbar = () => {
                   )}
                   <span className="hidden md:inline text-sm">{user.username}</span>
                 </button>
-                  <span className="hidden md:inline text-sm">{user.username}</span>
-                </button>
 
                 {showUserMenu && (
                   <div className="absolute right-0 mt-2 w-52 bg-black/95 border border-white/20 rounded-md shadow-lg py-2">
