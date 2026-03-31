@@ -457,49 +457,6 @@ const SettingsPage = () => {
           </div>
         </div>
 
-        {/* App Preferences */}
-        <div className="bg-white/5 backdrop-blur-sm rounded-lg p-6 mb-6 border border-white/10">
-          <h2 className="text-xl font-semibold text-white mb-4">Preferences</h2>
-          
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <Label className="text-white/80">Autoplay Trailers</Label>
-                <p className="text-xs text-white/50">Automatically play trailers when browsing</p>
-              </div>
-              <button
-                onClick={() => setProfileData({ ...profileData, autoplay_trailers: !profileData.autoplay_trailers })}
-                className={`relative w-12 h-6 rounded-full transition-colors ${
-                  profileData.autoplay_trailers ? 'bg-purple-600' : 'bg-white/20'
-                }`}
-              >
-                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
-                  profileData.autoplay_trailers ? 'translate-x-7' : 'translate-x-1'
-                }`} />
-              </button>
-            </div>
-
-            <Separator className="bg-white/10" />
-
-            <div className="flex items-center justify-between">
-              <div>
-                <Label className="text-white/80">Email Notifications</Label>
-                <p className="text-xs text-white/50">Receive updates about new content</p>
-              </div>
-              <button
-                onClick={() => setProfileData({ ...profileData, email_notifications: !profileData.email_notifications })}
-                className={`relative w-12 h-6 rounded-full transition-colors ${
-                  profileData.email_notifications ? 'bg-purple-600' : 'bg-white/20'
-                }`}
-              >
-                <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-transform ${
-                  profileData.email_notifications ? 'translate-x-7' : 'translate-x-1'
-                }`} />
-              </button>
-            </div>
-          </div>
-        </div>
-
         {/* Save Button */}
         <Button
           onClick={handleSaveProfile}

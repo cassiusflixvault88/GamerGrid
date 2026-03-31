@@ -103,7 +103,7 @@ const RatingsReviews = ({ contentId, contentTitle }) => {
     const [hover, setHover] = useState(0);
 
     return (
-      <div className="flex space-x-1">
+      <div className="flex gap-1">
         {[1, 2, 3, 4, 5].map((star) => (
           <button
             key={star}
@@ -112,13 +112,14 @@ const RatingsReviews = ({ contentId, contentTitle }) => {
             onMouseEnter={() => !readonly && setHover(star)}
             onMouseLeave={() => !readonly && setHover(0)}
             onClick={() => !readonly && onChange && onChange(star)}
-            className={`${readonly ? 'cursor-default' : 'cursor-pointer'} transition-transform hover:scale-110`}
+            className={`p-1 ${readonly ? 'cursor-default' : 'cursor-pointer active:scale-95'} transition-transform hover:scale-110`}
+            aria-label={`Rate ${star} star${star > 1 ? 's' : ''}`}
           >
             <Star
-              className={`w-6 h-6 ${
+              className={`w-8 h-8 sm:w-10 sm:h-10 ${
                 star <= (hover || value)
                   ? 'fill-yellow-400 text-yellow-400'
-                  : 'text-white/30'
+                  : 'text-white/40'
               }`}
             />
           </button>

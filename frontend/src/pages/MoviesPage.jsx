@@ -33,7 +33,14 @@ const MoviesPage = () => {
       const data = await response.json();
       const movies = data.results || [];
       
-      setAllMovies(movies);
+      // SORT BY TOP RATED FIRST (highest vote_average)
+      const sortedByRating = [...movies].sort((a, b) => {
+        const ratingA = a.vote_average || 0;
+        const ratingB = b.vote_average || 0;
+        return ratingB - ratingA; // Highest rating first
+      });
+      
+      setAllMovies(sortedByRating);
       
       // Sort by popularity for "Popular" tab
       const popularMovies = [...movies].sort((a, b) => b.popularity - a.popularity);
