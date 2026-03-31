@@ -101,11 +101,35 @@ export const AuthProvider = ({ children }) => {
   }, [token, fetchCurrentUser]);
 
   const login = async (email, password) => {
+    console.log('🔐 Logging in...', email);
+    
+    // Clear old user data first
+    localStorage.removeItem('user');
+    setUser(null);
+    
     const response = await axios.post(`${API}/auth/login`, { email, password });
     const { access_token, user: userData } = response.data;
+    
+    console.log('✅ Login successful for:', userData.username, userData.email);
+    
     localStorage.setItem('token', access_token);
     setToken(access_token);
     setUser(userData);
+    
+    // Force immediate refresh to ensure data is current
+    setTimeout(async () => {
+      console.log('🔄 Force refreshing user data...');
+      try {
+        const freshResponse = await axios.get(`${API}/auth/me`, {
+          headers: { Authorization: `Bearer ${access_token}` },
+        });
+        console.log('✅ Fresh user data:', freshResponse.data);
+        setUser(freshResponse.data);
+      } catch (error) {
+        console.error('⚠️ Failed to refresh user data:', error);
+      }
+    }, 500);
+    
     return userData;
   };
 
