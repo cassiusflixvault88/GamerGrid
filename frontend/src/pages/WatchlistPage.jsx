@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import TopNavBar from '../components/TopNavBar';
-import BackNavigation from '../components/BackNavigation';
 import ContentCard from '../components/ContentCard';
 import ContentModal from '../components/ContentModal';
 import VideoPlayer from '../components/VideoPlayer';
@@ -62,10 +60,8 @@ const WatchlistPage = () => {
   return (
     <div className="min-h-screen bg-black">
       <Navbar />
-      <TopNavBar />
-      <BackNavigation />
       
-      <div className="px-6 lg:px-12 max-w-[1920px] mx-auto pb-20">
+      <div className="pt-24 px-6 lg:px-12 max-w-[1920px] mx-auto pb-20">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-white mb-4">My Watchlist</h1>
           <p className="text-white/70 text-lg">
