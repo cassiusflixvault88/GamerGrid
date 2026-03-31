@@ -15,7 +15,7 @@ import { Separator } from '../components/ui/separator';
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const SettingsPage = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, refreshUser } = useAuth();  // Get refreshUser function
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -156,6 +156,9 @@ const SettingsPage = () => {
         title: 'Settings Saved',
         description: 'Your profile has been updated successfully.'
       });
+      
+      // Refresh user data in AuthContext to update Navbar immediately
+      await refreshUser();
       
       // Force reload profile after save to confirm changes
       await new Promise(resolve => setTimeout(resolve, 800));

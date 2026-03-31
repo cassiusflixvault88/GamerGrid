@@ -112,19 +112,50 @@ const Navbar = () => {
               <div className="relative">
                 <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="p-2 text-white/90 hover:text-white transition-colors flex items-center space-x-2"
+                  className="flex items-center space-x-2 text-white/90 hover:text-white transition-colors"
                 >
-                  <User className="w-5 h-5" />
+                  {user.profile_picture_url ? (
+                    <img 
+                      src={user.profile_picture_url.startsWith('http') 
+                        ? user.profile_picture_url 
+                        : `${process.env.REACT_APP_BACKEND_URL}${user.profile_picture_url}`
+                      }
+                      alt={user.username}
+                      className="w-8 h-8 rounded-full object-cover border-2 border-purple-500"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
+                      <User className="w-5 h-5" />
+                    </div>
+                  )}
                   <span className="hidden md:inline text-sm">{user.username}</span>
                 </button>
 
                 {showUserMenu && (
                   <div className="absolute right-0 mt-2 w-52 bg-black/95 border border-white/20 rounded-md shadow-lg py-2">
-                    {/* Signed in as section */}
+                    {/* Profile picture in dropdown */}
                     <div className="px-4 py-3 border-b border-white/10 bg-white/5">
+                      <div className="flex items-center space-x-3 mb-2">
+                        {user.profile_picture_url ? (
+                          <img 
+                            src={user.profile_picture_url.startsWith('http') 
+                              ? user.profile_picture_url 
+                              : `${process.env.REACT_APP_BACKEND_URL}${user.profile_picture_url}`
+                            }
+                            alt={user.username}
+                            className="w-12 h-12 rounded-full object-cover border-2 border-purple-500"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
+                            <User className="w-6 h-6" />
+                          </div>
+                        )}
+                        <div className="flex-1">
+                          <p className="text-sm text-white font-semibold truncate">{user.username}</p>
+                        </div>
+                      </div>
                       <p className="text-xs text-white/50 uppercase tracking-wide mb-1">Signed in as</p>
-                      <p className="text-sm text-white font-semibold truncate">{user?.email}</p>
-                      <p className="text-xs text-purple-400 mt-1">@{user?.username}</p>
+                      <p className="text-xs text-purple-400 truncate">{user?.email}</p>
                     </div>
                     
                     <Link

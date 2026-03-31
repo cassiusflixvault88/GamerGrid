@@ -16,6 +16,7 @@ export const AuthProvider = ({ children }) => {
         headers: { Authorization: `Bearer ${token}` },
       });
       setUser(response.data);
+      console.log('✅ User data fetched:', response.data);
     } catch (error) {
       console.error('Failed to fetch user:', error);
       localStorage.removeItem('token');
@@ -25,6 +26,13 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
     }
   }, [token]);
+
+  // Add function to manually refresh user data (for profile updates)
+  const refreshUser = useCallback(async () => {
+    if (token) {
+      await fetchCurrentUser();
+    }
+  }, [token, fetchCurrentUser]);
 
   useEffect(() => {
     if (token) {
@@ -116,6 +124,7 @@ export const AuthProvider = ({ children }) => {
         login,
         signup,
         logout,
+        refreshUser,
         addToWatchlist,
         removeFromWatchlist,
         isInWatchlist,
