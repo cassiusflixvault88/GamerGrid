@@ -170,6 +170,28 @@ const Home = () => {
       />
 
       <div className="relative -mt-32 z-20 space-y-8 pb-20">
+        {/* BROWSE ALL CATALOG MOVIES - PROMINENT SECTION */}
+        <div className="px-6 lg:px-12 max-w-[1920px] mx-auto mb-12">
+          <div className="bg-gradient-to-r from-purple-900/40 to-blue-900/40 rounded-xl p-8 border border-purple-500/30">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div>
+                <h2 className="text-3xl font-bold text-white mb-2">
+                  🎬 Browse All Movies with Trailers
+                </h2>
+                <p className="text-white/70">
+                  Explore our complete collection - Every movie includes HD trailers
+                </p>
+              </div>
+              <a
+                href="/movies"
+                className="px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold rounded-lg transition-all transform hover:scale-105 shadow-lg"
+              >
+                View All Movies →
+              </a>
+            </div>
+          </div>
+        </div>
+
         {/* What's Hot - Community Trending */}
         {whatsHot.length > 0 && (
           <ContentRow

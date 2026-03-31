@@ -1,15 +1,32 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, X } from 'lucide-react';
-import { search } from '../services/tmdb';
+
+const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const SearchAutocomplete = () => {
   const [query, setQuery] = useState('');
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [allMovies, setAllMovies] = useState([]);
   const navigate = useNavigate();
   const wrapperRef = useRef(null);
+
+  // Load all movies once on mount
+  useEffect(() => {
+    const loadAllMovies = async () => {
+      try {
+        const response = await fetch(`${API_URL}/api/catalog/movies?limit=1000`);
+        const data = await response.json();
+        setAllMovies(data.results || []);
+        console.log(`🔍 Loaded ${data.results?.length || 0} movies for search`);
+      } catch (error) {
+        console.error('Error loading movies for search:', error);
+      }
+    };
+    loadAllMovies();
+  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -23,7 +40,7 @@ const SearchAutocomplete = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Fetch suggestions as user types
+  // Search YOUR catalog as user types
   useEffect(() => {
     const fetchSuggestions = async () => {
       if (query.trim().length < 2) {
@@ -34,9 +51,28 @@ const SearchAutocomplete = () => {
 
       setLoading(true);
       try {
-        const results = await search(query);
-        setSuggestions(results.slice(0, 20)); // Show top 20
+        const searchTerm = query.toLowerCase();
+        const filtered = allMovies.filter(movie => {
+          const title = (movie.title || movie.name || '').toLowerCase();
+          const overview = (movie.overview || '').toLowerCase();
+          return title.includes(searchTerm) || overview.includes(searchTerm);
+        });
+        
+        // Sort by relevance (title match first, then by popularity)
+        const sorted = filtered.sort((a, b) => {
+          const aTitle = (a.title || a.name || '').toLowerCase();
+          const bTitle = (b.title || b.name || '').toLowerCase();
+          const aStartsWith = aTitle.startsWith(searchTerm);
+          const bStartsWith = bTitle.startsWith(searchTerm);
+          
+          if (aStartsWith && !bStartsWith) return -1;
+          if (!aStartsWith && bStartsWith) return 1;
+          return (b.popularity || 0) - (a.popularity || 0);
+        });
+        
+        setSuggestions(sorted.slice(0, 20)); // Show top 20
         setShowSuggestions(true);
+        console.log(`Found ${sorted.length} movies matching "${query}"`);
       } catch (error) {
         console.error('Search autocomplete error:', error);
         setSuggestions([]);
@@ -47,7 +83,7 @@ const SearchAutocomplete = () => {
 
     const debounce = setTimeout(fetchSuggestions, 300); // Debounce 300ms
     return () => clearTimeout(debounce);
-  }, [query]);
+  }, [query, allMovies]);
 
   const handleSuggestionClick = (item) => {
     setQuery('');
