@@ -2,13 +2,15 @@
 Authentication and User Profile Routes
 Handles signup, login, profile management
 """
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from motor.motor_asyncio import AsyncIOMotorClient
 from datetime import datetime, timezone
 from dotenv import load_dotenv
 from pathlib import Path
 import logging
 import os
+import shutil
+import uuid
 
 # Load environment variables
 ROOT_DIR = Path(__file__).parent.parent
@@ -160,3 +162,45 @@ async def update_user_profile(profile_data: UserProfileUpdate, token_data: dict 
         raise HTTPException(status_code=404, detail="User not found")
     
     return {"message": "Profile updated successfully", "updated_fields": list(update_data.keys())}
+
+
+@profile_router.post("/upload-profile-picture")
+async def upload_profile_picture(file: UploadFile = File(...), token_data: dict = Depends(verify_token)):
+    """Upload profile picture"""
+    # Validate file type
+    allowed_types = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"]
+    if file.content_type not in allowed_types:
+        raise HTTPException(status_code=400, detail="Invalid file type. Only images allowed.")
+    
+    # Validate file size (5MB max)
+    file.file.seek(0, 2)
+    file_size = file.file.tell()
+    file.file.seek(0)
+    
+    if file_size > 5 * 1024 * 1024:  # 5MB
+        raise HTTPException(status_code=400, detail="File too large. Max 5MB.")
+    
+    try:
+        # Create uploads directory if it doesn't exist
+        upload_dir = ROOT_DIR / "uploads" / "profile_pictures"
+        upload_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Generate unique filename
+        file_extension = file.filename.split(".")[-1]
+        unique_filename = f"{token_data['user_id']}_{uuid.uuid4().hex[:8]}.{file_extension}"
+        file_path = upload_dir / unique_filename
+        
+        # Save file
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        
+        # Generate URL (using backend URL)
+        file_url = f"/uploads/profile_pictures/{unique_filename}"
+        
+        logger.info(f"Profile picture uploaded: {file_url}")
+        
+        return {"url": file_url, "message": "Profile picture uploaded successfully"}
+        
+    except Exception as e:
+        logger.error(f"Error uploading profile picture: {e}")
+        raise HTTPException(status_code=500, detail="Failed to upload image")

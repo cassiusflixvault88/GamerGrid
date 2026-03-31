@@ -21,6 +21,7 @@ const SettingsPage = () => {
   const { toast } = useToast();
   
   const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [profileData, setProfileData] = useState({
     username: '',
     display_name: '',
@@ -64,6 +65,62 @@ const SettingsPage = () => {
       }
     } catch (error) {
       console.error('Failed to load profile:', error);
+    }
+  };
+
+  const handleImageUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Check file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: 'Error',
+        description: 'Image must be less than 5MB',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: 'Error',
+        description: 'Please upload an image file',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const token = localStorage.getItem('token');
+      const response = await axios.post(`${API}/user/upload-profile-picture`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      // Update profile data with new image URL
+      setProfileData({ ...profileData, profile_picture_url: response.data.url });
+      
+      toast({
+        title: 'Success',
+        description: 'Profile picture uploaded!'
+      });
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({
+        title: 'Upload Failed',
+        description: error.response?.data?.detail || 'Failed to upload image',
+        variant: 'destructive'
+      });
+    } finally {
+      setUploadingImage(false);
     }
   };
 
@@ -231,15 +288,55 @@ const SettingsPage = () => {
             </div>
 
             <div>
-              <Label htmlFor="profile_picture" className="text-white/80">Profile Picture URL</Label>
-              <Input
-                id="profile_picture"
-                type="url"
-                value={profileData.profile_picture_url}
-                onChange={(e) => setProfileData({ ...profileData, profile_picture_url: e.target.value })}
-                placeholder="https://example.com/avatar.jpg"
-                className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
-              />
+              <Label htmlFor="profile_picture" className="text-white/80 mb-2 block">Profile Picture</Label>
+              <div className="flex gap-3 items-end">
+                <div className="flex-1">
+                  <Input
+                    id="profile_picture"
+                    type="url"
+                    value={profileData.profile_picture_url}
+                    onChange={(e) => setProfileData({ ...profileData, profile_picture_url: e.target.value })}
+                    placeholder="https://example.com/avatar.jpg"
+                    className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
+                  />
+                </div>
+                <div className="relative">
+                  <input
+                    type="file"
+                    id="image-upload"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
+                  <Button
+                    type="button"
+                    onClick={() => document.getElementById('image-upload').click()}
+                    disabled={uploadingImage}
+                    className="bg-purple-600 hover:bg-purple-700 text-white"
+                  >
+                    {uploadingImage ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                        Uploading...
+                      </>
+                    ) : (
+                      <>
+                        <UserIcon className="w-4 h-4 mr-2" />
+                        Upload Photo
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+              {profileData.profile_picture_url && (
+                <div className="mt-3">
+                  <img 
+                    src={profileData.profile_picture_url} 
+                    alt="Profile preview" 
+                    className="w-20 h-20 rounded-full object-cover border-2 border-purple-500"
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>
