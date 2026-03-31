@@ -102,54 +102,67 @@ const RatingsReviews = ({ contentId, contentTitle }) => {
   const StarRating = ({ value, onChange, readonly = false }) => {
     const [hover, setHover] = useState(0);
 
+    const handleStarClick = (starValue) => {
+      if (!readonly && onChange) {
+        console.log(`⭐ Star ${starValue} clicked! Current value: ${value}`);
+        onChange(starValue);
+      }
+    };
+
     return (
-      <div className="flex gap-2 relative z-50">
+      <div className="flex gap-3 relative" style={{ zIndex: 9999, position: 'relative' }}>
         {[1, 2, 3, 4, 5].map((star) => (
-          <button
+          <div
             key={star}
-            type="button"
-            disabled={readonly}
             onMouseEnter={() => !readonly && setHover(star)}
             onMouseLeave={() => !readonly && setHover(0)}
-            onClick={(e) => {
+            onPointerDown={(e) => {
+              if (readonly) return;
               e.preventDefault();
               e.stopPropagation();
-              if (!readonly && onChange) {
-                console.log(`⭐ Star ${star} clicked!`);
-                onChange(star);
-              }
+              console.log(`⭐ Pointer down on star ${star}`);
+              handleStarClick(star);
             }}
-            onTouchEnd={(e) => {
+            onTouchStart={(e) => {
+              if (readonly) return;
               e.preventDefault();
               e.stopPropagation();
-              if (!readonly && onChange) {
-                console.log(`⭐ Star ${star} touched!`);
-                onChange(star);
-              }
+              console.log(`⭐ Touch start on star ${star}`);
+              handleStarClick(star);
+            }}
+            onClick={(e) => {
+              if (readonly) return;
+              e.preventDefault();
+              e.stopPropagation();
+              console.log(`⭐ Click on star ${star}`);
+              handleStarClick(star);
             }}
             className={`
-              min-w-[48px] min-h-[48px] p-2 flex items-center justify-center
-              ${readonly ? 'cursor-default' : 'cursor-pointer active:scale-95 touch-manipulation'} 
-              transition-transform hover:scale-110
-              bg-transparent border-0 outline-none
+              min-w-[56px] min-h-[56px] flex items-center justify-center
+              ${readonly ? 'cursor-default' : 'cursor-pointer active:opacity-75'} 
+              transition-opacity
             `}
             style={{ 
-              touchAction: 'manipulation',
-              WebkitTapHighlightColor: 'transparent',
+              touchAction: 'none',
+              WebkitTapHighlightColor: 'rgba(255, 255, 255, 0.3)',
+              userSelect: 'none',
+              WebkitUserSelect: 'none',
               position: 'relative',
-              zIndex: 100
+              zIndex: 9999
             }}
+            role="button"
+            tabIndex={readonly ? -1 : 0}
             aria-label={`Rate ${star} star${star > 1 ? 's' : ''}`}
           >
             <Star
-              className={`w-10 h-10 ${
+              className={`w-12 h-12 ${
                 star <= (hover || value)
-                  ? 'fill-yellow-400 text-yellow-400'
-                  : 'text-white/40'
+                  ? 'fill-yellow-400 text-yellow-400 drop-shadow-lg'
+                  : 'text-gray-500'
               }`}
-              style={{ pointerEvents: 'none' }}
+              style={{ pointerEvents: 'none', userSelect: 'none' }}
             />
-          </button>
+          </div>
         ))}
       </div>
     );
@@ -194,14 +207,26 @@ const RatingsReviews = ({ contentId, contentTitle }) => {
 
       {/* Review Form */}
       {showReviewForm && (
-        <div className="bg-white/5 border border-white/10 rounded-lg p-6 space-y-4 relative z-40">
+        <div 
+          className="bg-white/5 border border-white/10 rounded-lg p-6 space-y-4 relative" 
+          style={{ zIndex: 9998, position: 'relative', isolation: 'isolate' }}
+        >
           <h4 className="text-white font-semibold text-lg">Your Review for {contentTitle}</h4>
           
-          <div className="relative z-50">
-            <label className="text-white/90 text-sm mb-3 block font-semibold">Your Rating ⭐</label>
+          <div className="relative" style={{ zIndex: 9999, position: 'relative' }}>
+            <label className="text-white/90 text-base mb-4 block font-bold">
+              ⭐ Your Rating (Tap a star below)
+            </label>
             <StarRating value={rating} onChange={setRating} />
             {rating > 0 && (
-              <p className="text-yellow-400 text-sm mt-2">✓ You selected {rating} star{rating > 1 ? 's' : ''}</p>
+              <p className="text-yellow-400 text-base mt-3 font-semibold animate-pulse">
+                ✓ You selected {rating} star{rating > 1 ? 's' : ''}!
+              </p>
+            )}
+            {rating === 0 && (
+              <p className="text-red-400 text-sm mt-3">
+                👆 Please tap a star above to rate (required)
+              </p>
             )}
           </div>
           
