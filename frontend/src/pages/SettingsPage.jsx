@@ -136,11 +136,21 @@ const SettingsPage = () => {
     setSaving(true);
     try {
       const token = localStorage.getItem('token');
+      if (!token) {
+        toast({
+          title: 'Session Expired',
+          description: 'Please log in again to save your settings.',
+          variant: 'destructive'
+        });
+        navigate('/');
+        return;
+      }
+      
       const response = await axios.put(`${API}/user/profile`, profileData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
-      console.log('Save response:', response.data);
+      console.log('✅ Profile saved:', response.data);
       
       toast({
         title: 'Settings Saved',
@@ -153,11 +163,25 @@ const SettingsPage = () => {
       
     } catch (error) {
       console.error('Failed to save profile:', error);
-      toast({
-        title: 'Error',
-        description: error.response?.data?.detail || 'Failed to save settings. Please try again.',
-        variant: 'destructive'
-      });
+      
+      // Handle authentication errors specifically
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        toast({
+          title: 'Session Expired',
+          description: 'Your session has expired. Please log in again.',
+          variant: 'destructive'
+        });
+        // Clear invalid token and redirect to login
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setTimeout(() => navigate('/'), 2000);
+      } else {
+        toast({
+          title: 'Error',
+          description: error.response?.data?.detail || 'Failed to save settings. Please try again.',
+          variant: 'destructive'
+        });
+      }
     } finally {
       setSaving(false);
     }
