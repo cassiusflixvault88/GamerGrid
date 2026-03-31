@@ -98,7 +98,17 @@ const SettingsPage = () => {
       formData.append('file', file);
 
       const token = localStorage.getItem('token');
-      const response = await axios.post(`${API}/user/upload-profile-picture`, formData, {
+      if (!token) {
+        toast({
+          title: 'Session Expired',
+          description: 'Please log in again to upload photos.',
+          variant: 'destructive'
+        });
+        navigate('/');
+        return;
+      }
+      
+      const response = await axios.post(`${API}/auth/profile/upload-picture`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
@@ -114,11 +124,24 @@ const SettingsPage = () => {
       });
     } catch (error) {
       console.error('Upload error:', error);
-      toast({
-        title: 'Upload Failed',
-        description: error.response?.data?.detail || 'Failed to upload image',
-        variant: 'destructive'
-      });
+      
+      // Handle authentication errors
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        toast({
+          title: 'Session Expired',
+          description: 'Your session has expired. Please log in again.',
+          variant: 'destructive'
+        });
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        setTimeout(() => navigate('/'), 2000);
+      } else {
+        toast({
+          title: 'Upload Failed',
+          description: error.response?.data?.detail || 'Failed to upload image',
+          variant: 'destructive'
+        });
+      }
     } finally {
       setUploadingImage(false);
     }
