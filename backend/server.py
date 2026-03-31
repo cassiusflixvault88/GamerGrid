@@ -846,11 +846,19 @@ async def get_admin_stats(token_data: dict = Depends(verify_admin)):
 
 @api_router.get("/admin/users")
 async def get_all_users(token_data: dict = Depends(verify_admin)):
-    """Get all users"""
+    """Get all users with admin status"""
     users = await db.users.find(
         {},
         {"_id": 0, "id": 1, "email": 1, "username": 1, "created_at": 1, "watchlist": 1}
     ).sort("created_at", -1).to_list(1000)
+    
+    # Get all admin user IDs
+    admin_records = await db.admins.find({}, {"_id": 0, "user_id": 1}).to_list(1000)
+    admin_ids = {admin["user_id"] for admin in admin_records}
+    
+    # Add is_admin flag to users
+    for user in users:
+        user["is_admin"] = user["id"] in admin_ids
     
     return users
 
@@ -1305,42 +1313,46 @@ class AdminAction(BaseModel):
     action: str  # "promote", "demote"
 
 @api_router.post("/admin/manage-admin")
-async def manage_admin_status(action: AdminAction, current_user: dict = Depends(verify_token)):
+async def manage_admin_status(action: AdminAction, token_data: dict = Depends(verify_admin)):
     """Admin: Promote or demote user to/from admin"""
-    admin_user = await db.users.find_one({"id": current_user['user_id']}, {"_id": 0})
-    if not admin_user or not admin_user.get('is_admin'):
-        raise HTTPException(status_code=403, detail="Admin access required")
-    
     target_user = await db.users.find_one({"id": action.user_id}, {"_id": 0})
     if not target_user:
         raise HTTPException(status_code=404, detail="User not found")
     
     if action.action == "promote":
-        await db.users.update_one(
-            {"id": action.user_id},
-            {"$set": {"is_admin": True}}
-        )
+        # Check if already admin
+        existing_admin = await db.admins.find_one({"user_id": action.user_id})
+        if existing_admin:
+            raise HTTPException(status_code=400, detail="User is already an admin")
+        
+        # Add to admins collection
+        admin_config = {
+            "user_id": action.user_id,
+            "is_admin": True,
+            "permissions": ["moderate_reviews", "manage_content", "manage_users"],
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "role": "Admin"
+        }
+        await db.admins.insert_one(admin_config)
         return {"message": f"User {target_user['username']} promoted to admin"}
+        
     elif action.action == "demote":
         # Prevent demoting self
-        if action.user_id == current_user['user_id']:
+        if action.user_id == token_data['user_id']:
             raise HTTPException(status_code=400, detail="Cannot demote yourself")
         
-        await db.users.update_one(
-            {"id": action.user_id},
-            {"$set": {"is_admin": False}}
-        )
+        # Remove from admins collection
+        result = await db.admins.delete_one({"user_id": action.user_id})
+        if result.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="User is not an admin")
+        
         return {"message": f"User {target_user['username']} removed from admin"}
     else:
         raise HTTPException(status_code=400, detail="Invalid action")
 
 @api_router.get("/admin/user-details/{user_id}")
-async def get_user_details(user_id: str, current_user: dict = Depends(verify_token)):
+async def get_user_details(user_id: str, token_data: dict = Depends(verify_admin)):
     """Admin: Get detailed user information"""
-    admin_user = await db.users.find_one({"id": current_user['user_id']}, {"_id": 0})
-    if not admin_user or not admin_user.get('is_admin'):
-        raise HTTPException(status_code=403, detail="Admin access required")
-    
     # Get user basic info
     user = await db.users.find_one({"id": user_id}, {"_id": 0})
     if not user:
