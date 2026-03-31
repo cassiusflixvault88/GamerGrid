@@ -13,7 +13,12 @@ const Footer = () => {
       <footer className="bg-black border-t border-white/10 py-8 mt-20">
         <div className="max-w-[1920px] mx-auto px-6 lg:px-12">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-3">
+              <img 
+                src="/flixvault-icon.svg" 
+                alt="FlixVault" 
+                className="w-8 h-8"
+              />
               <span className="text-2xl font-bold bg-gradient-to-r from-purple-500 to-blue-500 bg-clip-text text-transparent">
                 FlixVault
               </span>

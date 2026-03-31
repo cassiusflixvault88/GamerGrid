@@ -63,7 +63,12 @@ const Navbar = () => {
       >
         <div className="max-w-[1920px] mx-auto px-6 lg:px-12 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-8">
-            <Link to="/" className="flex items-center">
+            <Link to="/" className="flex items-center gap-2">
+              <img 
+                src="/flixvault-icon.svg" 
+                alt="FlixVault" 
+                className="w-8 h-8"
+              />
               <div className="text-3xl font-bold bg-gradient-to-r from-purple-500 to-blue-500 bg-clip-text text-transparent">
                 FlixVault
               </div>
@@ -122,29 +127,22 @@ const Navbar = () => {
                   onClick={() => setShowUserMenu(!showUserMenu)}
                   className="flex items-center space-x-2 text-white/90 hover:text-white transition-colors"
                 >
-                  {user.profile_picture_url ? (
-                    <img 
-                      src={user.profile_picture_url.startsWith('http') 
-                        ? user.profile_picture_url 
-                        : `${process.env.REACT_APP_BACKEND_URL}${user.profile_picture_url}`
-                      }
-                      alt={user.username}
-                      className="w-8 h-8 rounded-full object-cover border-2 border-purple-500 bg-gray-800"
-                      onError={(e) => {
-                        console.error('❌ Profile picture failed to load:', user.profile_picture_url);
-                        console.error('Full URL:', e.target.src);
-                        // Hide broken image, show fallback
-                        e.target.style.display = 'none';
-                      }}
-                      onLoad={() => {
-                        console.log('✅ Profile picture loaded successfully');
-                      }}
-                    />
-                  ) : (
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center border-2 border-purple-500">
-                      <User className="w-5 h-5" />
-                    </div>
-                  )}
+                  <img 
+                    src={
+                      user.profile_picture_url 
+                        ? (user.profile_picture_url.startsWith('http') 
+                            ? user.profile_picture_url 
+                            : `${user.profile_picture_url}`)
+                        : '/flixvault-icon.svg'
+                    }
+                    alt={user.username}
+                    className="w-10 h-10 rounded-full object-cover border-2 border-purple-500 bg-gray-800 p-1"
+                    onError={(e) => {
+                      console.error('❌ Profile picture failed to load:', user.profile_picture_url);
+                      // Fallback to FlixVault logo
+                      e.target.src = '/flixvault-icon.svg';
+                    }}
+                  />
                   <span className="hidden md:inline text-sm">{user.username}</span>
                 </button>
 
@@ -153,20 +151,20 @@ const Navbar = () => {
                     {/* Profile picture in dropdown */}
                     <div className="px-4 py-3 border-b border-white/10 bg-white/5">
                       <div className="flex items-center space-x-3 mb-2">
-                        {user.profile_picture_url ? (
-                          <img 
-                            src={user.profile_picture_url.startsWith('http') 
-                              ? user.profile_picture_url 
-                              : `${process.env.REACT_APP_BACKEND_URL}${user.profile_picture_url}`
-                            }
-                            alt={user.username}
-                            className="w-12 h-12 rounded-full object-cover border-2 border-purple-500"
-                          />
-                        ) : (
-                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
-                            <User className="w-6 h-6" />
-                          </div>
-                        )}
+                        <img 
+                          src={
+                            user.profile_picture_url 
+                              ? (user.profile_picture_url.startsWith('http') 
+                                  ? user.profile_picture_url 
+                                  : `${user.profile_picture_url}`)
+                              : '/flixvault-icon.svg'
+                          }
+                          alt={user.username}
+                          className="w-12 h-12 rounded-full object-cover border-2 border-purple-500 bg-gray-800 p-1"
+                          onError={(e) => {
+                            e.target.src = '/flixvault-icon.svg';
+                          }}
+                        />
                         <div className="flex-1">
                           <p className="text-sm text-white font-semibold truncate">{user.username}</p>
                         </div>

@@ -170,6 +170,38 @@ const Home = () => {
       />
 
       <div className="relative -mt-32 z-20 space-y-8 pb-20">
+        {/* RATE FLIXVAULT - PROMINENT CTA */}
+        <div className="px-6 lg:px-12 max-w-[1920px] mx-auto mb-8">
+          <div className="bg-gradient-to-br from-purple-600/30 via-blue-600/30 to-purple-600/30 rounded-2xl p-10 border-2 border-purple-500/50 shadow-2xl backdrop-blur-sm">
+            <div className="flex items-center justify-between flex-wrap gap-6">
+              <div className="flex items-center gap-4">
+                <img 
+                  src="/flixvault-icon.svg" 
+                  alt="FlixVault" 
+                  className="w-20 h-20 animate-pulse"
+                />
+                <div>
+                  <h2 className="text-4xl font-bold text-white mb-3 flex items-center gap-3">
+                    <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+                      Rate FlixVault
+                    </span>
+                    ⭐
+                  </h2>
+                  <p className="text-white/80 text-lg">
+                    Love FlixVault? Share your experience and help us improve!
+                  </p>
+                </div>
+              </div>
+              <a
+                href="/app-reviews"
+                className="px-10 py-5 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-bold text-xl rounded-xl transition-all transform hover:scale-110 shadow-2xl animate-bounce"
+              >
+                ⭐ Rate Us Now
+              </a>
+            </div>
+          </div>
+        </div>
+
         {/* BROWSE ALL CATALOG MOVIES - PROMINENT SECTION */}
         <div className="px-6 lg:px-12 max-w-[1920px] mx-auto mb-12">
           <div className="bg-gradient-to-r from-purple-900/40 to-blue-900/40 rounded-xl p-8 border border-purple-500/30">
