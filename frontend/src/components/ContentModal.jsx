@@ -10,7 +10,7 @@ import { useToast } from '../hooks/use-toast';
 import RatingsReviews from './RatingsReviews';
 import ShareButtons from './ShareButtons';
 
-const ContentModal = ({ content, isOpen, onClose, onPlayTrailer }) => {
+const ContentModal = ({ content, isOpen, onClose, onPlayTrailer, onSelectContent }) => {
   const [details, setDetails] = useState(null);
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -339,8 +339,9 @@ const ContentModal = ({ content, isOpen, onClose, onPlayTrailer }) => {
                       onClick={() => {
                         onClose();
                         setTimeout(() => {
-                          setSelectedContent(item);
-                          setModalOpen(true);
+                          if (onSelectContent) {
+                            onSelectContent(item);
+                          }
                         }, 300);
                       }}
                       className="relative aspect-video rounded-md overflow-hidden cursor-pointer hover:scale-105 hover:ring-2 hover:ring-white/40 transition-all"
