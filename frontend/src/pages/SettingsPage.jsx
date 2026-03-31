@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sun, Moon, Monitor, Save, User as UserIcon, Home, ArrowLeft } from 'lucide-react';
+import { Sun, Moon, Monitor, Save, User as UserIcon, Home, ArrowLeft, Film } from 'lucide-react';
 import axios from 'axios';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
