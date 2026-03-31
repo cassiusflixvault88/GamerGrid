@@ -121,13 +121,24 @@ const Navbar = () => {
                         : `${process.env.REACT_APP_BACKEND_URL}${user.profile_picture_url}`
                       }
                       alt={user.username}
-                      className="w-8 h-8 rounded-full object-cover border-2 border-purple-500"
+                      className="w-8 h-8 rounded-full object-cover border-2 border-purple-500 bg-gray-800"
+                      onError={(e) => {
+                        console.error('❌ Profile picture failed to load:', user.profile_picture_url);
+                        console.error('Full URL:', e.target.src);
+                        // Hide broken image, show fallback
+                        e.target.style.display = 'none';
+                      }}
+                      onLoad={() => {
+                        console.log('✅ Profile picture loaded successfully');
+                      }}
                     />
                   ) : (
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center border-2 border-purple-500">
                       <User className="w-5 h-5" />
                     </div>
                   )}
+                  <span className="hidden md:inline text-sm">{user.username}</span>
+                </button>
                   <span className="hidden md:inline text-sm">{user.username}</span>
                 </button>
 

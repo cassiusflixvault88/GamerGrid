@@ -108,6 +108,8 @@ const SettingsPage = () => {
         return;
       }
       
+      console.log('📤 Uploading image to:', `${API}/user/upload-profile-picture`);
+      
       const response = await axios.post(`${API}/user/upload-profile-picture`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -115,11 +117,16 @@ const SettingsPage = () => {
         }
       });
 
+      console.log('✅ Upload response:', response.data);
+      const imageUrl = response.data.url;
+      console.log('📸 Image URL:', imageUrl);
+
       // Update profile data with new image URL
-      setProfileData({ ...profileData, profile_picture_url: response.data.url });
+      const updatedProfile = { ...profileData, profile_picture_url: imageUrl };
+      setProfileData(updatedProfile);
       
       // AUTO-SAVE after upload so user doesn't have to click Save Settings
-      const updatedProfile = { ...profileData, profile_picture_url: response.data.url };
+      console.log('💾 Auto-saving profile with new image...');
       await saveProfileWithNewPicture(updatedProfile);
       
       toast({
