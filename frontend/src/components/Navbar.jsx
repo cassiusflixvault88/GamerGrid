@@ -31,6 +31,14 @@ const Navbar = () => {
     }
   };
 
+  // Debug: Log when user profile picture changes
+  useEffect(() => {
+    if (user) {
+      console.log('👤 Navbar detected user change:', user.username);
+      console.log('📸 Current profile picture:', user.profile_picture_url || 'NOT SET');
+    }
+  }, [user, user?.profile_picture_url]);
+
   const handleLogout = () => {
     logout();
     setShowUserMenu(false);

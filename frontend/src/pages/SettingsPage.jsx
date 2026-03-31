@@ -177,15 +177,25 @@ const SettingsPage = () => {
       const token = localStorage.getItem('token');
       if (!token) return;
       
+      console.log('💾 Saving profile with new picture:', updatedData.profile_picture_url);
+      
       await axios.put(`${API}/user/profile`, updatedData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       
+      console.log('✅ Profile saved successfully');
+      
       // Refresh user context to update navbar immediately
+      console.log('🔄 Refreshing user data...');
       await refreshUser();
-      console.log('✅ Profile saved and navbar refreshed');
+      
+      // Force a small delay to ensure state updates propagate
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      console.log('✅ User data refreshed, navbar should update now');
     } catch (error) {
-      console.error('Failed to auto-save:', error);
+      console.error('❌ Failed to auto-save:', error);
+      console.error('Error details:', error.response?.data);
     }
   };
 
