@@ -148,13 +148,14 @@ const ContentModal = ({ content, isOpen, onClose, onPlayTrailer, onSelectContent
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[95vh] overflow-y-auto p-0 bg-[#141414] border-0 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent touch-auto overscroll-contain">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0 bg-[#141414] border-0 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
         <div className="relative">
-          <div className="relative aspect-video w-full">
+          {/* Backdrop Image - Smaller on mobile */}
+          <div className="relative w-full h-[40vh] md:h-[50vh] lg:aspect-video">
             <img
               src={getImageUrl(content.backdrop_path || content.poster_path, 'original')}
               alt={title}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover object-top"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-[#141414]/50 to-transparent" />
             
@@ -165,9 +166,9 @@ const ContentModal = ({ content, isOpen, onClose, onPlayTrailer, onSelectContent
               <X className="w-6 h-6 text-white" />
             </button>
 
-            <div className="absolute bottom-8 left-8 right-8">
-              <h2 className="text-4xl font-bold text-white mb-4">{title}</h2>
-              <div className="flex items-center space-x-3">
+            <div className="absolute bottom-4 left-4 right-4 md:bottom-8 md:left-8 md:right-8">
+              <h2 className="text-2xl md:text-4xl font-bold text-white mb-2 md:mb-4">{title}</h2>
+              <div className="flex items-center space-x-2 md:space-x-3">
                 {/* For Plex movies: Show BOTH trailer AND Plex button */}
                 {hasPlexMovie && trailer ? (
                   <>
