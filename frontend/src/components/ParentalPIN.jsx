@@ -105,8 +105,8 @@ const ParentalPIN = ({ isOpen, onClose, onSuccess, mode = 'verify' }) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md bg-gradient-to-br from-gray-900 to-black border-purple-500/30">
-        <div className="p-6">
+      <DialogContent className="max-w-md bg-gradient-to-br from-gray-900 to-black border-purple-500/30 max-h-[90vh] overflow-y-auto">
+        <div className="p-6 max-h-full overflow-y-auto">
           <button
             onClick={onClose}
             className="absolute top-4 right-4 text-white/50 hover:text-white"

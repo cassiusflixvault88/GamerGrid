@@ -84,11 +84,11 @@ Created by Cassius Fox | FlixVault`;
       </Button>
 
       <Dialog open={showModal} onOpenChange={setShowModal}>
-        <DialogContent className="max-w-2xl bg-gradient-to-br from-gray-900 via-black to-purple-900/20 border-purple-500/30">
-          <div className="p-6">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-gray-900 via-black to-purple-900/20 border-purple-500/30">
+          <div className="p-6 max-h-full overflow-y-auto">
             <button
               onClick={() => setShowModal(false)}
-              className="absolute top-4 right-4 text-white/50 hover:text-white"
+              className="absolute top-4 right-4 text-white/50 hover:text-white z-10"
             >
               <X className="w-5 h-5" />
             </button>

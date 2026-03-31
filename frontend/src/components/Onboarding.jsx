@@ -112,8 +112,8 @@ const Onboarding = () => {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="max-w-2xl p-0 bg-gradient-to-br from-gray-900 via-black to-purple-900/20 border-purple-500/30 overflow-hidden">
-        <div className="relative p-8">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0 bg-gradient-to-br from-gray-900 via-black to-purple-900/20 border-purple-500/30">
+        <div className="relative p-8 max-h-full overflow-y-auto">
           {/* Close button */}
           <button
             onClick={handleClose}

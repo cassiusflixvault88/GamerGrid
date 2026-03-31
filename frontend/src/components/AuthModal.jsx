@@ -57,8 +57,8 @@ const AuthModal = ({ isOpen, onClose }) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md p-0 bg-black/95 border border-white/10">
-        <div className="p-8">
+      <DialogContent className="max-w-md p-0 bg-black/95 border border-white/10 max-h-[90vh] overflow-y-auto">
+        <div className="p-8 max-h-full overflow-y-auto">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-3xl font-bold text-white">
               {isLogin ? 'Sign In' : 'Sign Up'}
