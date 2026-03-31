@@ -124,6 +124,14 @@ const SettingsPage = () => {
     }
   };
 
+  const useFlixVaultLogo = () => {
+    setProfileData({ ...profileData, profile_picture_url: '/flixvault-icon.svg' });
+    toast({
+      title: 'FlixVault Logo Set',
+      description: 'Using FlixVault logo as profile picture'
+    });
+  };
+
   const handleSaveProfile = async () => {
     setSaving(true);
     try {
@@ -289,8 +297,8 @@ const SettingsPage = () => {
 
             <div>
               <Label htmlFor="profile_picture" className="text-white/80 mb-2 block">Profile Picture</Label>
-              <div className="flex gap-3 items-end">
-                <div className="flex-1">
+              <div className="flex gap-3 items-end flex-wrap">
+                <div className="flex-1 min-w-[200px]">
                   <Input
                     id="profile_picture"
                     type="url"
@@ -300,40 +308,54 @@ const SettingsPage = () => {
                     className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
                   />
                 </div>
-                <div className="relative">
-                  <input
-                    type="file"
-                    id="image-upload"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="hidden"
-                  />
+                <div className="flex gap-2">
+                  <div className="relative">
+                    <input
+                      type="file"
+                      id="image-upload"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="hidden"
+                    />
+                    <Button
+                      type="button"
+                      onClick={() => document.getElementById('image-upload').click()}
+                      disabled={uploadingImage}
+                      className="bg-purple-600 hover:bg-purple-700 text-white"
+                    >
+                      {uploadingImage ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                          Uploading...
+                        </>
+                      ) : (
+                        <>
+                          <UserIcon className="w-4 h-4 mr-2" />
+                          Upload Photo
+                        </>
+                      )}
+                    </Button>
+                  </div>
                   <Button
                     type="button"
-                    onClick={() => document.getElementById('image-upload').click()}
-                    disabled={uploadingImage}
-                    className="bg-purple-600 hover:bg-purple-700 text-white"
+                    onClick={useFlixVaultLogo}
+                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
                   >
-                    {uploadingImage ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                        Uploading...
-                      </>
-                    ) : (
-                      <>
-                        <UserIcon className="w-4 h-4 mr-2" />
-                        Upload Photo
-                      </>
-                    )}
+                    <Film className="w-4 h-4 mr-2" />
+                    Use FlixVault Logo
                   </Button>
                 </div>
               </div>
               {profileData.profile_picture_url && (
                 <div className="mt-3">
+                  <p className="text-xs text-white/50 mb-2">Preview:</p>
                   <img 
                     src={profileData.profile_picture_url} 
                     alt="Profile preview" 
-                    className="w-20 h-20 rounded-full object-cover border-2 border-purple-500"
+                    className="w-20 h-20 rounded-full object-cover border-2 border-purple-500 bg-white/10"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                    }}
                   />
                 </div>
               )}
