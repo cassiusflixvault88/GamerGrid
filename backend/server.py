@@ -664,6 +664,43 @@ async def get_user_rating(content_id: int, token_data: dict = Depends(verify_tok
     )
 
 
+@api_router.get("/reviews/all")
+async def get_all_reviews(limit: int = 100, skip: int = 0):
+    """Get all reviews across all content - for Reviews page"""
+    try:
+        # Fetch all ratings with reviews from database
+        all_ratings = await db.ratings.find(
+            {"review": {"$exists": True, "$ne": None, "$ne": ""}},  # Only get ratings with actual reviews
+            {"_id": 0}
+        ).sort("created_at", -1).limit(limit).skip(skip).to_list(length=limit)
+        
+        # Fetch user data for each rating to get username
+        enriched_reviews = []
+        for rating in all_ratings:
+            user = await db.users.find_one(
+                {"id": rating["user_id"]},
+                {"_id": 0, "username": 1}
+            )
+            
+            enriched_reviews.append({
+                "id": rating["id"],
+                "content_id": rating["content_id"],
+                "content_title": rating.get("content_title", "Unknown"),
+                "username": user.get("username", "Anonymous") if user else "Anonymous",
+                "rating": rating["rating"],
+                "review": rating["review"],
+                "created_at": rating["created_at"],
+                "media_type": rating.get("media_type", "movie")
+            })
+        
+        return enriched_reviews
+        
+    except Exception as e:
+        logging.error(f"Error fetching all reviews: {e}")
+        return []
+
+
+
 # ============= WATCH HISTORY / CONTINUE WATCHING ROUTES =============
 
 @api_router.post("/watch-history")

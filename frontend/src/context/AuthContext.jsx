@@ -147,29 +147,47 @@ export const AuthProvider = ({ children }) => {
         media_type: content.media_type || (content.title ? 'movie' : 'tv'),
       };
 
+      console.log('➕ Adding to watchlist:', item.title);
+      
       await axios.post(`${API}/watchlist/add`, item, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
+      console.log('✅ Added to watchlist, refreshing user data...');
+      
+      // Add small delay to ensure backend has processed
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
       // Update user state immediately for instant feedback
       await fetchCurrentUser();
+      
+      console.log('✅ Watchlist updated in UI');
       return true;
     } catch (error) {
-      console.error('Failed to add to watchlist:', error);
+      console.error('❌ Failed to add to watchlist:', error);
       return false;
     }
   }, [token, fetchCurrentUser]);
 
   const removeFromWatchlist = useCallback(async (contentId) => {
     try {
+      console.log('➖ Removing from watchlist:', contentId);
+      
       await axios.delete(`${API}/watchlist/remove/${contentId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
+      console.log('✅ Removed from watchlist, refreshing user data...');
+      
+      // Add small delay to ensure backend has processed
+      await new Promise(resolve => setTimeout(resolve, 300));
+
       await fetchCurrentUser();
+      
+      console.log('✅ Watchlist updated in UI');
       return true;
     } catch (error) {
-      console.error('Failed to remove from watchlist:', error);
+      console.error('❌ Failed to remove from watchlist:', error);
       return false;
     }
   }, [token, fetchCurrentUser]);
