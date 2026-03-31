@@ -16,7 +16,7 @@ class User(BaseModel):
     display_name: Optional[str] = None
     phone: Optional[str] = None
     address: Optional[str] = None
-    profile_picture_url: Optional[str] = None
+    profile_picture_url: Optional[str] = "/flixvault-icon.svg"
     # Preferences
     autoplay_trailers: bool = True
     email_notifications: bool = True
@@ -45,7 +45,7 @@ class UserResponse(BaseModel):
     display_name: Optional[str] = None
     phone: Optional[str] = None
     address: Optional[str] = None
-    profile_picture_url: Optional[str] = None
+    profile_picture_url: Optional[str] = "/flixvault-icon.svg"
     # Preferences
     autoplay_trailers: bool = True
     email_notifications: bool = True
@@ -57,7 +57,7 @@ class UserProfileUpdate(BaseModel):
     display_name: Optional[str] = None
     phone: Optional[str] = None
     address: Optional[str] = None
-    profile_picture_url: Optional[str] = None
+    profile_picture_url: Optional[str] = "/flixvault-icon.svg"
     autoplay_trailers: Optional[bool] = None
     email_notifications: Optional[bool] = None
     maturity_rating: Optional[str] = None

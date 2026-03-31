@@ -403,33 +403,6 @@ const SettingsPage = () => {
                   />
                 </div>
                 <div className="flex gap-2">
-                  <div className="relative">
-                    <input
-                      type="file"
-                      id="image-upload"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      className="hidden"
-                    />
-                    <Button
-                      type="button"
-                      onClick={() => document.getElementById('image-upload').click()}
-                      disabled={uploadingImage}
-                      className="bg-purple-600 hover:bg-purple-700 text-white"
-                    >
-                      {uploadingImage ? (
-                        <>
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                          Uploading...
-                        </>
-                      ) : (
-                        <>
-                          <UserIcon className="w-4 h-4 mr-2" />
-                          Upload Photo
-                        </>
-                      )}
-                    </Button>
-                  </div>
                   <Button
                     type="button"
                     onClick={useFlixVaultLogo}
