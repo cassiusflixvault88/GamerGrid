@@ -6,28 +6,28 @@ const AboutFlixVault = ({ isOpen, onClose }) => {
   const features = [
     {
       icon: Play,
-      title: 'Stream Unlimited Content',
-      description: 'Access thousands of movies and TV shows from TMDB database with YouTube trailers'
+      title: 'Watch Movie Trailers',
+      description: 'Browse 446+ movies with high-quality YouTube trailers - discover what to watch next'
     },
     {
       icon: Star,
-      title: 'Rate & Review',
-      description: 'Share your thoughts with Rotten Tomatoes-style ratings and reviews'
+      title: 'Rate & Review Movies',
+      description: 'Share your opinions with IMDb and Rotten Tomatoes-style ratings and reviews'
     },
     {
       icon: Heart,
       title: 'Personal Watchlist',
-      description: 'Save your favorite content and build your perfect watchlist'
+      description: 'Save movies you want to watch and build your perfect watchlist'
     },
     {
       icon: Tv,
-      title: 'Free Movies Section',
-      description: 'Watch public domain movies completely free - full-length, no subscription required'
+      title: 'Bonus: 35 Free Full Movies',
+      description: 'Occasionally watch public domain classics completely free - no subscription required'
     },
     {
       icon: Download,
-      title: 'Progressive Web App',
-      description: 'Install FlixVault on any device - works offline and feels like a native app'
+      title: 'Install as an App',
+      description: 'Install FlixVault on any device - works offline and feels like a native app (PWA)'
     },
     {
       icon: Shield,
@@ -44,7 +44,7 @@ const AboutFlixVault = ({ isOpen, onClose }) => {
             About FlixVault
           </DialogTitle>
           <p className="text-white/70 text-sm">
-            Your ultimate streaming companion - Free, Fast, and Feature-Rich
+            Your Movie Discovery Vault - Watch Trailers, Rate Movies, Build Your Watchlist
           </p>
         </DialogHeader>
 
@@ -56,14 +56,18 @@ const AboutFlixVault = ({ isOpen, onClose }) => {
               What is FlixVault?
             </h3>
             <p className="text-white/80 leading-relaxed mb-4">
-              FlixVault is a modern streaming platform that brings together content discovery, 
-              community reviews, and personalized watchlists. Browse thousands of movies and series, 
-              watch trailers, read ratings, and discover what's trending - all in one beautiful, 
+              FlixVault is your <strong className="text-purple-300">movie discovery companion</strong> - like IMDb and Rotten Tomatoes combined. 
+              Browse 446+ movies with trailers, rate and review what you've watched, and build your personal watchlist. 
+              Discover what's hot, explore by genre, and find your next favorite film - all in one beautiful, 
               fast, and installable web app.
             </p>
+            <p className="text-white/80 leading-relaxed mb-4">
+              <strong className="text-blue-300">Bonus:</strong> We occasionally feature free full-length movies you can watch! 
+              Right now, enjoy 35 public domain classics and Plex-available films at no cost.
+            </p>
             <p className="text-white/80 leading-relaxed">
-              Built entirely from scratch by Cassius Fox, FlixVault represents the future of 
-              independent streaming platforms - powerful, user-focused, and constantly evolving.
+              Built entirely from scratch by Cassius Fox, FlixVault is <strong>primarily a movie rating and trailer vault</strong> 
+              where you can discover, rate, and track movies - with the occasional free movie as a bonus treat.
             </p>
           </div>
 
