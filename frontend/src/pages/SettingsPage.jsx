@@ -28,8 +28,7 @@ const SettingsPage = () => {
     address: '',
     profile_picture_url: '',
     autoplay_trailers: true,
-    email_notifications: true,
-    maturity_rating: 'PG-13'
+    email_notifications: true
   });
 
   useEffect(() => {
@@ -60,8 +59,7 @@ const SettingsPage = () => {
           address: response.data.address || '',
           profile_picture_url: response.data.profile_picture_url || '',
           autoplay_trailers: response.data.autoplay_trailers ?? true,
-          email_notifications: response.data.email_notifications ?? true,
-          maturity_rating: response.data.maturity_rating || 'PG-13'
+          email_notifications: response.data.email_notifications ?? true
         });
       }
     } catch (error) {
@@ -117,7 +115,7 @@ const SettingsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-black dark:bg-gray-950">
+    <div className="min-h-screen bg-black">
       <Navbar />
       
       <main className="pt-24 pb-12 px-6 lg:px-12 max-w-4xl mx-auto">
@@ -136,7 +134,7 @@ const SettingsPage = () => {
         </div>
 
         {/* Theme Selection */}
-        <div className="bg-white/5 dark:bg-white/10 backdrop-blur-sm rounded-lg p-6 mb-6 border border-white/10">
+        <div className="bg-white/5 backdrop-blur-sm rounded-lg p-6 mb-6 border border-white/10">
           <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
             <Monitor className="w-5 h-5" />
             Appearance
@@ -164,7 +162,7 @@ const SettingsPage = () => {
         </div>
 
         {/* Profile Information */}
-        <div className="bg-white/5 dark:bg-white/10 backdrop-blur-sm rounded-lg p-6 mb-6 border border-white/10">
+        <div className="bg-white/5 backdrop-blur-sm rounded-lg p-6 mb-6 border border-white/10">
           <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
             <UserIcon className="w-5 h-5" />
             Profile Information
@@ -247,7 +245,7 @@ const SettingsPage = () => {
         </div>
 
         {/* App Preferences */}
-        <div className="bg-white/5 dark:bg-white/10 backdrop-blur-sm rounded-lg p-6 mb-6 border border-white/10">
+        <div className="bg-white/5 backdrop-blur-sm rounded-lg p-6 mb-6 border border-white/10">
           <h2 className="text-xl font-semibold text-white mb-4">Preferences</h2>
           
           <div className="space-y-4">
@@ -285,25 +283,6 @@ const SettingsPage = () => {
                   profileData.email_notifications ? 'translate-x-7' : 'translate-x-1'
                 }`} />
               </button>
-            </div>
-
-            <Separator className="bg-white/10" />
-
-            <div>
-              <Label htmlFor="maturity" className="text-white/80">Content Maturity Rating</Label>
-              <select
-                id="maturity"
-                value={profileData.maturity_rating}
-                onChange={(e) => setProfileData({ ...profileData, maturity_rating: e.target.value })}
-                className="w-full mt-2 bg-white/10 border border-white/20 text-white rounded-md px-3 py-2"
-              >
-                <option value="G">G - All Ages</option>
-                <option value="PG">PG - Parental Guidance</option>
-                <option value="PG-13">PG-13 - Ages 13+</option>
-                <option value="R">R - Restricted</option>
-                <option value="NC-17">NC-17 - Adults Only</option>
-                <option value="TV-MA">TV-MA - Mature Audiences</option>
-              </select>
             </div>
           </div>
         </div>
