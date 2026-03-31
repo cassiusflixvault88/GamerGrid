@@ -6,7 +6,8 @@ import ContentCard from '../components/ContentCard';
 import ContentModal from '../components/ContentModal';
 import VideoPlayer from '../components/VideoPlayer';
 import Footer from '../components/Footer';
-import { search } from '../services/tmdb';
+
+const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const SearchPage = () => {
   const [searchParams] = useSearchParams();
@@ -21,15 +22,44 @@ const SearchPage = () => {
   useEffect(() => {
     if (query) {
       searchContent();
+    } else {
+      // Show all movies if no query
+      loadAllMovies();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
 
+  const loadAllMovies = async () => {
+    setLoading(true);
+    try {
+      // Get all movies from your catalog
+      const response = await fetch(`${API_URL}/api/catalog/movies?limit=100`);
+      const data = await response.json();
+      setResults(data.results || []);
+    } catch (error) {
+      console.error('Error loading movies:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const searchContent = async () => {
     setLoading(true);
     try {
-      const data = await search(query);
-      setResults(data.filter((item) => item.media_type !== 'person'));
+      // Search through YOUR catalog movies
+      const response = await fetch(`${API_URL}/api/catalog/movies?limit=100`);
+      const data = await response.json();
+      const allMovies = data.results || [];
+      
+      // Filter movies that match search query
+      const filtered = allMovies.filter(movie => {
+        const title = movie.title?.toLowerCase() || '';
+        const overview = movie.overview?.toLowerCase() || '';
+        const searchTerm = query.toLowerCase();
+        return title.includes(searchTerm) || overview.includes(searchTerm);
+      });
+      
+      setResults(filtered);
     } catch (error) {
       console.error('Error searching:', error);
     } finally {
@@ -53,7 +83,8 @@ const SearchPage = () => {
       <Navbar />
       <BackNavigation />
       
-      <div className="px-6 lg:px-12 max-w-[1920px] mx-auto">\n        <h1 className="text-3xl font-bold text-white mb-8">
+      <div className="px-6 lg:px-12 max-w-[1920px] mx-auto">
+        <h1 className="text-3xl font-bold text-white mb-8">
           {query ? `Search results for "${query}"` : 'Search'}
         </h1>
 
@@ -64,12 +95,18 @@ const SearchPage = () => {
         ) : results.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 pb-20">
             {results.map((item) => (
-              <ContentCard key={item.id} content={item} onClick={handleCardClick} />
+              <ContentCard 
+                key={item.id} 
+                content={{...item, media_type: item.media_type || 'movie'}} 
+                onClick={handleCardClick} 
+              />
             ))}
           </div>
         ) : (
           <div className="text-center py-20">
-            <p className="text-white/70 text-lg">No results found for "{query}"</p>
+            <p className="text-white/70 text-lg">
+              {query ? `No results found for "${query}"` : 'Start typing to search movies...'}
+            </p>
           </div>
         )}
       </div>
