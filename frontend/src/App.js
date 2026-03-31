@@ -13,6 +13,7 @@ import OriginalsPage from "./pages/OriginalsPage";
 import SearchPage from "./pages/SearchPage";
 import PublicDomainPage from "./pages/PublicDomainPage";
 import AppReviewsPage from "./pages/AppReviewsPage";
+import ReviewsPage from "./pages/ReviewsPage";
 import RequestContentPage from "./pages/RequestContentPage";
 import FeedbackPage from "./pages/FeedbackPage";
 import UserDetailPage from "./pages/UserDetailPage";
@@ -36,6 +37,7 @@ function App() {
               <Route path="/search" element={<SearchPage />} />
               <Route path="/public-domain" element={<PublicDomainPage />} />
               <Route path="/app-reviews" element={<AppReviewsPage />} />
+              <Route path="/reviews" element={<ReviewsPage />} />
               <Route path="/request-content" element={<RequestContentPage />} />
               <Route path="/feedback" element={<FeedbackPage />} />
               <Route path="/admin/user/:userId" element={<UserDetailPage />} />

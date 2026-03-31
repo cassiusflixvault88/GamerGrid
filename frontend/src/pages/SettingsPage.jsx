@@ -160,16 +160,51 @@ const SettingsPage = () => {
   };
 
   const useFlixVaultLogo = async () => {
-    const updatedProfile = { ...profileData, profile_picture_url: '/flixvault-icon.svg' };
-    setProfileData(updatedProfile);
+    console.log('🎬 Setting FlixVault logo as profile picture...');
+    const logoUrl = '/flixvault-icon.svg';
     
-    // AUTO-SAVE after selecting logo
-    await saveProfileWithNewPicture(updatedProfile);
+    // Update local state FIRST
+    setProfileData({ ...profileData, profile_picture_url: logoUrl });
     
-    toast({
-      title: 'FlixVault Logo Set',
-      description: 'Profile picture updated and saved!'
-    });
+    // AUTO-SAVE to backend
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        toast({
+          title: 'Error',
+          description: 'Please log in to change your profile picture',
+          variant: 'destructive'
+        });
+        return;
+      }
+      
+      const updatedData = { ...profileData, profile_picture_url: logoUrl };
+      
+      await axios.put(`${API}/user/profile`, updatedData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      console.log('✅ FlixVault logo saved to database');
+      
+      // Refresh user context
+      await refreshUser();
+      
+      toast({
+        title: 'FlixVault Logo Set',
+        description: 'Profile picture updated successfully!'
+      });
+      
+      // Reload profile to ensure sync
+      setTimeout(() => fetchUserProfile(), 500);
+      
+    } catch (error) {
+      console.error('❌ Failed to set FlixVault logo:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update profile picture',
+        variant: 'destructive'
+      });
+    }
   };
 
   // Helper function to save profile and refresh navbar

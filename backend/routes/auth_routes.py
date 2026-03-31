@@ -79,7 +79,7 @@ async def login(credentials: UserLogin):
     """Login with email and password"""
     user = await db.users.find_one(
         {"email": credentials.email},
-        {"email": 1, "id": 1, "username": 1, "hashed_password": 1, "created_at": 1, "watchlist": 1, "favorites": 1}
+        {"email": 1, "id": 1, "username": 1, "hashed_password": 1, "created_at": 1, "watchlist": 1, "favorites": 1, "profile_picture_url": 1}
     )
     if not user or not verify_password(credentials.password, user["hashed_password"]):
         raise HTTPException(
