@@ -30,11 +30,18 @@ const AppReviewsPage = () => {
     loadReviews();
   }, []);
 
-  const loadReviews = async () => {
+  const loadReviews = async (forceRefresh = false) => {
     try {
-      console.log('🔄 Loading app reviews...');
-      const response = await axios.get(`${API}/app-reviews`);
+      console.log('🔄 Loading app reviews...', forceRefresh ? '(FORCE REFRESH)' : '');
+      
+      // Add cache busting for force refresh
+      const url = forceRefresh 
+        ? `${API}/app-reviews?t=${Date.now()}` 
+        : `${API}/app-reviews`;
+      
+      const response = await axios.get(url);
       console.log('✅ Loaded reviews:', response.data);
+      
       setReviews(response.data.reviews || []);
       setAverageRating(response.data.average_rating || 0);
       setTotalReviews(response.data.total || 0);
@@ -103,11 +110,16 @@ const AppReviewsPage = () => {
       setUserRating(0);
       setUserReview('');
       
-      // Immediately reload reviews - add small delay to ensure backend processed
+      // Immediately reload reviews with longer delay and force refresh
       console.log('🔄 Reloading reviews after submission...');
-      await new Promise(resolve => setTimeout(resolve, 800));
-      await loadReviews();
-      console.log('✅ Reviews reloaded!');
+      console.log('⏳ Waiting 1.5 seconds for backend to process...');
+      
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      console.log('🔄 Now fetching reviews with cache bust...');
+      await loadReviews(true); // Force refresh with cache busting
+      
+      console.log('✅ Reviews reloaded! Total:', totalReviews);
       
     } catch (error) {
       console.error('❌ App review submission failed:', error.response || error);
