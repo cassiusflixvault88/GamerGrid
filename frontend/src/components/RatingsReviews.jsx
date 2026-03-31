@@ -29,10 +29,13 @@ const RatingsReviews = ({ contentId, contentTitle }) => {
 
   const loadRatings = async () => {
     try {
+      console.log(`📊 Loading ratings for content_id: ${contentId}`);
       const response = await axios.get(`${API}/ratings/${contentId}`);
+      console.log(`✅ Loaded ratings:`, response.data);
       setRatings(response.data);
     } catch (error) {
-      console.error('Error loading ratings:', error);
+      console.error('❌ Error loading ratings:', error);
+      setRatings({ average: 0, count: 0, ratings: [] });
     }
   };
 
@@ -74,21 +77,34 @@ const RatingsReviews = ({ contentId, contentTitle }) => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      await axios.post(
+      console.log(`💾 Submitting rating for content_id ${contentId}: ${rating}★`);
+      
+      const response = await axios.post(
         `${API}/ratings`,
         { content_id: contentId, rating, review: review || null },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+      
+      console.log(`✅ Rating submitted successfully:`, response.data);
       
       toast({
         title: 'Rating submitted!',
         description: 'Thank you for your review',
       });
       
+      // Close form first
       setShowReviewForm(false);
-      loadRatings();
-      loadUserRating();
+      
+      // Force reload ratings with a small delay to ensure backend has processed
+      setTimeout(async () => {
+        console.log('🔄 Reloading ratings after submission...');
+        await loadRatings();
+        await loadUserRating();
+        console.log('✅ Ratings reloaded!');
+      }, 500);
+      
     } catch (error) {
+      console.error('❌ Error submitting rating:', error);
       toast({
         title: 'Error',
         description: error.response?.data?.detail || 'Failed to submit rating',
@@ -266,16 +282,16 @@ const RatingsReviews = ({ contentId, contentTitle }) => {
 
       {/* Reviews List */}
       {ratings.ratings && ratings.ratings.length > 0 && (
-        <div className="space-y-4">
+        <div className="space-y-4" key={`reviews-${ratings.count}-${contentId}`}>
           <h4 className="text-white font-semibold text-lg flex items-center">
             <MessageSquare className="w-5 h-5 mr-2" />
             User Reviews ({ratings.count})
           </h4>
           
-          {ratings.ratings.map((r) => (
+          {ratings.ratings.map((r, index) => (
             <div
-              key={r.id}
-              className="bg-white/5 border border-white/10 rounded-lg p-4 space-y-2"
+              key={`${r.id}-${index}`}
+              className="bg-white/5 border border-white/10 rounded-lg p-4 space-y-2 animate-fadeIn"
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
@@ -297,6 +313,15 @@ const RatingsReviews = ({ contentId, contentTitle }) => {
               )}
             </div>
           ))}
+        </div>
+      )}
+      
+      {/* No Reviews Yet Message */}
+      {(!ratings.ratings || ratings.ratings.length === 0) && !showReviewForm && (
+        <div className="text-center py-8 bg-white/5 border border-white/10 rounded-lg">
+          <MessageSquare className="w-12 h-12 mx-auto text-white/30 mb-3" />
+          <p className="text-white/70 text-sm mb-2">No reviews yet</p>
+          <p className="text-white/50 text-xs">Be the first to review {contentTitle}!</p>
         </div>
       )}
     </div>
