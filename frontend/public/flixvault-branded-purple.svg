@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 250">
+  <defs>
+    <!-- Purple Gradient for FlixVault text -->
+    <linearGradient id="purpleGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#a855f7;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#7c3aed;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#6366f1;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Gold Gradient for Vault Icon -->
+    <linearGradient id="vaultGoldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFD700;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#FFA500;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FF8C00;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Vault Icon -->
+  <g transform="translate(60, 100)">
+    <circle cx="0" cy="0" r="60" fill="url(#vaultGoldGradient)" opacity="0.2"/>
+    <circle cx="0" cy="0" r="50" fill="none" stroke="url(#vaultGoldGradient)" stroke-width="4"/>
+    <circle cx="0" cy="0" r="38" fill="url(#vaultGoldGradient)"/>
+    <circle cx="0" cy="0" r="30" fill="#000"/>
+    <circle cx="0" cy="0" r="12" fill="url(#vaultGoldGradient)"/>
+    <circle cx="0" cy="0" r="8" fill="#000"/>
+    <!-- Play button -->
+    <path d="M -5 -7 L 8 0 L -5 7 Z" fill="url(#vaultGoldGradient)"/>
+  </g>
+  
+  <!-- FlixVault Text (Purple) -->
+  <text x="150" y="130" font-family="Arial, sans-serif" font-size="100" font-weight="900" fill="url(#purpleGradient)" letter-spacing="-3">FlixVault</text>
+  
+  <!-- "Created by Cassius Fox" Text -->
+  <text x="150" y="175" font-family="Arial, sans-serif" font-size="28" font-weight="600" fill="#9ca3af" letter-spacing="0.5">Created by Cassius Fox</text>
+</svg>

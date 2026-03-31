@@ -94,7 +94,14 @@ Created by Cassius Fox | FlixVault`;
             </button>
 
             <div className="text-center mb-6">
-              <h2 className="text-3xl font-bold text-white mb-2">Share FlixVault! 🚀</h2>
+              <div className="flex items-center justify-center gap-3 mb-3">
+                <img 
+                  src="/flixvault-icon.svg" 
+                  alt="FlixVault" 
+                  className="w-16 h-16 animate-pulse"
+                />
+                <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">Share FlixVault! 🚀</h2>
+              </div>
               <p className="text-white/70">Help us grow by inviting your friends to test!</p>
             </div>
 
