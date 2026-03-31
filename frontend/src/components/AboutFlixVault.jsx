@@ -78,7 +78,7 @@ const AboutFlixVault = ({ isOpen, onClose }) => {
               <p className="leading-relaxed">
                 <strong className="text-purple-300">Cassius Fox</strong>, born September 30, 1988 in Upper Sandusky, Ohio, 
                 is the 37-year-old founder and sole creator of FlixVault. What started as a vision to revolutionize 
-                how people discover and enjoy streaming content became a reality through determination and innovation.
+                how people discover movies and watch trailers became a reality through determination and innovation.
               </p>
               <p className="leading-relaxed">
                 Building FlixVault was a journey of learning, iterating, and pushing boundaries. From conceptualizing 
@@ -93,7 +93,7 @@ const AboutFlixVault = ({ isOpen, onClose }) => {
               </p>
               <p className="leading-relaxed font-semibold text-purple-300">
                 This is just version 1.0. Future versions of FlixVault will bring even more groundbreaking features, 
-                all continuing the mission: making streaming better, smarter, and more enjoyable for everyone.
+                all continuing the mission: making movie discovery better, smarter, and more enjoyable for everyone.
               </p>
             </div>
           </div>
@@ -156,7 +156,7 @@ const AboutFlixVault = ({ isOpen, onClose }) => {
               Founder & CEO • Born September 30, 1988 • Upper Sandusky, Ohio
             </p>
             <p className="text-white/40 text-xs mt-1">
-              "Building the future of streaming, one feature at a time."
+              "Building the future of movie discovery, one feature at a time."
             </p>
           </div>
         </div>

@@ -11,15 +11,15 @@ const ShareButton = ({ variant = 'default', size = 'default', showText = true })
   const { toast } = useToast();
   const shareUrl = 'https://hbo-max-app.preview.emergentagent.com';
 
-  const shareMessage = `🎬 Check out FlixVault - Premium Streaming Platform!
+  const shareMessage = `🎬 Check out FlixVault - Movie Discovery & Trailer App!
 
 ✨ Features:
-• Thousands of movies & TV shows
+• Watch trailers for 446+ movies
+• Rate & review like IMDb
+• Build your watchlist
 • 35+ FREE full-length movies
 • Top 10 Rankings
 • What's Hot trending section
-• Personal watchlist
-• Rate & review content
 
 🚀 Try it now (Preview):
 ${shareUrl}
@@ -61,8 +61,8 @@ Created by Cassius Fox | FlixVault`;
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'FlixVault - Premium Streaming',
-          text: 'Check out FlixVault! Thousands of movies, TV shows, and free content!',
+          title: 'FlixVault - Movie Discovery App',
+          text: 'Check out FlixVault! Watch trailers for 446+ movies, rate & review, plus 35 free movies!',
           url: shareUrl,
         });
       } catch (err) {

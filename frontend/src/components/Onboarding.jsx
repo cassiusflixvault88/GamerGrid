@@ -38,52 +38,52 @@ const Onboarding = () => {
   const steps = [
     {
       title: 'Welcome to FlixVault! 🎬',
-      description: 'Your ultimate streaming destination for movies, TV series, and documentaries.',
+      description: 'Your movie discovery vault - watch trailers, rate movies, and explore thousands of films!',
       icon: <Film className="w-16 h-16 text-purple-400" />,
       features: [
-        'Thousands of movies & TV shows',
-        'Free content available',
-        'New releases every week'
+        '446+ movies with HD trailers',
+        '35 free full-length movies',
+        'Rate & review like IMDb'
       ]
     },
     {
-      title: 'Discover Amazing Content 🔥',
-      description: 'Browse through trending movies, popular series, and exclusive documentaries.',
+      title: 'Watch Movie Trailers 🔥',
+      description: 'Browse hundreds of movies with high-quality YouTube trailers.',
       icon: <Star className="w-16 h-16 text-yellow-400" />,
       features: [
-        'Personalized recommendations',
+        'HD trailers for 446+ movies',
         'What\'s Hot trending section',
-        'Genre-based browsing'
+        'Discover by genre'
       ]
     },
     {
       title: 'Build Your Watchlist 💜',
-      description: 'Save your favorite content and never lose track of what you want to watch.',
+      description: 'Save movies you want to watch and never lose track of your favorites.',
       icon: <Heart className="w-16 h-16 text-red-400" />,
       features: [
-        'Add movies & shows to watchlist',
+        'Add movies to watchlist',
         'Sync across devices',
-        'Organize your favorites'
+        'Track what you want to watch'
       ]
     },
     {
-      title: 'Watch Free Movies 🎉',
-      description: 'Enjoy a curated selection of classic films completely free!',
+      title: 'Bonus: Free Movies! 🎉',
+      description: 'Enjoy 35 classic public domain films completely free!',
       icon: <Play className="w-16 h-16 text-green-400" />,
       features: [
-        '17+ free full-length movies',
+        '35 free full-length movies',
         'Classic cinema & horror',
         'No subscription needed'
       ]
     },
     {
-      title: 'Request Content 🎬',
-      description: 'Can\'t find something? Let us know what you\'d like to watch!',
+      title: 'Rate & Review Movies 🎬',
+      description: 'Share your opinions! Rate movies and read community reviews.',
       icon: <Share2 className="w-16 h-16 text-blue-400" />,
       features: [
-        'Submit content requests',
-        'Vote on community requests',
-        'Get updates on new additions'
+        'Rate movies like IMDb',
+        'Leave reviews',
+        'See what others think'
       ]
     },
     {
