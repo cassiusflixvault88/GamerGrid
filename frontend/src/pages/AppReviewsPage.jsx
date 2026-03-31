@@ -74,6 +74,16 @@ const AppReviewsPage = () => {
     setSubmitting(true);
     try {
       const token = localStorage.getItem('token');
+      console.log('📝 Submitting app review...', { 
+        hasToken: !!token, 
+        tokenPreview: token ? token.substring(0, 20) + '...' : 'none',
+        rating: userRating 
+      });
+      
+      if (!token) {
+        throw new Error('No authentication token found. Please log in again.');
+      }
+      
       await axios.post(
         `${API}/app-reviews/submit`,
         { rating: userRating, review: userReview },
@@ -93,9 +103,20 @@ const AppReviewsPage = () => {
         loadReviews();
       }, 500);
     } catch (error) {
+      console.error('❌ App review submission failed:', error.response || error);
+      
+      let errorMessage = 'Failed to submit review';
+      if (error.response?.status === 401) {
+        errorMessage = 'Authentication error. Please log out and log in again.';
+      } else if (error.response?.data?.detail) {
+        errorMessage = error.response.data.detail;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: 'Error',
-        description: error.response?.data?.detail || 'Failed to submit review',
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {
