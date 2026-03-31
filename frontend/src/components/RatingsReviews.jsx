@@ -103,7 +103,7 @@ const RatingsReviews = ({ contentId, contentTitle }) => {
     const [hover, setHover] = useState(0);
 
     return (
-      <div className="flex gap-1">
+      <div className="flex gap-2 relative z-50">
         {[1, 2, 3, 4, 5].map((star) => (
           <button
             key={star}
@@ -111,16 +111,43 @@ const RatingsReviews = ({ contentId, contentTitle }) => {
             disabled={readonly}
             onMouseEnter={() => !readonly && setHover(star)}
             onMouseLeave={() => !readonly && setHover(0)}
-            onClick={() => !readonly && onChange && onChange(star)}
-            className={`p-1 ${readonly ? 'cursor-default' : 'cursor-pointer active:scale-95'} transition-transform hover:scale-110`}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (!readonly && onChange) {
+                console.log(`⭐ Star ${star} clicked!`);
+                onChange(star);
+              }
+            }}
+            onTouchEnd={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (!readonly && onChange) {
+                console.log(`⭐ Star ${star} touched!`);
+                onChange(star);
+              }
+            }}
+            className={`
+              min-w-[48px] min-h-[48px] p-2 flex items-center justify-center
+              ${readonly ? 'cursor-default' : 'cursor-pointer active:scale-95 touch-manipulation'} 
+              transition-transform hover:scale-110
+              bg-transparent border-0 outline-none
+            `}
+            style={{ 
+              touchAction: 'manipulation',
+              WebkitTapHighlightColor: 'transparent',
+              position: 'relative',
+              zIndex: 100
+            }}
             aria-label={`Rate ${star} star${star > 1 ? 's' : ''}`}
           >
             <Star
-              className={`w-8 h-8 sm:w-10 sm:h-10 ${
+              className={`w-10 h-10 ${
                 star <= (hover || value)
                   ? 'fill-yellow-400 text-yellow-400'
                   : 'text-white/40'
               }`}
+              style={{ pointerEvents: 'none' }}
             />
           </button>
         ))}
@@ -167,12 +194,15 @@ const RatingsReviews = ({ contentId, contentTitle }) => {
 
       {/* Review Form */}
       {showReviewForm && (
-        <div className="bg-white/5 border border-white/10 rounded-lg p-6 space-y-4">
+        <div className="bg-white/5 border border-white/10 rounded-lg p-6 space-y-4 relative z-40">
           <h4 className="text-white font-semibold text-lg">Your Review for {contentTitle}</h4>
           
-          <div>
-            <label className="text-white/90 text-sm mb-2 block">Your Rating</label>
+          <div className="relative z-50">
+            <label className="text-white/90 text-sm mb-3 block font-semibold">Your Rating ⭐</label>
             <StarRating value={rating} onChange={setRating} />
+            {rating > 0 && (
+              <p className="text-yellow-400 text-sm mt-2">✓ You selected {rating} star{rating > 1 ? 's' : ''}</p>
+            )}
           </div>
           
           <div>
