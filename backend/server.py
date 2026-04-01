@@ -477,7 +477,7 @@ class AppReview(BaseModel):
     username: str
     rating: int = Field(ge=1, le=5)
     review: str
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 class AppReviewCreate(BaseModel):
     rating: int = Field(ge=1, le=5)
