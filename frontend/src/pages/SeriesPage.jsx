@@ -24,8 +24,8 @@ const SeriesPage = () => {
 
   const loadSeries = async () => {
     try {
-      // Load series from catalog (limit 1000 to avoid timeout)
-      const response = await fetch(`${API_URL}/api/catalog/movies?limit=1000&page=1`);
+      // Load more items to get series (they start after movies in catalog)
+      const response = await fetch(`${API_URL}/api/catalog/movies?limit=2000&page=1`);
       const data = await response.json();
       const allItems = data.results || [];
       
