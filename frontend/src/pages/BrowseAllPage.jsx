@@ -137,7 +137,7 @@ const BrowseAllPage = () => {
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">
             🎬 Browse All
           </h1>
-          <p className="text-white/60 text-lg">Discover 10,000+ movies and TV shows</p>
+          <p className="text-white/60 text-lg">Discover 9,000+ movies and TV shows</p>
         </div>
 
         {/* Search Bar */}

@@ -211,7 +211,7 @@ const Home = () => {
                   🎬📺 Browse All Movies & TV Series
                 </h2>
                 <p className="text-white/70">
-                  Explore our complete catalog - 10,000+ movies and series with HD trailers
+                  Explore our complete catalog - 9,000+ movies and series with HD trailers
                 </p>
               </div>
               <a
