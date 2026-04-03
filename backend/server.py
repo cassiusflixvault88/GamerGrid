@@ -1093,6 +1093,91 @@ async def reset_ceo_accounts_endpoint():
         user_id = user['id']
         deleted_users.append({
             "email": user['email'],
+
+
+# ============= FEEDBACK / REPORT ISSUE ROUTES =============
+
+class FeedbackCreate(BaseModel):
+    title: str
+    feedback_type: str  # bug, feature, improvement
+    description: str
+    priority: str = "medium"  # low, medium, high, critical
+
+
+class Feedback(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    username: str
+    title: str
+    feedback_type: str
+    description: str
+    priority: str
+    status: str = "pending"  # pending, in_progress, resolved, wont_fix
+    admin_response: Optional[str] = None
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+
+@api_router.post("/feedback/submit")
+async def submit_feedback(feedback: FeedbackCreate, token_data: dict = Depends(verify_token)):
+    """Submit feedback/bug report"""
+    user = await db.users.find_one(
+        {"id": token_data["user_id"]},
+        {"_id": 0, "username": 1}
+    )
+    
+    feedback_doc = Feedback(
+        user_id=token_data["user_id"],
+        username=user.get("username", "User"),
+        title=feedback.title,
+        feedback_type=feedback.feedback_type,
+        description=feedback.description,
+        priority=feedback.priority
+    )
+    
+    await db.feedback.insert_one(feedback_doc.model_dump())
+    
+    return {"message": "Feedback submitted successfully", "id": feedback_doc.id}
+
+
+@api_router.get("/feedback/my-feedback")
+async def get_my_feedback(token_data: dict = Depends(verify_token)):
+    """Get user's own feedback submissions"""
+    feedback_list = await db.feedback.find(
+        {"user_id": token_data["user_id"]},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(100)
+    
+    return {"feedback": feedback_list}
+
+
+@api_router.get("/admin/feedback")
+async def get_all_feedback(token_data: dict = Depends(verify_admin)):
+    """Admin: Get all feedback"""
+    feedback_list = await db.feedback.find(
+        {},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(1000)
+    
+    return feedback_list
+
+
+@api_router.put("/admin/feedback/{feedback_id}/respond")
+async def respond_to_feedback(
+    feedback_id: str,
+    response: dict,
+    token_data: dict = Depends(verify_admin)
+):
+    """Admin: Respond to feedback and update status"""
+    await db.feedback.update_one(
+        {"id": feedback_id},
+        {"$set": {
+            "admin_response": response.get("admin_response"),
+            "status": response.get("status", "resolved")
+        }}
+    )
+    
+    return {"message": "Feedback updated successfully"}
+
             "username": user.get('username', 'N/A'),
             "user_id": user_id
         })
