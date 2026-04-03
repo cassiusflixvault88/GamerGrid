@@ -117,16 +117,16 @@ const MoviesPage = () => {
               Top Rated
             </TabsTrigger>
             <TabsTrigger value="action" className="data-[state=active]:bg-purple-600">
-              Action ({action.length})
+              Action
             </TabsTrigger>
             <TabsTrigger value="comedy" className="data-[state=active]:bg-purple-600">
-              Comedy ({comedy.length})
+              Comedy
             </TabsTrigger>
             <TabsTrigger value="horror" className="data-[state=active]:bg-purple-600">
-              Horror ({horror.length})
+              Horror
             </TabsTrigger>
             <TabsTrigger value="sci-fi" className="data-[state=active]:bg-purple-600">
-              Sci-Fi ({sciFi.length})
+              Sci-Fi
             </TabsTrigger>
           </TabsList>
 
