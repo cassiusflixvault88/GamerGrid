@@ -9,14 +9,34 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const BrowseAllPage = () => {
   const [allContent, setAllContent] = useState([]);
+  const [displayedContent, setDisplayedContent] = useState([]);
   const [filteredContent, setFilteredContent] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [selectedContent, setSelectedContent] = useState(null);
+  const [itemsToShow, setItemsToShow] = useState(100); // Start with 100 items
 
   useEffect(() => {
     loadAllContent();
   }, []);
+
+  // Infinite scroll: Load more items as user scrolls
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 500) {
+        // User is near bottom, load more items
+        setItemsToShow(prev => Math.min(prev + 100, filteredContent.length));
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [filteredContent]);
+
+  // Update displayed content when items to show changes
+  useEffect(() => {
+    setDisplayedContent(filteredContent.slice(0, itemsToShow));
+  }, [filteredContent, itemsToShow]);
 
   useEffect(() => {
     // Filter content based on search query
@@ -30,6 +50,8 @@ const BrowseAllPage = () => {
       });
       setFilteredContent(filtered);
     }
+    // Reset items to show when search changes
+    setItemsToShow(100);
   }, [searchQuery, allContent]);
 
   const loadAllContent = async () => {
@@ -136,11 +158,11 @@ const BrowseAllPage = () => {
         ) : (
           <div>
             <p className="text-white/80 mb-6">
-              Showing {filteredContent.length} {searchQuery ? 'results' : 'top-rated movies and series'}
+              Showing {displayedContent.length} of {filteredContent.length} {searchQuery ? 'results' : 'top-rated movies and series'}
             </p>
             
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-              {filteredContent.map((item) => (
+              {displayedContent.map((item) => (
                 <div
                   key={`${item.media_type}-${item.id}`}
                   onClick={() => handleCardClick(item)}
@@ -185,6 +207,13 @@ const BrowseAllPage = () => {
                 </div>
               ))}
             </div>
+            
+            {/* Loading more indicator */}
+            {displayedContent.length < filteredContent.length && (
+              <div className="text-center mt-8 text-white/60">
+                <p>Scroll down to load more...</p>
+              </div>
+            )}
           </div>
         )}
       </div>
