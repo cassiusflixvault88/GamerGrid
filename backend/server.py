@@ -1093,6 +1093,17 @@ async def reset_ceo_accounts_endpoint():
         user_id = user['id']
         deleted_users.append({
             "email": user['email'],
+            "username": user.get('username', 'N/A'),
+            "user_id": user_id
+        })
+        
+        # Delete user and all related data
+        await db.users.delete_one({"id": user_id})
+        await db.ratings.delete_many({"user_id": user_id})
+        await db.watchlist.delete_many({"user_id": user_id})
+        await db.admins.delete_many({"user_id": user_id})
+    
+    return {"message": f"Deleted {len(deleted_users)} users", "deleted_users": deleted_users}
 
 
 # ============= FEEDBACK / REPORT ISSUE ROUTES =============
