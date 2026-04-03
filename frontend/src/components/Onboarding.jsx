@@ -38,7 +38,7 @@ const Onboarding = () => {
   const steps = [
     {
       title: 'Welcome to FlixVault! 🎬',
-      description: 'Your movie discovery vault - watch trailers, rate movies, and explore films!',
+      description: 'Your movie & TV series discovery vault - watch trailers, rate content, and explore films & shows!',
       icon: <Film className="w-16 h-16 text-purple-400" />,
       features: [
         'Browse movies with HD trailers',

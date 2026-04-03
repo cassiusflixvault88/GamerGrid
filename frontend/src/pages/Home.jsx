@@ -203,7 +203,7 @@ const Home = () => {
         </div>
 
         {/* BROWSE ALL CATALOG MOVIES - PROMINENT SECTION */}
-        <div className="px-6 lg:px-12 max-w-[1920px] mx-auto mb-12">
+        <div className="px-6 lg:px-12 max-w-[1920px] mx-auto mb-8">
           <div className="bg-gradient-to-r from-purple-900/40 to-blue-900/40 rounded-xl p-8 border border-purple-500/30">
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div>
@@ -211,7 +211,7 @@ const Home = () => {
                   🎬 Browse All Movies with Trailers
                 </h2>
                 <p className="text-white/70">
-                  Explore our complete collection - Every movie includes HD trailers
+                  Explore our complete movie collection - Every movie includes HD trailers
                 </p>
               </div>
               <a
@@ -219,6 +219,28 @@ const Home = () => {
                 className="px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold rounded-lg transition-all transform hover:scale-105 shadow-lg"
               >
                 View All Movies →
+              </a>
+            </div>
+          </div>
+        </div>
+
+        {/* BROWSE ALL CATALOG SERIES - PROMINENT SECTION */}
+        <div className="px-6 lg:px-12 max-w-[1920px] mx-auto mb-12">
+          <div className="bg-gradient-to-r from-blue-900/40 to-purple-900/40 rounded-xl p-8 border border-blue-500/30">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div>
+                <h2 className="text-3xl font-bold text-white mb-2">
+                  📺 Browse All TV Series with Trailers
+                </h2>
+                <p className="text-white/70">
+                  Discover our complete series collection - Every show includes HD trailers
+                </p>
+              </div>
+              <a
+                href="/series"
+                className="px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold rounded-lg transition-all transform hover:scale-105 shadow-lg"
+              >
+                View All Series →
               </a>
             </div>
           </div>

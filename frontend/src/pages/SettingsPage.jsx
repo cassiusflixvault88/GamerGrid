@@ -329,31 +329,25 @@ const SettingsPage = () => {
           </button>
         </div>
 
-        {/* Theme Selection */}
+        {/* Theme Section - Dark Only */}
         <div className="bg-white/5 backdrop-blur-sm rounded-lg p-6 mb-6 border border-white/10">
           <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-            <Monitor className="w-5 h-5" />
+            <Moon className="w-5 h-5" />
             Appearance
           </h2>
-          <p className="text-white/60 text-sm mb-4">Choose how FlixVault looks to you</p>
+          <p className="text-white/60 text-sm mb-4">FlixVault is optimized for dark mode</p>
           
-          <div className="grid grid-cols-2 gap-4">
-            {themeOptions.map(({ value, icon: Icon, label }) => (
-              <button
-                key={value}
-                onClick={() => setTheme(value)}
-                className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all ${
-                  theme === value
-                    ? 'border-purple-500 bg-purple-500/20'
-                    : 'border-white/20 bg-white/5 hover:bg-white/10'
-                }`}
-              >
-                <Icon className={`w-6 h-6 ${theme === value ? 'text-purple-400' : 'text-white/70'}`} />
-                <span className={`text-sm ${theme === value ? 'text-purple-300 font-medium' : 'text-white/70'}`}>
-                  {label}
-                </span>
-              </button>
-            ))}
+          <div className="flex items-center space-x-3 p-4 bg-white/5 border border-white/10 rounded-lg">
+            <div className="p-3 bg-purple-600 rounded-lg">
+              <Moon className="w-5 h-5 text-white" />
+            </div>
+            <div className="flex-1">
+              <p className="text-white font-medium">Dark Mode</p>
+              <p className="text-white/60 text-sm">Perfect for movie & series viewing</p>
+            </div>
+            <div className="px-3 py-1 bg-purple-600/20 text-purple-300 rounded-full text-sm font-medium">
+              Active
+            </div>
           </div>
         </div>
 

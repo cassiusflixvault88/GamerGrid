@@ -175,7 +175,7 @@ const AppReviewsPage = () => {
             Rate <span className="text-purple-500">FlixVault</span>
           </h1>
           <p className="text-gray-400 text-lg mb-6">
-            Share your experience with FlixVault - our movie discovery and trailer app!
+            Share your experience with FlixVault - our movie & TV series discovery and trailer app!
           </p>
 
           {/* Average Rating Display */}
