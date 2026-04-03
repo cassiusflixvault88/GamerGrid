@@ -40,6 +40,8 @@ function App() {
               <Route path="/reviews" element={<ReviewsPage />} />
               <Route path="/request-content" element={<RequestContentPage />} />
               <Route path="/feedback" element={<FeedbackPage />} />
+              <Route path="/support" element={<SupportPage />} />
+              <Route path="/payment-success" element={<PaymentSuccessPage />} />
               <Route path="/admin/user/:userId" element={<UserDetailPage />} />
               <Route path="/watchlist" element={<WatchlistPage />} />
               <Route path="/admin" element={<AdminDashboard />} />
