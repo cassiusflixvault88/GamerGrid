@@ -17,6 +17,7 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [stats, setStats] = useState(null);
   const [reviews, setReviews] = useState([]);
+  const [appReviews, setAppReviews] = useState([]);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -31,15 +32,17 @@ const AdminDashboard = () => {
     try {
       const token = localStorage.getItem('token');
       
-      const [statsRes, reviewsRes, usersRes] = await Promise.all([
+      const [statsRes, reviewsRes, usersRes, appReviewsRes] = await Promise.all([
         axios.get(`${API}/admin/stats`, { headers: { Authorization: `Bearer ${token}` } }),
         axios.get(`${API}/admin/reviews`, { headers: { Authorization: `Bearer ${token}` } }),
-        axios.get(`${API}/admin/users`, { headers: { Authorization: `Bearer ${token}` } })
+        axios.get(`${API}/admin/users`, { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API}/app-reviews`)
       ]);
 
       setStats(statsRes.data);
       setReviews(reviewsRes.data);
       setUsers(usersRes.data);
+      setAppReviews(appReviewsRes.data.reviews || []);
     } catch (error) {
       console.error('Failed to load dashboard data:', error);
       toast({
@@ -165,6 +168,34 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleReplyToAppReview = async (reviewId) => {
+    if (!replyText.trim()) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API}/admin/reply-to-app-review`, 
+        { review_id: reviewId, reply_text: replyText },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      toast({
+        title: 'Success',
+        description: 'Reply posted successfully'
+      });
+      
+      setReplyingTo(null);
+      setReplyText('');
+      loadDashboardData();
+    } catch (error) {
+      console.error('Failed to reply:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to post reply',
+        variant: 'destructive',
+      });
+    }
+  };
+
   if (loading || authLoading) {
     return (
       <div className="min-h-screen bg-black">
@@ -242,7 +273,18 @@ const AdminDashboard = () => {
             }`}
           >
             <MessageSquare className="w-4 h-4 inline mr-2" />
-            Reviews ({stats?.total_reviews || 0})
+            Content Reviews ({stats?.total_reviews || 0})
+          </button>
+          <button
+            onClick={() => setActiveTab('app-reviews')}
+            className={`px-6 py-3 font-semibold transition-all border-b-2 whitespace-nowrap ${
+              activeTab === 'app-reviews'
+                ? 'border-yellow-400 text-yellow-400'
+                : 'border-transparent text-white/60 hover:text-white'
+            }`}
+          >
+            <Star className="w-4 h-4 inline mr-2" />
+            App Reviews ({appReviews.length})
           </button>
         </div>
 
@@ -446,8 +488,17 @@ const AdminDashboard = () => {
                               ⭐ {review.rating}/5
                             </span>
                           </div>
-                          <p className="text-white/50 text-sm mb-1">Content ID: {review.content_id}</p>
+                          <p className="text-purple-400 text-sm mb-1 font-medium">
+                            🎬 {review.content_title || `Content ID: ${review.content_id}`}
+                          </p>
                           <p className="text-white/90 mt-3">{review.comment}</p>
+                          <p className="text-white/40 text-xs mt-2">
+                            {new Date(review.created_at).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric'
+                            })}
+                          </p>
                         </div>
                         <div className="flex space-x-2 ml-4">
                           <Button
@@ -501,15 +552,109 @@ const AdminDashboard = () => {
                           </div>
                         </div>
                       )}
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
-                      {/* Display existing admin reply */}
-                      {review.admin_reply && (
-                        <div className="mt-4 p-4 bg-yellow-900/20 border-l-4 border-yellow-500 rounded">
-                          <p className="text-yellow-400 font-semibold text-sm mb-1">Admin Response:</p>
-                          <p className="text-white/90">{review.admin_reply}</p>
+          {/* APP REVIEWS TAB */}
+          {activeTab === 'app-reviews' && (
+            <div>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-white">Manage App Reviews</h2>
+                <p className="text-white/60">{appReviews.length} total app reviews</p>
+              </div>
+
+              {appReviews.length === 0 ? (
+                <Card className="bg-white/5 border-white/10 p-12 text-center">
+                  <Star className="w-16 h-16 text-white/30 mx-auto mb-4" />
+                  <p className="text-white/50">No app reviews yet</p>
+                </Card>
+              ) : (
+                <div className="space-y-4">
+                  {appReviews.map((review) => (
+                    <Card key={review.id} className="bg-white/5 border-white/10 p-6 hover:bg-white/10 transition-colors">
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <p className="text-white font-semibold text-lg">{review.username}</p>
+                            <span className="px-2 py-1 bg-yellow-600/20 text-yellow-300 rounded text-sm">
+                              ⭐ {review.rating}/5
+                            </span>
+                          </div>
+                          <p className="text-white/90 mt-3">{review.review}</p>
                           <p className="text-white/40 text-xs mt-2">
-                            {new Date(review.admin_reply_date).toLocaleDateString()}
+                            {new Date(review.created_at).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric'
+                            })}
                           </p>
+                        </div>
+                        <div className="flex space-x-2 ml-4">
+                          <Button
+                            onClick={() => setReplyingTo(review.id === replyingTo ? null : review.id)}
+                            size="sm"
+                            className="bg-yellow-500 hover:bg-yellow-600 text-black font-semibold"
+                          >
+                            {replyingTo === review.id ? 'Cancel' : 'Reply'}
+                          </Button>
+                        </div>
+                      </div>
+
+                      {replyingTo === review.id && (
+                        <div className="mt-4 p-4 bg-black/50 rounded-lg border border-yellow-500/20">
+                          <Textarea
+                            value={replyText}
+                            onChange={(e) => setReplyText(e.target.value)}
+                            placeholder="Write your reply as admin..."
+                            className="bg-white/5 border-white/20 text-white mb-3"
+                            rows={3}
+                            autoFocus
+                          />
+                          <div className="flex justify-end space-x-2">
+                            <Button
+                              onClick={() => {
+                                setReplyingTo(null);
+                                setReplyText('');
+                              }}
+                              size="sm"
+                              variant="outline"
+                              className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              onClick={() => handleReplyToAppReview(review.id)}
+                              size="sm"
+                              className="bg-yellow-500 hover:bg-yellow-600 text-black"
+                              disabled={!replyText.trim()}
+                            >
+                              Post Reply
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {/* Display existing admin replies */}
+                      {review.admin_replies && review.admin_replies.length > 0 && (
+                        <div className="mt-4 space-y-3">
+                          {review.admin_replies.map((reply) => (
+                            <div key={reply.id} className="p-4 bg-yellow-900/20 border-l-4 border-yellow-500 rounded">
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className="px-2 py-1 bg-yellow-500 text-black text-xs font-bold rounded">
+                                  👑 ADMIN
+                                </span>
+                                <span className="text-yellow-400 font-semibold text-sm">{reply.admin_username}</span>
+                              </div>
+                              <p className="text-white/90">{reply.reply_text}</p>
+                              <p className="text-white/40 text-xs mt-2">
+                                {new Date(reply.created_at).toLocaleDateString()}
+                              </p>
+                            </div>
+                          ))}
                         </div>
                       )}
                     </Card>

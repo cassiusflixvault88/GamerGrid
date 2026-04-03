@@ -524,11 +524,23 @@ async def submit_app_review(review_data: AppReviewCreate, token_data: dict = Dep
 
 @api_router.get("/app-reviews")
 async def get_app_reviews():
-    """Get all FlixVault app reviews"""
+    """Get all FlixVault app reviews with admin replies"""
     reviews = await db.app_reviews.find(
         {},
         {"_id": 0}
     ).sort("created_at", -1).to_list(100)
+    
+    # Get admin replies for each review
+    for review in reviews:
+        review_id = review.get("id")
+        if review_id:
+            replies = await db.app_review_replies.find(
+                {"review_id": review_id},
+                {"_id": 0}
+            ).sort("created_at", 1).to_list(100)
+            review["admin_replies"] = replies
+        else:
+            review["admin_replies"] = []
     
     # Calculate average rating
     if reviews:
@@ -610,13 +622,13 @@ async def add_rating(rating_data: RatingCreate, token_data: dict = Depends(verif
 
 @api_router.get("/ratings/{content_id}")
 async def get_ratings(content_id: int):
-    ratings = await db.ratings.find({"content_id": content_id}).to_list(1000)
+    ratings = await db.ratings.find({"content_id": content_id}, {"_id": 0}).to_list(1000)
     
     # Get usernames for all ratings
     user_ids = [r["user_id"] for r in ratings]
     users = await db.users.find(
         {"id": {"$in": user_ids}},
-        {"id": 1, "username": 1}
+        {"_id": 0, "id": 1, "username": 1}
     ).to_list(1000)
     
     user_map = {u["id"]: u["username"] for u in users}
@@ -624,20 +636,32 @@ async def get_ratings(content_id: int):
     # Calculate average
     avg_rating = sum(r["rating"] for r in ratings) / len(ratings) if ratings else 0
     
+    enriched_ratings = []
+    for r in ratings:
+        # Get admin replies for this rating
+        replies = await db.review_replies.find(
+            {"review_id": r["id"]},
+            {"_id": 0}
+        ).sort("created_at", 1).to_list(100)
+        
+        rating_obj = RatingResponse(
+            id=r["id"],
+            user_id=r["user_id"],
+            username=user_map.get(r["user_id"], "Unknown"),
+            content_id=r["content_id"],
+            rating=r["rating"],
+            review=r.get("review"),
+            created_at=r["created_at"]
+        )
+        # Add admin_replies as dict attribute
+        rating_dict = rating_obj.model_dump()
+        rating_dict["admin_replies"] = replies
+        enriched_ratings.append(rating_dict)
+    
     return {
         "average": round(avg_rating, 1),
         "count": len(ratings),
-        "ratings": [
-            RatingResponse(
-                id=r["id"],
-                user_id=r["user_id"],
-                username=user_map.get(r["user_id"], "Unknown"),
-                content_id=r["content_id"],
-                rating=r["rating"],
-                review=r.get("review"),
-                created_at=r["created_at"]
-            ) for r in ratings
-        ]
+        "ratings": enriched_ratings
     }
 
 
@@ -882,6 +906,9 @@ async def get_all_reviews(token_data: dict = Depends(verify_admin)):
     
     for review in reviews:
         review["username"] = user_map.get(review["user_id"], "Unknown")
+        # Add content_title if it exists (movie/show name)
+        if "content_title" not in review or not review.get("content_title"):
+            review["content_title"] = f"Content ID: {review.get('content_id', 'Unknown')}"
         # Rename 'review' field to 'comment' for frontend compatibility
         if "review" in review:
             review["comment"] = review.pop("review")
@@ -907,6 +934,28 @@ async def reply_to_review(reply_data: ReviewReplyCreate, token_data: dict = Depe
     )
     
     await db.review_replies.insert_one(reply.model_dump())
+    
+    return {"message": "Reply posted successfully", "reply": reply}
+
+
+@api_router.post("/admin/reply-to-app-review")
+async def reply_to_app_review(reply_data: ReviewReplyCreate, token_data: dict = Depends(verify_admin)):
+    """Admin reply to an app review"""
+    user = await db.users.find_one(
+        {"id": token_data["user_id"]},
+        {"_id": 0, "username": 1}
+    )
+    
+    reply = {
+        "id": str(uuid.uuid4()),
+        "review_id": reply_data.review_id,
+        "admin_id": token_data["user_id"],
+        "admin_username": user.get("username", "Admin"),
+        "reply_text": reply_data.reply_text,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.app_review_replies.insert_one(reply)
     
     return {"message": "Reply posted successfully", "reply": reply}
 

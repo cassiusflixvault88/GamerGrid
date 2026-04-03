@@ -311,6 +311,32 @@ const RatingsReviews = ({ contentId, contentTitle }) => {
               {r.review && (
                 <p className="text-white/80 text-sm mt-3">{r.review}</p>
               )}
+              
+              {/* Admin Replies */}
+              {r.admin_replies && r.admin_replies.length > 0 && (
+                <div className="mt-4 space-y-3">
+                  {r.admin_replies.map((reply, replyIdx) => (
+                    <div key={reply.id || replyIdx} className="pl-4 border-l-4 border-yellow-500 bg-yellow-900/10 p-4 rounded">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="px-2 py-1 bg-yellow-500 text-black text-xs font-bold rounded">
+                          👑 ADMIN
+                        </span>
+                        <span className="text-yellow-400 font-semibold text-sm">
+                          {reply.admin_username}
+                        </span>
+                      </div>
+                      <p className="text-white/90 text-sm">{reply.reply_text}</p>
+                      <p className="text-white/40 text-xs mt-2">
+                        {new Date(reply.created_at).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric'
+                        })}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
         </div>
