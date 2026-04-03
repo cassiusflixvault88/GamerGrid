@@ -594,6 +594,7 @@ async def add_rating(rating_data: RatingCreate, token_data: dict = Depends(verif
             {"$set": {
                 "rating": rating_data.rating,
                 "review": rating_data.review,
+                "content_title": rating_data.content_title,
                 "created_at": datetime.utcnow()
             }}
         )
@@ -603,6 +604,7 @@ async def add_rating(rating_data: RatingCreate, token_data: dict = Depends(verif
         rating = Rating(
             user_id=token_data["user_id"],
             content_id=rating_data.content_id,
+            content_title=rating_data.content_title,
             rating=rating_data.rating,
             review=rating_data.review
         )
@@ -921,21 +923,21 @@ async def reply_to_review(reply_data: ReviewReplyCreate, token_data: dict = Depe
     """Admin reply to a user review"""
     user = await db.users.find_one(
         {"id": token_data["user_id"]},
-        {"username": 1}
+        {"_id": 0, "username": 1}
     )
     
-    reply = ReviewReply(
-        id=str(uuid.uuid4()),
-        review_id=reply_data.review_id,
-        admin_id=token_data["user_id"],
-        admin_username=user["username"],
-        reply_text=reply_data.reply_text,
-        created_at=datetime.utcnow()
-    )
+    reply = {
+        "id": str(uuid.uuid4()),
+        "review_id": reply_data.review_id,
+        "admin_id": token_data["user_id"],
+        "admin_username": user.get("username", "Admin"),
+        "reply_text": reply_data.reply_text,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
     
-    await db.review_replies.insert_one(reply.model_dump())
+    await db.review_replies.insert_one(reply)
     
-    return {"message": "Reply posted successfully", "reply": reply}
+    return {"message": "Reply posted successfully"}
 
 
 @api_router.post("/admin/reply-to-app-review")

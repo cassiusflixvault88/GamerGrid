@@ -81,7 +81,12 @@ const RatingsReviews = ({ contentId, contentTitle }) => {
       
       const response = await axios.post(
         `${API}/ratings`,
-        { content_id: contentId, rating, review: review || null },
+        { 
+          content_id: contentId, 
+          content_title: contentTitle,
+          rating, 
+          review: review || null 
+        },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
