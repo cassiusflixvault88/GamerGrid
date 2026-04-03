@@ -526,8 +526,14 @@ const AdminDashboard = () => {
                             placeholder="Write your reply as admin..."
                             className="bg-white/5 border-white/20 text-white mb-3"
                             rows={3}
-                            autoFocus
-                            style={{ touchAction: 'auto' }}
+                            style={{ 
+                              touchAction: 'auto',
+                              WebkitUserSelect: 'text',
+                              userSelect: 'text'
+                            }}
+                            onFocus={(e) => {
+                              e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }}
                           />
                           <div className="flex justify-end space-x-2">
                             <Button
@@ -612,7 +618,14 @@ const AdminDashboard = () => {
                             placeholder="Write your reply as admin..."
                             className="bg-white/5 border-white/20 text-white mb-3"
                             rows={3}
-                            autoFocus
+                            style={{ 
+                              touchAction: 'auto',
+                              WebkitUserSelect: 'text',
+                              userSelect: 'text'
+                            }}
+                            onFocus={(e) => {
+                              e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }}
                           />
                           <div className="flex justify-end space-x-2">
                             <Button
