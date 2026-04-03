@@ -957,7 +957,8 @@ async def reply_to_app_review(reply_data: ReviewReplyCreate, token_data: dict = 
     
     await db.app_review_replies.insert_one(reply)
     
-    return {"message": "Reply posted successfully", "reply": reply}
+    # Return without _id
+    return {"message": "Reply posted successfully"}
 
 
 @api_router.get("/admin/review-replies/{review_id}")
