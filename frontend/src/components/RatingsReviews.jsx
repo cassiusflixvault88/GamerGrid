@@ -293,7 +293,15 @@ const RatingsReviews = ({ contentId, contentTitle }) => {
             User Reviews ({ratings.count})
           </h4>
           
-          {ratings.ratings.map((r, index) => (
+          {ratings.ratings.map((r, index) => {
+            console.log(`🎬 Rendering rating ${index}:`, {
+              id: r.id,
+              username: r.username,
+              admin_replies_count: r.admin_replies?.length || 0,
+              admin_replies: r.admin_replies
+            });
+            
+            return (
             <div
               key={`${r.id}-${index}`}
               className="bg-white/5 border border-white/10 rounded-lg p-4 space-y-2 animate-fadeIn"
@@ -318,8 +326,9 @@ const RatingsReviews = ({ contentId, contentTitle }) => {
               )}
               
               {/* Admin Replies */}
-              {r.admin_replies && r.admin_replies.length > 0 && (
+              {r.admin_replies && r.admin_replies.length > 0 ? (
                 <div className="mt-4 space-y-3">
+                  {console.log(`✅ Rendering ${r.admin_replies.length} admin replies for rating ${r.id}`)}
                   {r.admin_replies.map((reply, replyIdx) => (
                     <div key={reply.id || replyIdx} className="pl-4 border-l-4 border-yellow-500 bg-yellow-900/10 p-4 rounded">
                       <div className="flex items-center gap-2 mb-2">
@@ -341,9 +350,12 @@ const RatingsReviews = ({ contentId, contentTitle }) => {
                     </div>
                   ))}
                 </div>
+              ) : (
+                console.log(`❌ No admin replies for rating ${r.id}`)
               )}
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
       
