@@ -91,8 +91,10 @@ const FeedbackPage = () => {
       setFeedbackType('bug');
       setPriority('medium');
       
-      // Reload feedback
-      loadMyFeedback();
+      // Reload feedback with a small delay to ensure DB write completes
+      setTimeout(() => {
+        loadMyFeedback();
+      }, 500);
     } catch (error) {
       toast({
         title: 'Error',
