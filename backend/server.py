@@ -1189,23 +1189,6 @@ async def respond_to_feedback(
     
     return {"message": "Feedback updated successfully"}
 
-            "username": user.get('username', 'N/A'),
-            "user_id": user_id
-        })
-        
-        # Delete user and all related data
-        await db.users.delete_one({"id": user_id})
-        await db.admins.delete_many({"user_id": user_id})
-        await db.ratings.delete_many({"user_id": user_id})
-        
-        deleted_count += 1
-    
-    return {
-        "message": f"✅ Deleted {deleted_count} CEO account(s)",
-        "deleted_accounts": deleted_users,
-        "next_step": "You can now sign up fresh with cassiusflixvault@gmail.com!"
-    }
-
 
 @api_router.get("/admin/check")
 async def check_admin_status(token_data: dict = Depends(verify_token)):
