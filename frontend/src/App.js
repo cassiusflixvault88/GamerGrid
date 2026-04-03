@@ -44,6 +44,7 @@ function App() {
               <Route path="/feedback" element={<FeedbackPage />} />
               <Route path="/support" element={<SupportPage />} />
               <Route path="/payment-success" element={<PaymentSuccessPage />} />
+              <Route path="/browse-all" element={<BrowseAllPage />} />
               <Route path="/admin/user/:userId" element={<UserDetailPage />} />
               <Route path="/watchlist" element={<WatchlistPage />} />
               <Route path="/admin" element={<AdminDashboard />} />
