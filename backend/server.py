@@ -768,6 +768,24 @@ async def user_reply_to_admin(reply_data: UserReplyCreate, token_data: dict = De
     )
     
     await db.user_replies.insert_one(reply.model_dump())
+
+
+@api_router.delete("/ratings/{rating_id}")
+async def delete_rating(rating_id: str, token_data: dict = Depends(verify_token)):
+    """Delete user's own rating/review"""
+    # Check if rating exists and belongs to user
+    existing = await db.ratings.find_one({"id": rating_id}, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Rating not found")
+    
+    if existing["user_id"] != token_data["user_id"]:
+        raise HTTPException(status_code=403, detail="Can only delete your own reviews")
+    
+    # Delete rating
+    await db.ratings.delete_one({"id": rating_id})
+    
+    return {"message": "Rating deleted successfully"}
+
     
     return {"message": "Reply posted successfully"}
 
@@ -1580,102 +1598,102 @@ async def get_user_details(user_id: str, token_data: dict = Depends(verify_admin
     }
 
 
-# ============= FEEDBACK & BUG REPORTS SYSTEM =============
-
-class Feedback(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-    
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    user_id: str
-    title: str
-    feedback_type: str  # "bug", "feature", "improvement"
-    description: str
-    priority: str = "medium"  # "low", "medium", "high", "critical"
-    status: str = "pending"  # pending, in_progress, resolved, wont_fix
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    admin_response: Optional[str] = None
-    resolved_at: Optional[datetime] = None
-
-class FeedbackCreate(BaseModel):
-    title: str
-    feedback_type: str
-    description: str
-    priority: str = "medium"
-
-@api_router.post("/feedback/submit")
-async def submit_feedback(feedback: FeedbackCreate, current_user: dict = Depends(verify_token)):
-    """Submit feedback/bug report"""
-    feedback_dict = feedback.model_dump()
-    feedback_obj = Feedback(user_id=current_user['user_id'], **feedback_dict)
-    
-    doc = feedback_obj.model_dump()
-    doc['created_at'] = doc['created_at'].isoformat()
-    
-    await db.feedback.insert_one(doc)
-    
-    return {"message": "Feedback submitted successfully!", "feedback_id": feedback_obj.id}
-
-@api_router.get("/feedback/my-feedback")
-async def get_my_feedback(current_user: dict = Depends(verify_token)):
-    """Get user's feedback submissions"""
-    feedback_items = await db.feedback.find(
-        {"user_id": current_user['user_id']}, 
-        {"_id": 0}
-    ).sort("created_at", -1).to_list(100)
-    
-    for item in feedback_items:
-        if isinstance(item['created_at'], str):
-            item['created_at'] = datetime.fromisoformat(item['created_at'])
-    
-    return {"feedback": feedback_items}
-
-@api_router.get("/admin/feedback")
-async def get_all_feedback(current_user: dict = Depends(verify_token)):
-    """Admin: Get all feedback submissions"""
-    user = await db.users.find_one({"id": current_user['user_id']}, {"_id": 0})
-    if not user or not user.get('is_admin'):
-        raise HTTPException(status_code=403, detail="Admin access required")
-    
-    feedback_items = await db.feedback.find({}, {"_id": 0}).sort("created_at", -1).to_list(1000)
-    
-    for item in feedback_items:
-        if isinstance(item['created_at'], str):
-            item['created_at'] = datetime.fromisoformat(item['created_at'])
-        # Get username
-        user = await db.users.find_one({"id": item['user_id']}, {"_id": 0, "username": 1})
-        item['username'] = user.get('username', 'Unknown') if user else 'Unknown'
-    
-    return {"feedback": feedback_items}
-
-@api_router.post("/admin/feedback/{feedback_id}/respond")
-async def respond_to_feedback(
-    feedback_id: str,
-    response: str,
-    new_status: str,
-    current_user: dict = Depends(verify_token)
-):
-    """Admin: Respond to feedback"""
-    user = await db.users.find_one({"id": current_user['user_id']}, {"_id": 0})
-    if not user or not user.get('is_admin'):
-        raise HTTPException(status_code=403, detail="Admin access required")
-    
-    update_data = {
-        "admin_response": response,
-        "status": new_status,
-        "responded_at": datetime.now(timezone.utc).isoformat()
-    }
-    
-    if new_status == "resolved":
-        update_data["resolved_at"] = datetime.now(timezone.utc).isoformat()
-    
-    await db.feedback.update_one(
-        {"id": feedback_id},
-        {"$set": update_data}
-    )
-    
-    return {"message": "Response sent successfully"}
-
-
+# # ============= FEEDBACK & BUG REPORTS SYSTEM =============
+# 
+# class Feedback(BaseModel):
+#     model_config = ConfigDict(extra="ignore")
+#     
+#     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+#     user_id: str
+#     title: str
+#     feedback_type: str  # "bug", "feature", "improvement"
+#     description: str
+#     priority: str = "medium"  # "low", "medium", "high", "critical"
+#     status: str = "pending"  # pending, in_progress, resolved, wont_fix
+#     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+#     admin_response: Optional[str] = None
+#     resolved_at: Optional[datetime] = None
+# 
+# class FeedbackCreate(BaseModel):
+#     title: str
+#     feedback_type: str
+#     description: str
+#     priority: str = "medium"
+# 
+# @api_router.post("/feedback/submit")
+# async def submit_feedback(feedback: FeedbackCreate, current_user: dict = Depends(verify_token)):
+#     """Submit feedback/bug report"""
+#     feedback_dict = feedback.model_dump()
+#     feedback_obj = Feedback(user_id=current_user['user_id'], **feedback_dict)
+#     
+#     doc = feedback_obj.model_dump()
+#     doc['created_at'] = doc['created_at'].isoformat()
+#     
+#     await db.feedback.insert_one(doc)
+#     
+#     return {"message": "Feedback submitted successfully!", "feedback_id": feedback_obj.id}
+# 
+# @api_router.get("/feedback/my-feedback")
+# async def get_my_feedback(current_user: dict = Depends(verify_token)):
+#     """Get user's feedback submissions"""
+#     feedback_items = await db.feedback.find(
+#         {"user_id": current_user['user_id']}, 
+#         {"_id": 0}
+#     ).sort("created_at", -1).to_list(100)
+#     
+#     for item in feedback_items:
+#         if isinstance(item['created_at'], str):
+#             item['created_at'] = datetime.fromisoformat(item['created_at'])
+#     
+#     return {"feedback": feedback_items}
+# 
+# @api_router.get("/admin/feedback")
+# async def get_all_feedback(current_user: dict = Depends(verify_token)):
+#     """Admin: Get all feedback submissions"""
+#     user = await db.users.find_one({"id": current_user['user_id']}, {"_id": 0})
+#     if not user or not user.get('is_admin'):
+#         raise HTTPException(status_code=403, detail="Admin access required")
+#     
+#     feedback_items = await db.feedback.find({}, {"_id": 0}).sort("created_at", -1).to_list(1000)
+#     
+#     for item in feedback_items:
+#         if isinstance(item['created_at'], str):
+#             item['created_at'] = datetime.fromisoformat(item['created_at'])
+#         # Get username
+#         user = await db.users.find_one({"id": item['user_id']}, {"_id": 0, "username": 1})
+#         item['username'] = user.get('username', 'Unknown') if user else 'Unknown'
+#     
+#     return {"feedback": feedback_items}
+# 
+# @api_router.post("/admin/feedback/{feedback_id}/respond")
+# async def respond_to_feedback(
+#     feedback_id: str,
+#     response: str,
+#     new_status: str,
+#     current_user: dict = Depends(verify_token)
+# ):
+#     """Admin: Respond to feedback"""
+#     user = await db.users.find_one({"id": current_user['user_id']}, {"_id": 0})
+#     if not user or not user.get('is_admin'):
+#         raise HTTPException(status_code=403, detail="Admin access required")
+#     
+#     update_data = {
+#         "admin_response": response,
+#         "status": new_status,
+#         "responded_at": datetime.now(timezone.utc).isoformat()
+#     }
+#     
+#     if new_status == "resolved":
+#         update_data["resolved_at"] = datetime.now(timezone.utc).isoformat()
+#     
+#     await db.feedback.update_one(
+#         {"id": feedback_id},
+#         {"$set": update_data}
+#     )
+#     
+#     return {"message": "Response sent successfully"}
+# 
+# 
 # ============= ORIGINAL ROUTES =============
 
 @api_router.get("/")

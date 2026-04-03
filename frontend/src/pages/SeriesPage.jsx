@@ -24,14 +24,21 @@ const SeriesPage = () => {
 
   const loadSeries = async () => {
     try {
-      // Load ALL series from YOUR catalog
-      const response = await fetch(`${API_URL}/api/catalog/movies?limit=1000`);
-      const data = await response.json();
-      const catalogItems = data.results || [];
+      // Load ALL series from YOUR catalog - fetch in batches if needed
+      const page1 = await fetch(`${API_URL}/api/catalog/movies?limit=1000&page=1`);
+      const data1 = await page1.json();
+      let allItems = data1.results || [];
+      
+      // If there's a second page, fetch it
+      if (data1.total_results > 1000) {
+        const page2 = await fetch(`${API_URL}/api/catalog/movies?limit=1000&page=2`);
+        const data2 = await page2.json();
+        allItems = [...allItems, ...(data2.results || [])];
+      }
       
       // Filter only TV series
-      const series = catalogItems.filter(item => item.media_type === 'tv');
-      console.log(`📺 Loaded ${series.length} TV series from catalog`);
+      const series = allItems.filter(item => item.media_type === 'tv');
+      console.log(`📺 Loaded ${series.length} TV series from catalog (total items: ${allItems.length})`);
       
       setAllSeries(series);
       
