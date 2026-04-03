@@ -46,19 +46,22 @@ const SearchPage = () => {
   const searchContent = async () => {
     setLoading(true);
     try {
+      console.log(`🔍 Searching for: "${query}"`);
       // Search through YOUR catalog movies
-      const response = await fetch(`${API_URL}/api/catalog/movies?limit=100`);
+      const response = await fetch(`${API_URL}/api/catalog/movies?limit=1000`);
       const data = await response.json();
       const allMovies = data.results || [];
+      console.log(`📚 Total catalog items: ${allMovies.length}`);
       
       // Filter movies that match search query
       const filtered = allMovies.filter(movie => {
-        const title = movie.title?.toLowerCase() || '';
-        const overview = movie.overview?.toLowerCase() || '';
+        const title = (movie.title || movie.name || '').toLowerCase();
+        const overview = (movie.overview || '').toLowerCase();
         const searchTerm = query.toLowerCase();
         return title.includes(searchTerm) || overview.includes(searchTerm);
       });
       
+      console.log(`✅ Found ${filtered.length} matches for "${query}"`);
       setResults(filtered);
     } catch (error) {
       console.error('Error searching:', error);
