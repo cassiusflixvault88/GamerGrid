@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, User, LogOut, List, Shield, Settings, Home, Mail } from 'lucide-react';
+import { Search, User, LogOut, List, Shield, Settings, Home, Mail, Heart } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import AuthModal from './AuthModal';
 import SearchAutocomplete from './SearchAutocomplete';
@@ -195,6 +195,16 @@ const Navbar = () => {
                     >
                       <Settings className="w-4 h-4" />
                       <span>Account Settings</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        navigate('/support');
+                        setShowUserMenu(false);
+                      }}
+                      className="flex items-center space-x-2 w-full px-4 py-2 text-purple-400 hover:bg-purple-900/20 transition-colors font-semibold"
+                    >
+                      <Heart className="w-4 h-4" />
+                      <span>💜 Support FlixVault</span>
                     </button>
                     <a
                       href="mailto:cassiusflixvault@gmail.com"

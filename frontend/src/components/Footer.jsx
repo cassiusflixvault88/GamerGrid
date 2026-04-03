@@ -40,6 +40,12 @@ const Footer = () => {
           <div className="mt-6 pt-6 border-t border-white/5 flex flex-wrap justify-center md:justify-start gap-6 text-white/50 text-sm items-center">
             <ShareButton variant="outline" size="sm" />
             <Link 
+              to="/support"
+              className="hover:text-white transition-colors text-purple-400 font-semibold"
+            >
+              💜 Support Creator
+            </Link>
+            <Link 
               to="/app-reviews"
               className="hover:text-white transition-colors text-yellow-400 font-semibold"
             >
