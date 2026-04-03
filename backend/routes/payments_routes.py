@@ -364,6 +364,17 @@ async def stripe_webhook(request: Request):
                         }}
                     )
                 
+                # 🔔 LOG PAYMENT NOTIFICATION
+                payment_type = transaction.get('payment_type', 'unknown')
+                amount = transaction.get('amount', 0)
+                logger.warning(f"💰 PAYMENT RECEIVED: ${amount} ({payment_type}) - Session: {session_id}")
+                print(f"\n{'='*60}")
+                print(f"💰💰💰 NEW PAYMENT RECEIVED 💰💰💰")
+                print(f"Amount: ${amount}")
+                print(f"Type: {payment_type}")
+                print(f"Session ID: {session_id}")
+                print(f"{'='*60}\n")
+                
                 logger.info(f"Webhook processed payment: {session_id}")
         
         return {"status": "success"}
@@ -407,4 +418,19 @@ async def get_revenue_stats(current_user: dict = Depends(verify_token)):
             key=lambda x: x.get('created_at', ''),
             reverse=True
         )[:10]
+    }
+
+
+@router.get("/check-recent")
+async def check_recent_payments():
+    """Quick check for recent payments (no auth required for testing)"""
+    # Get last 5 transactions
+    transactions = await db.payment_transactions.find(
+        {},
+        {"_id": 0, "amount": 1, "payment_status": 1, "payment_type": 1, "created_at": 1}
+    ).sort("created_at", -1).limit(5).to_list(5)
+    
+    return {
+        "total_found": len(transactions),
+        "recent_payments": transactions
     }
