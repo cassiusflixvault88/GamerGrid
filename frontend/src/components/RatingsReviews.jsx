@@ -81,30 +81,40 @@ const RatingsReviews = ({ contentId, contentTitle }) => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      console.log(`💾 Submitting rating for content_id ${contentId}: ${rating}★`);
+      console.log(`💾 ${editingRatingId ? 'Updating' : 'Submitting'} rating for content_id ${contentId}: ${rating}★`);
       
-      const response = await axios.post(
-        `${API}/ratings`,
-        { 
-          content_id: contentId, 
-          content_title: contentTitle,
-          rating, 
-          review: review || null 
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      if (editingRatingId) {
+        // Update existing rating
+        await axios.put(
+          `${API}/ratings/${editingRatingId}`,
+          { content_id: contentId, content_title: contentTitle, rating, review: review || null },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        console.log(`✅ Rating updated successfully`);
+        toast({ title: 'Updated!', description: 'Your review has been updated' });
+      } else {
+        // Create new rating
+        const response = await axios.post(
+          `${API}/ratings`,
+          { 
+            content_id: contentId, 
+            content_title: contentTitle,
+            rating, 
+            review: review || null 
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        console.log(`✅ Rating submitted successfully:`, response.data);
+        toast({ title: 'Rating submitted!', description: 'Thank you for your review' });
+      }
       
-      console.log(`✅ Rating submitted successfully:`, response.data);
-      
-      toast({
-        title: 'Rating submitted!',
-        description: 'Thank you for your review',
-      });
-      
-      // Close form first
+      // Close form and reset
       setShowReviewForm(false);
+      setEditingRatingId(null);
+      setRating(0);
+      setReview('');
       
-      // Force reload ratings with a small delay to ensure backend has processed
+      // Force reload ratings
       setTimeout(async () => {
         console.log('🔄 Reloading ratings after submission...');
         await loadRatings();
@@ -123,6 +133,60 @@ const RatingsReviews = ({ contentId, contentTitle }) => {
       setLoading(false);
     }
   };
+
+  const handleEditReview = (ratingData) => {
+    setEditingRatingId(ratingData.id);
+    setRating(ratingData.rating);
+    setReview(ratingData.review || '');
+    setShowReviewForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleDeleteReview = async (ratingId) => {
+    if (!window.confirm('Are you sure you want to delete this review?')) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`${API}/ratings/${ratingId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      toast({ title: 'Success', description: 'Review deleted successfully' });
+      loadRatings();
+      loadUserRating();
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to delete review',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleReplyToAdmin = async (adminReplyId) => {
+    if (!replyText.trim()) return;
+
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(
+        `${API}/user-reply-to-admin`,
+        { admin_reply_id: adminReplyId, reply_text: replyText },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      toast({ title: 'Success', description: 'Reply posted successfully' });
+      setReplyText('');
+      setReplyingToAdminId(null);
+      loadRatings();
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to post reply',
+        variant: 'destructive',
+      });
+    }
+  };
+
 
   const StarRating = ({ value, onChange, readonly = false }) => {
     const [hover, setHover] = useState(0);
@@ -320,9 +384,32 @@ const RatingsReviews = ({ contentId, contentTitle }) => {
                     <StarRating value={r.rating} readonly />
                   </div>
                 </div>
-                <p className="text-white/50 text-xs">
-                  {new Date(r.created_at).toLocaleDateString()}
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="text-white/50 text-xs">
+                    {new Date(r.created_at).toLocaleDateString()}
+                  </p>
+                  {/* Edit/Delete buttons for own reviews */}
+                  {user && user.id === r.user_id && (
+                    <div className="flex gap-1">
+                      <Button
+                        onClick={() => handleEditReview(r)}
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 px-2 text-xs text-blue-400 hover:text-blue-300 hover:bg-blue-500/20"
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        onClick={() => handleDeleteReview(r.id)}
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 px-2 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/20"
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </div>
               
               {r.review && (
@@ -334,23 +421,72 @@ const RatingsReviews = ({ contentId, contentTitle }) => {
                 <div className="mt-4 space-y-3">
                   {console.log(`✅ Rendering ${r.admin_replies.length} admin replies for rating ${r.id}`)}
                   {r.admin_replies.map((reply, replyIdx) => (
-                    <div key={reply.id || replyIdx} className="pl-4 border-l-4 border-yellow-500 bg-yellow-900/10 p-4 rounded">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="px-2 py-1 bg-yellow-500 text-black text-xs font-bold rounded">
-                          👑 ADMIN
-                        </span>
-                        <span className="text-yellow-400 font-semibold text-sm">
-                          {reply.admin_username}
-                        </span>
+                    <div key={reply.id || replyIdx} className="space-y-2">
+                      <div className="pl-4 border-l-4 border-yellow-500 bg-yellow-900/10 p-4 rounded">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="px-2 py-1 bg-yellow-500 text-black text-xs font-bold rounded">
+                            👑 ADMIN
+                          </span>
+                          <span className="text-yellow-400 font-semibold text-sm">
+                            {reply.admin_username}
+                          </span>
+                        </div>
+                        <p className="text-white/90 text-sm">{reply.reply_text}</p>
+                        <div className="flex items-center justify-between mt-2">
+                          <p className="text-white/40 text-xs">
+                            {new Date(reply.created_at).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric'
+                            })}
+                          </p>
+                          {/* Reply to Admin button */}
+                          {user && (
+                            <Button
+                              onClick={() => setReplyingToAdminId(replyingToAdminId === reply.id ? null : reply.id)}
+                              size="sm"
+                              variant="ghost"
+                              className="h-6 px-2 text-xs text-yellow-400 hover:text-yellow-300 hover:bg-yellow-500/20"
+                            >
+                              {replyingToAdminId === reply.id ? 'Cancel' : 'Reply'}
+                            </Button>
+                          )}
+                        </div>
                       </div>
-                      <p className="text-white/90 text-sm">{reply.reply_text}</p>
-                      <p className="text-white/40 text-xs mt-2">
-                        {new Date(reply.created_at).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'short',
-                          day: 'numeric'
-                        })}
-                      </p>
+                      
+                      {/* Reply form */}
+                      {replyingToAdminId === reply.id && (
+                        <div className="ml-8 p-3 bg-white/5 border border-white/10 rounded">
+                          <Textarea
+                            value={replyText}
+                            onChange={(e) => setReplyText(e.target.value)}
+                            placeholder="Reply to admin..."
+                            className="bg-white/10 border-white/20 text-white mb-2"
+                            rows={2}
+                          />
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              onClick={() => {
+                                setReplyingToAdminId(null);
+                                setReplyText('');
+                              }}
+                              size="sm"
+                              variant="ghost"
+                              className="text-xs"
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              onClick={() => handleReplyToAdmin(reply.id)}
+                              size="sm"
+                              className="bg-yellow-500 hover:bg-yellow-600 text-black text-xs"
+                              disabled={!replyText.trim()}
+                            >
+                              Post Reply
+                            </Button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
