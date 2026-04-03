@@ -14,7 +14,7 @@ router = APIRouter(prefix="/catalog", tags=["tmdb-catalog"])
 @router.get("/movies")
 async def get_catalog_movies(
     page: int = Query(1, ge=1),
-    limit: int = Query(20, ge=1, le=1000),  # Increased to 1000 for "All Movies" view
+    limit: int = Query(20, ge=1, le=10000),  # Increased to 10000 for full catalog
     genre: Optional[int] = None
 ):
     """Get paginated movie catalog"""

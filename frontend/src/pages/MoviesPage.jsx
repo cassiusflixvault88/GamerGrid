@@ -29,10 +29,13 @@ const MoviesPage = () => {
 
   const loadMovies = async () => {
     try {
-      // Load ALL movies from YOUR catalog (446+ movies)
-      const response = await fetch(`${API_URL}/api/catalog/movies?limit=1000`);
+      // Load ALL movies from catalog
+      const response = await fetch(`${API_URL}/api/catalog/movies?limit=10000`);
       const data = await response.json();
-      const movies = data.results || [];
+      const allItems = data.results || [];
+      
+      // Filter only movies
+      const movies = allItems.filter(m => m.media_type === 'movie');
       
       // SORT BY TOP RATED FIRST (highest vote_average)
       const sortedByRating = [...movies].sort((a, b) => {
@@ -99,13 +102,13 @@ const MoviesPage = () => {
       <div className="px-6 lg:px-12 max-w-[1920px] mx-auto pb-20">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-white mb-2">All Movies</h1>
-          <p className="text-white/60">Browse our complete collection of movies with trailers</p>
+          <p className="text-white/60">Discover thousands of movies</p>
         </div>
 
         <Tabs defaultValue="all" className="w-full">
           <TabsList className="bg-white/10 border border-white/20 mb-8 flex-wrap">
             <TabsTrigger value="all" className="data-[state=active]:bg-purple-600">
-              All Movies ({allMovies.length})
+              All Movies
             </TabsTrigger>
             <TabsTrigger value="popular" className="data-[state=active]:bg-purple-600">
               Popular

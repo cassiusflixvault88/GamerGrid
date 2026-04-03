@@ -24,21 +24,14 @@ const SeriesPage = () => {
 
   const loadSeries = async () => {
     try {
-      // Load ALL series from YOUR catalog - fetch in batches if needed
-      const page1 = await fetch(`${API_URL}/api/catalog/movies?limit=1000&page=1`);
-      const data1 = await page1.json();
-      let allItems = data1.results || [];
-      
-      // If there's a second page, fetch it
-      if (data1.total_results > 1000) {
-        const page2 = await fetch(`${API_URL}/api/catalog/movies?limit=1000&page=2`);
-        const data2 = await page2.json();
-        allItems = [...allItems, ...(data2.results || [])];
-      }
+      // Load ALL series from catalog - increased limit to get everything
+      const response = await fetch(`${API_URL}/api/catalog/movies?limit=10000&page=1`);
+      const data = await response.json();
+      const allItems = data.results || [];
       
       // Filter only TV series
       const series = allItems.filter(item => item.media_type === 'tv');
-      console.log(`📺 Loaded ${series.length} TV series from catalog (total items: ${allItems.length})`);
+      console.log(`📺 Loaded ${series.length} TV series from catalog`);
       
       setAllSeries(series);
       
@@ -79,13 +72,13 @@ const SeriesPage = () => {
       <div className="px-6 lg:px-12 max-w-[1920px] mx-auto pb-20">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-white mb-2">📺 All TV Series</h1>
-          <p className="text-white/60">Browse {allSeries.length} TV shows with trailers</p>
+          <p className="text-white/60">Discover thousands of TV shows</p>
         </div>
 
         <Tabs defaultValue="all" className="w-full">
           <TabsList className="bg-white/10 border border-white/20 mb-8">
             <TabsTrigger value="all" className="data-[state=active]:bg-purple-600">
-              All Series ({allSeries.length})
+              All Series
             </TabsTrigger>
             <TabsTrigger value="top-rated" className="data-[state=active]:bg-purple-600">
               Top Rated
