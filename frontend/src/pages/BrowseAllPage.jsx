@@ -9,6 +9,8 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 
 const BrowseAllPage = () => {
   const [allContent, setAllContent] = useState([]);
+  const [filteredContent, setFilteredContent] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [selectedContent, setSelectedContent] = useState(null);
 
@@ -16,26 +18,77 @@ const BrowseAllPage = () => {
     loadAllContent();
   }, []);
 
+  useEffect(() => {
+    // Filter content based on search query
+    if (searchQuery.trim() === '') {
+      setFilteredContent(allContent);
+    } else {
+      const query = searchQuery.toLowerCase();
+      const filtered = allContent.filter(item => {
+        const title = (item.title || item.name || '').toLowerCase();
+        return title.includes(query);
+      });
+      setFilteredContent(filtered);
+    }
+  }, [searchQuery, allContent]);
+
   const loadAllContent = async () => {
     try {
-      // Fetch multiple pages to get both movies AND series
-      const page1 = await fetch(`${API_URL}/api/catalog/movies?limit=1000&page=1`);
-      const data1 = await page1.json();
+      // Fetch ALL items in multiple batches to avoid timeout
+      // Catalog has ~9,937 items total (page 1: 0-2999, page 2: 3000-5999, page 3: 6000-8999, page 4: 9000+)
+      const [data1, data2, data3, data4] = await Promise.all([
+        fetch(`${API_URL}/api/catalog/movies?limit=2500&page=1`).then(r => r.json()),
+        fetch(`${API_URL}/api/catalog/movies?limit=2500&page=2`).then(r => r.json()),
+        fetch(`${API_URL}/api/catalog/movies?limit=2500&page=3`).then(r => r.json()),
+        fetch(`${API_URL}/api/catalog/movies?limit=2500&page=4`).then(r => r.json()),
+      ]);
       
-      const page3 = await fetch(`${API_URL}/api/catalog/movies?limit=1000&page=3`);
-      const data3 = await page3.json();
+      // Combine all results
+      const allItems = [
+        ...(data1.results || []),
+        ...(data2.results || []),
+        ...(data3.results || []),
+        ...(data4.results || [])
+      ];
       
-      // Combine both pages (movies from page 1, series from page 3)
-      const allItems = [...(data1.results || []), ...(data3.results || [])];
+      console.log(`📥 Fetched ${allItems.length} total items from catalog`);
       
-      // Sort by rating
-      const sorted = allItems.sort((a, b) => (b.vote_average || 0) - (a.vote_average || 0));
+      // Remove duplicates by unique ID
+      const uniqueItems = [];
+      const seenIds = new Set();
+      
+      for (const item of allItems) {
+        const uniqueKey = `${item.media_type}-${item.id}`;
+        if (!seenIds.has(uniqueKey)) {
+          seenIds.add(uniqueKey);
+          uniqueItems.push(item);
+        }
+      }
+      
+      console.log(`🔍 Removed ${allItems.length - uniqueItems.length} duplicates`);
+      
+      // Sort: English content first, then by rating (highest first)
+      const sorted = uniqueItems.sort((a, b) => {
+        const aIsEnglish = a.original_language === 'en' ? 1 : 0;
+        const bIsEnglish = b.original_language === 'en' ? 1 : 0;
+        
+        // Prioritize English content
+        if (aIsEnglish !== bIsEnglish) {
+          return bIsEnglish - aIsEnglish;
+        }
+        
+        // Then sort by rating
+        return (b.vote_average || 0) - (a.vote_average || 0);
+      });
       
       setAllContent(sorted);
+      setFilteredContent(sorted);
       
       const movies = sorted.filter(x => x.media_type === 'movie');
       const series = sorted.filter(x => x.media_type === 'tv');
-      console.log(`✅ Loaded ${movies.length} movies + ${series.length} series = ${sorted.length} total`);
+      const englishContent = sorted.filter(x => x.original_language === 'en');
+      
+      console.log(`✅ Loaded ${movies.length} movies + ${series.length} series = ${sorted.length} total (${englishContent.length} English)`);
     } catch (error) {
       console.error('Error loading content:', error);
     } finally {
@@ -45,6 +98,10 @@ const BrowseAllPage = () => {
 
   const handleCardClick = (item) => {
     setSelectedContent(item);
+  };
+
+  const handleSearchChange = (e) => {
+    setSearchQuery(e.target.value);
   };
 
   return (
@@ -61,6 +118,17 @@ const BrowseAllPage = () => {
           <p className="text-white/60 text-lg">Discover 10,000+ movies and TV shows</p>
         </div>
 
+        {/* Search Bar */}
+        <div className="mb-6">
+          <input
+            type="text"
+            placeholder="Search movies and TV shows..."
+            value={searchQuery}
+            onChange={handleSearchChange}
+            className="w-full px-6 py-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+          />
+        </div>
+
         {loading ? (
           <div className="flex justify-center items-center h-64">
             <div className="text-white text-xl">Loading content...</div>
@@ -68,11 +136,11 @@ const BrowseAllPage = () => {
         ) : (
           <div>
             <p className="text-white/80 mb-6">
-              Showing {allContent.length} top-rated movies and series
+              Showing {filteredContent.length} {searchQuery ? 'results' : 'top-rated movies and series'}
             </p>
             
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-              {allContent.map((item) => (
+              {filteredContent.map((item) => (
                 <div
                   key={`${item.media_type}-${item.id}`}
                   onClick={() => handleCardClick(item)}
