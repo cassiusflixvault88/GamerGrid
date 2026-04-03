@@ -5,11 +5,12 @@ import ContentCard from '../components/ContentCard';
 import ContentModal from '../components/ContentModal';
 import VideoPlayer from '../components/VideoPlayer';
 import Footer from '../components/Footer';
-import { getPopular, getTopRated } from '../services/tmdb';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs';
 
+const API_URL = process.env.REACT_APP_BACKEND_URL;
+
 const SeriesPage = () => {
-  const [popular, setPopular] = useState([]);
+  const [allSeries, setAllSeries] = useState([]);
   const [topRated, setTopRated] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedContent, setSelectedContent] = useState(null);
@@ -23,13 +24,21 @@ const SeriesPage = () => {
 
   const loadSeries = async () => {
     try {
-      const [popularData, topRatedData] = await Promise.all([
-        getPopular('tv'),
-        getTopRated('tv'),
-      ]);
-
-      setPopular(popularData);
-      setTopRated(topRatedData);
+      // Load ALL series from YOUR catalog
+      const response = await fetch(`${API_URL}/api/catalog/movies?limit=1000`);
+      const data = await response.json();
+      const catalogItems = data.results || [];
+      
+      // Filter only TV series
+      const series = catalogItems.filter(item => item.media_type === 'tv');
+      console.log(`📺 Loaded ${series.length} TV series from catalog`);
+      
+      setAllSeries(series);
+      
+      // Sort by rating for Top Rated tab
+      const sortedByRating = [...series].sort((a, b) => (b.vote_average || 0) - (a.vote_average || 0));
+      setTopRated(sortedByRating);
+      
     } catch (error) {
       console.error('Error loading series:', error);
     } finally {
@@ -61,21 +70,24 @@ const SeriesPage = () => {
       <BackNavigation />
       
       <div className="px-6 lg:px-12 max-w-[1920px] mx-auto pb-20">
-        <h1 className="text-4xl font-bold text-white mb-8">Series</h1>
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-white mb-2">📺 All TV Series</h1>
+          <p className="text-white/60">Browse {allSeries.length} TV shows with trailers</p>
+        </div>
 
-        <Tabs defaultValue="popular" className="w-full">
+        <Tabs defaultValue="all" className="w-full">
           <TabsList className="bg-white/10 border border-white/20 mb-8">
-            <TabsTrigger value="popular" className="data-[state=active]:bg-purple-600">
-              Popular
+            <TabsTrigger value="all" className="data-[state=active]:bg-purple-600">
+              All Series ({allSeries.length})
             </TabsTrigger>
             <TabsTrigger value="top-rated" className="data-[state=active]:bg-purple-600">
               Top Rated
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="popular">
+          <TabsContent value="all">
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-              {popular.map((item) => (
+              {allSeries.map((item) => (
                 <ContentCard key={item.id} content={item} onClick={handleCardClick} />
               ))}
             </div>
@@ -99,14 +111,10 @@ const SeriesPage = () => {
           isOpen={modalOpen}
           onClose={() => setModalOpen(false)}
           onPlayTrailer={handlePlayTrailer}
-          onSelectContent={(content) => {
-            setSelectedContent(content);
-            setModalOpen(true);
-          }}
         />
       )}
 
-      {currentVideo && (
+      {videoPlayerOpen && currentVideo && (
         <VideoPlayer
           video={currentVideo}
           isOpen={videoPlayerOpen}
