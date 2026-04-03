@@ -758,6 +758,18 @@ async def user_reply_to_admin(reply_data: UserReplyCreate, token_data: dict = De
     user = await db.users.find_one(
         {"id": token_data["user_id"]},
         {"_id": 0, "username": 1}
+    )
+    
+    reply = UserReply(
+        admin_reply_id=reply_data.admin_reply_id,
+        user_id=token_data["user_id"],
+        username=user.get("username", "User"),
+        reply_text=reply_data.reply_text
+    )
+    
+    await db.user_replies.insert_one(reply.model_dump())
+    
+    return {"message": "Reply posted successfully"}
 
 
 # ============= FEEDBACK / REPORT ISSUE ROUTES =============
@@ -842,19 +854,6 @@ async def respond_to_feedback(
     )
     
     return {"message": "Feedback updated successfully"}
-
-    )
-    
-    reply = UserReply(
-        admin_reply_id=reply_data.admin_reply_id,
-        user_id=token_data["user_id"],
-        username=user.get("username", "User"),
-        reply_text=reply_data.reply_text
-    )
-    
-    await db.user_replies.insert_one(reply.model_dump())
-    
-    return {"message": "Reply posted successfully"}
 
 
 # ============= WATCH HISTORY / CONTINUE WATCHING ROUTES =============
