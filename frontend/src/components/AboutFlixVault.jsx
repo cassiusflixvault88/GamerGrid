@@ -66,8 +66,7 @@ const AboutFlixVault = ({ isOpen, onClose }) => {
               Enjoy public domain classics and select films at no cost.
             </p>
             <p className="text-white/80 leading-relaxed">
-              Built entirely from scratch by Cassius Fox, FlixVault is <strong>primarily a movie & TV series rating and trailer vault</strong> 
-              where you can discover, rate, and track content - with the occasional free movie as a bonus treat.
+              Built entirely from scratch by Cassius Fox, FlixVault is <strong>primarily a movie & TV series rating and trailer vault</strong> where you can discover, rate, and track content - with the occasional free movie as a bonus treat.
             </p>
           </div>
 

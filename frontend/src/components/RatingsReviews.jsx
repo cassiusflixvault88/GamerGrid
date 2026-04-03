@@ -15,6 +15,10 @@ const RatingsReviews = ({ contentId, contentTitle }) => {
   const [rating, setRating] = useState(0);
   const [review, setReview] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [editingRatingId, setEditingRatingId] = useState(null);
+  const [replyingToAdminId, setReplyingToAdminId] = useState(null);
+  const [replyText, setReplyText] = useState('');
   
   const { user } = useAuth();
   const { toast } = useToast();
