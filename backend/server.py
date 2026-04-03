@@ -891,7 +891,7 @@ async def get_all_users(token_data: dict = Depends(verify_admin)):
 
 @api_router.get("/admin/reviews")
 async def get_all_reviews(token_data: dict = Depends(verify_admin)):
-    """Get all reviews for moderation"""
+    """Get all reviews for moderation with admin replies"""
     reviews = await db.ratings.find(
         {},
         {"_id": 0}
@@ -914,6 +914,13 @@ async def get_all_reviews(token_data: dict = Depends(verify_admin)):
         # Rename 'review' field to 'comment' for frontend compatibility
         if "review" in review:
             review["comment"] = review.pop("review")
+        
+        # Get admin replies for this review
+        replies = await db.review_replies.find(
+            {"review_id": review["id"]},
+            {"_id": 0}
+        ).sort("created_at", 1).to_list(100)
+        review["admin_replies"] = replies
     
     return reviews
 
