@@ -89,8 +89,8 @@ const SearchAutocomplete = () => {
     setQuery('');
     setShowSuggestions(false);
     setSuggestions([]);
-    // Navigate to search page or open modal (you can customize this)
-    navigate(`/search?q=${encodeURIComponent(item.title || item.name)}`);
+    // Navigate with exact title to open modal directly
+    navigate(`/search?q=${encodeURIComponent(item.title || item.name)}&direct=true&id=${item.id}`);
   };
 
   const handleSubmit = (e) => {

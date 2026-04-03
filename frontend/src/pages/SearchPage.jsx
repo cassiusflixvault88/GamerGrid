@@ -12,6 +12,8 @@ const API_URL = process.env.REACT_APP_BACKEND_URL;
 const SearchPage = () => {
   const [searchParams] = useSearchParams();
   const query = searchParams.get('q');
+  const isDirect = searchParams.get('direct') === 'true'; // Direct click from autocomplete
+  const directId = searchParams.get('id');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedContent, setSelectedContent] = useState(null);
@@ -28,6 +30,17 @@ const SearchPage = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
+
+  // Auto-open modal when clicking from autocomplete
+  useEffect(() => {
+    if (isDirect && directId && results.length > 0) {
+      const matchedContent = results.find(item => item.id === parseInt(directId));
+      if (matchedContent) {
+        handleCardClick(matchedContent);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [results, isDirect, directId]);
 
   const loadAllMovies = async () => {
     setLoading(true);
@@ -53,16 +66,23 @@ const SearchPage = () => {
       const allMovies = data.results || [];
       console.log(`📚 Total catalog items: ${allMovies.length}`);
       
-      // Filter movies that match search query
-      const filtered = allMovies.filter(movie => {
-        const title = (movie.title || movie.name || '').toLowerCase();
-        const overview = (movie.overview || '').toLowerCase();
-        const searchTerm = query.toLowerCase();
-        return title.includes(searchTerm) || overview.includes(searchTerm);
-      });
-      
-      console.log(`✅ Found ${filtered.length} matches for "${query}"`);
-      setResults(filtered);
+      // If direct click from autocomplete, show only exact match
+      if (isDirect && directId) {
+        const exactMatch = allMovies.filter(movie => movie.id === parseInt(directId));
+        console.log(`✅ Direct match for ID ${directId}`);
+        setResults(exactMatch);
+      } else {
+        // Filter movies that match search query
+        const filtered = allMovies.filter(movie => {
+          const title = (movie.title || movie.name || '').toLowerCase();
+          const overview = (movie.overview || '').toLowerCase();
+          const searchTerm = query.toLowerCase();
+          return title.includes(searchTerm) || overview.includes(searchTerm);
+        });
+        
+        console.log(`✅ Found ${filtered.length} matches for "${query}"`);
+        setResults(filtered);
+      }
     } catch (error) {
       console.error('Error searching:', error);
     } finally {

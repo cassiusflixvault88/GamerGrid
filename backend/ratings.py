@@ -31,6 +31,20 @@ class RatingResponse(BaseModel):
     created_at: datetime
 
 
+class UserReplyCreate(BaseModel):
+    admin_reply_id: str
+    reply_text: str
+
+
+class UserReply(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    admin_reply_id: str
+    user_id: str
+    username: str
+    reply_text: str
+    created_at: str = Field(default_factory=lambda: datetime.utcnow().isoformat())
+
+
 class WatchHistory(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     user_id: str

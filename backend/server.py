@@ -12,7 +12,7 @@ import uuid
 from datetime import datetime, timezone
 
 from models import User, UserCreate, UserLogin, UserResponse, UserProfileUpdate, WatchlistItem, Token
-from ratings import Rating, RatingCreate, RatingResponse, WatchHistory, WatchHistoryCreate
+from ratings import Rating, RatingCreate, RatingResponse, WatchHistory, WatchHistoryCreate, UserReplyCreate, UserReply
 from admin_models import AdminConfig, ReviewReply, ReviewReplyCreate
 from auth import (
     get_password_hash,
@@ -725,6 +725,51 @@ async def get_all_reviews(limit: int = 100, skip: int = 0):
         logging.error(f"Error fetching all reviews: {e}")
         return []
 
+
+
+# ============= WATCH HISTORY / CONTINUE WATCHING ROUTES =============
+
+@api_router.put("/ratings/{rating_id}")
+async def update_rating(rating_id: str, rating_data: RatingCreate, token_data: dict = Depends(verify_token)):
+    """Update user's own rating/review"""
+    existing = await db.ratings.find_one({"id": rating_id}, {"_id": 0})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Rating not found")
+    
+    if existing["user_id"] != token_data["user_id"]:
+        raise HTTPException(status_code=403, detail="Can only edit your own reviews")
+    
+    await db.ratings.update_one(
+        {"id": rating_id},
+        {"$set": {
+            "rating": rating_data.rating,
+            "review": rating_data.review,
+            "content_title": rating_data.content_title,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    return {"message": "Rating updated successfully"}
+
+
+@api_router.post("/user-reply-to-admin")
+async def user_reply_to_admin(reply_data: UserReplyCreate, token_data: dict = Depends(verify_token)):
+    """User replies to an admin reply"""
+    user = await db.users.find_one(
+        {"id": token_data["user_id"]},
+        {"_id": 0, "username": 1}
+    )
+    
+    reply = UserReply(
+        admin_reply_id=reply_data.admin_reply_id,
+        user_id=token_data["user_id"],
+        username=user.get("username", "User"),
+        reply_text=reply_data.reply_text
+    )
+    
+    await db.user_replies.insert_one(reply.model_dump())
+    
+    return {"message": "Reply posted successfully"}
 
 
 # ============= WATCH HISTORY / CONTINUE WATCHING ROUTES =============
