@@ -29,6 +29,10 @@ from routes import auth_routes, watchlist_routes, movies_routes, catalog_routes
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
+# Setup logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
@@ -126,9 +130,20 @@ async def login(credentials: UserLogin):
     # Optimized query - only fetch needed fields
     user = await db.users.find_one(
         {"email": credentials.email},
-        {"email": 1, "id": 1, "username": 1, "hashed_password": 1, "created_at": 1, "watchlist": 1, "favorites": 1}
+        {"_id": 0, "email": 1, "id": 1, "username": 1, "hashed_password": 1, "created_at": 1, "watchlist": 1, "favorites": 1}
     )
-    if not user or not verify_password(credentials.password, user["hashed_password"]):
+    if not user:
+        logger.warning(f"Login failed: User not found for email {credentials.email}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password"
+        )
+    
+    # Verify password
+    password_valid = verify_password(credentials.password, user["hashed_password"])
+    logger.info(f"Login attempt for {credentials.email}: user_found=True, password_valid={password_valid}")
+    
+    if not password_valid:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password"
@@ -1740,7 +1755,6 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
-logger = logging.getLogger(__name__)
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
