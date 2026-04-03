@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { CheckCircle, Crown, Heart, Loader } from 'lucide-react';
@@ -25,10 +25,9 @@ const PaymentSuccessPage = () => {
     } else {
       setStatus('error');
     }
-    // eslint-disable-next-line
-  }, [sessionId]);
+  }, [sessionId, checkPaymentStatus]);
 
-  const checkPaymentStatus = async () => {
+  const checkPaymentStatus = useCallback(async () => {
     if (attempts >= maxAttempts) {
       setStatus('error');
       return;
@@ -48,14 +47,14 @@ const PaymentSuccessPage = () => {
         setStatus('error');
       } else {
         // Still pending, poll again
-        setAttempts(attempts + 1);
+        setAttempts(prev => prev + 1);
         setTimeout(() => checkPaymentStatus(), 2000);
       }
     } catch (error) {
       console.error('Error checking payment:', error);
       setStatus('error');
     }
-  };
+  }, [attempts, maxAttempts, sessionId]);
 
   if (status === 'checking') {
     return (
