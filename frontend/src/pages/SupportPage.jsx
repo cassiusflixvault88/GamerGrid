@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Heart, Crown, Zap, Check, Gift, Star } from 'lucide-react';
+import { Heart, Crown, Zap, Check, Gift, Star, X, Home, Search } from 'lucide-react';
 import Navbar from '../components/Navbar';
+import BackNavigation from '../components/BackNavigation';
 import Footer from '../components/Footer';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../hooks/use-toast';
@@ -141,6 +142,7 @@ const SupportPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 via-purple-900 to-gray-900">
       <Navbar />
+      <BackNavigation />
 
       <div className="max-w-7xl mx-auto px-4 py-12 mt-16">
         {/* Header */}
