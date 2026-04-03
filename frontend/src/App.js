@@ -18,6 +18,7 @@ import RequestContentPage from "./pages/RequestContentPage";
 import FeedbackPage from "./pages/FeedbackPage";
 import SupportPage from "./pages/SupportPage";
 import PaymentSuccessPage from "./pages/PaymentSuccessPage";
+import BrowseAllPage from "./pages/BrowseAllPage";
 import UserDetailPage from "./pages/UserDetailPage";
 import WatchlistPage from "./pages/WatchlistPage";
 import AdminDashboard from "./pages/AdminDashboard";
