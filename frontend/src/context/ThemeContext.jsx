@@ -5,7 +5,7 @@ const ThemeContext = createContext(null);
 export const ThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState(() => {
     // Check localStorage first
-    const savedTheme = localStorage.getItem('flixvault-theme');
+    const savedTheme = localStorage.getItem('gamergrid-theme');
     if (savedTheme) return savedTheme;
     
     // Check system preference
@@ -25,7 +25,7 @@ export const ThemeProvider = ({ children }) => {
       root.classList.toggle('dark', theme === 'dark');
     }
     
-    localStorage.setItem('flixvault-theme', theme);
+    localStorage.setItem('gamergrid-theme', theme);
   }, [theme]);
 
   // Listen for system theme changes when in system mode

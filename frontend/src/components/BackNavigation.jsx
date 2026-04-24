@@ -27,7 +27,7 @@ const BackNavigation = () => {
     } else if (path.includes('/search')) {
       breadcrumbs.push({ name: 'Search', path: '/search', icon: Film });
     } else if (path.includes('/app-reviews')) {
-      breadcrumbs.push({ name: 'Rate FlixVault', path: '/app-reviews', icon: Film });
+      breadcrumbs.push({ name: 'Rate GamerGrid', path: '/app-reviews', icon: Film });
     } else if (path.includes('/settings')) {
       breadcrumbs.push({ name: 'Settings', path: '/settings', icon: Film });
     } else if (path.includes('/admin')) {

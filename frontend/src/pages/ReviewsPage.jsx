@@ -72,7 +72,7 @@ const ReviewsPage = () => {
             <MessageSquare className="w-10 h-10 text-purple-500" />
             All Reviews
           </h1>
-          <p className="text-white/60">Community reviews from FlixVault users</p>
+          <p className="text-white/60">Community reviews from GamerGrid users</p>
         </div>
 
         {/* Filter Tabs */}
@@ -121,7 +121,7 @@ const ReviewsPage = () => {
           <div className="text-center py-20 bg-white/5 border border-white/10 rounded-lg">
             <MessageSquare className="w-16 h-16 mx-auto text-white/30 mb-4" />
             <p className="text-white/70 text-lg mb-2">No reviews yet</p>
-            <p className="text-white/50">Be the first to review content on FlixVault!</p>
+            <p className="text-white/50">Be the first to review content on GamerGrid!</p>
           </div>
         ) : (
           <div className="space-y-6">

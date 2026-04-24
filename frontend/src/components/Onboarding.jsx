@@ -9,7 +9,7 @@ const Onboarding = () => {
 
   useEffect(() => {
     // Check if user has seen onboarding before
-    const hasSeenOnboarding = localStorage.getItem('flixvault_onboarding_complete');
+    const hasSeenOnboarding = localStorage.getItem('gamergrid_onboarding_complete');
     if (!hasSeenOnboarding) {
       // Show onboarding after a short delay
       setTimeout(() => {
@@ -20,7 +20,7 @@ const Onboarding = () => {
 
   const handleClose = () => {
     setIsOpen(false);
-    localStorage.setItem('flixvault_onboarding_complete', 'true');
+    localStorage.setItem('gamergrid_onboarding_complete', 'true');
   };
 
   const handleNext = () => {

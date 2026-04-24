@@ -11,7 +11,7 @@ const InstallInstructions = ({ isOpen, onClose }) => {
         <div className="p-8">
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h2 className="text-3xl font-bold text-white mb-2">Install FlixVault</h2>
+              <h2 className="text-3xl font-bold text-white mb-2">Install GamerGrid</h2>
               <p className="text-white/70">Get the app experience on any device - it's free!</p>
             </div>
             <button
@@ -53,7 +53,7 @@ const InstallInstructions = ({ isOpen, onClose }) => {
                     </div>
                     <div>
                       <p className="text-white font-semibold">Open Chrome Browser</p>
-                      <p className="text-white/70 text-sm">Visit FlixVault in Google Chrome on your Android phone</p>
+                      <p className="text-white/70 text-sm">Visit GamerGrid in Google Chrome on your Android phone</p>
                     </div>
                   </div>
 
@@ -83,12 +83,12 @@ const InstallInstructions = ({ isOpen, onClose }) => {
                     </div>
                     <div>
                       <p className="text-white font-semibold">Tap "Install"</p>
-                      <p className="text-white/70 text-sm">FlixVault will be added to your home screen!</p>
+                      <p className="text-white/70 text-sm">GamerGrid will be added to your home screen!</p>
                     </div>
                   </div>
 
                   <div className="bg-green-500/20 border border-green-500/40 rounded-lg p-4 mt-4">
-                    <p className="text-green-400 font-semibold text-sm">✓ Done! Open FlixVault from your home screen like any other app.</p>
+                    <p className="text-green-400 font-semibold text-sm">✓ Done! Open GamerGrid from your home screen like any other app.</p>
                   </div>
                 </div>
               </div>
@@ -109,7 +109,7 @@ const InstallInstructions = ({ isOpen, onClose }) => {
                     </div>
                     <div>
                       <p className="text-white font-semibold">Open Safari Browser</p>
-                      <p className="text-white/70 text-sm">Visit FlixVault using Safari (not Chrome)</p>
+                      <p className="text-white/70 text-sm">Visit GamerGrid using Safari (not Chrome)</p>
                     </div>
                   </div>
 
@@ -139,12 +139,12 @@ const InstallInstructions = ({ isOpen, onClose }) => {
                     </div>
                     <div>
                       <p className="text-white font-semibold">Tap "Add"</p>
-                      <p className="text-white/70 text-sm">The FlixVault icon will appear on your home screen!</p>
+                      <p className="text-white/70 text-sm">The GamerGrid icon will appear on your home screen!</p>
                     </div>
                   </div>
 
                   <div className="bg-green-500/20 border border-green-500/40 rounded-lg p-4 mt-4">
-                    <p className="text-green-400 font-semibold text-sm">✓ Done! Launch FlixVault from your home screen like a native app.</p>
+                    <p className="text-green-400 font-semibold text-sm">✓ Done! Launch GamerGrid from your home screen like a native app.</p>
                   </div>
                 </div>
               </div>
@@ -165,7 +165,7 @@ const InstallInstructions = ({ isOpen, onClose }) => {
                     </div>
                     <div>
                       <p className="text-white font-semibold">Open Chrome, Edge, or Brave Browser</p>
-                      <p className="text-white/70 text-sm">Visit FlixVault on your computer</p>
+                      <p className="text-white/70 text-sm">Visit GamerGrid on your computer</p>
                     </div>
                   </div>
 
@@ -184,8 +184,8 @@ const InstallInstructions = ({ isOpen, onClose }) => {
                       3
                     </div>
                     <div>
-                      <p className="text-white font-semibold">Click "Install FlixVault"</p>
-                      <p className="text-white/70 text-sm">Or go to Menu (⋮) → "Install FlixVault..."</p>
+                      <p className="text-white font-semibold">Click "Install GamerGrid"</p>
+                      <p className="text-white/70 text-sm">Or go to Menu (⋮) → "Install GamerGrid..."</p>
                     </div>
                   </div>
 
@@ -195,12 +195,12 @@ const InstallInstructions = ({ isOpen, onClose }) => {
                     </div>
                     <div>
                       <p className="text-white font-semibold">Click "Install"</p>
-                      <p className="text-white/70 text-sm">FlixVault will open in its own window!</p>
+                      <p className="text-white/70 text-sm">GamerGrid will open in its own window!</p>
                     </div>
                   </div>
 
                   <div className="bg-green-500/20 border border-green-500/40 rounded-lg p-4 mt-4">
-                    <p className="text-green-400 font-semibold text-sm">✓ Done! Find FlixVault in your applications or launch from your desktop.</p>
+                    <p className="text-green-400 font-semibold text-sm">✓ Done! Find GamerGrid in your applications or launch from your desktop.</p>
                   </div>
                 </div>
               </div>

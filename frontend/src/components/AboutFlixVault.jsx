@@ -2,7 +2,7 @@ import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
 import { Play, Star, Heart, Tv, Download, Shield, Zap } from 'lucide-react';
 
-const AboutFlixVault = ({ isOpen, onClose }) => {
+const AboutGamerGrid = ({ isOpen, onClose }) => {
   const features = [
     {
       icon: Play,
@@ -27,7 +27,7 @@ const AboutFlixVault = ({ isOpen, onClose }) => {
     {
       icon: Download,
       title: 'Install as an App',
-      description: 'Install FlixVault on any device - works offline and feels like a native app (PWA)'
+      description: 'Install GamerGrid on any device - works offline and feels like a native app (PWA)'
     },
     {
       icon: Shield,
@@ -41,7 +41,7 @@ const AboutFlixVault = ({ isOpen, onClose }) => {
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-gradient-to-b from-gray-900 to-black border-purple-500/20">
         <DialogHeader>
           <DialogTitle className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent mb-2">
-            About FlixVault
+            About GamerGrid
           </DialogTitle>
           <p className="text-white/70 text-sm">
             Your Movie & TV Series Discovery Vault - Watch Trailers, Rate Content, Build Your Watchlist
@@ -49,14 +49,14 @@ const AboutFlixVault = ({ isOpen, onClose }) => {
         </DialogHeader>
 
         <div className="space-y-6 mt-6">
-          {/* What is FlixVault */}
+          {/* What is GamerGrid */}
           <div className="bg-white/5 rounded-lg p-6 border border-white/10">
             <h3 className="text-xl font-semibold text-white mb-3 flex items-center gap-2">
               <Zap className="w-5 h-5 text-purple-400" />
-              What is FlixVault?
+              What is GamerGrid?
             </h3>
             <p className="text-white/80 leading-relaxed mb-4">
-              FlixVault is your <strong className="text-purple-300">movie & TV series discovery companion</strong> - like IMDb and Rotten Tomatoes combined. 
+              GamerGrid is your <strong className="text-purple-300">movie & TV series discovery companion</strong> - like IMDb and Rotten Tomatoes combined. 
               Browse games and TV shows with trailers, rate and review what you've watched, and build your personal watchlist. 
               Discover what's hot, explore by genre, and find your next favorite film or series - all in one beautiful, 
               fast, and installable web app.
@@ -66,7 +66,7 @@ const AboutFlixVault = ({ isOpen, onClose }) => {
               Enjoy public domain classics and select films at no cost.
             </p>
             <p className="text-white/80 leading-relaxed">
-              Built entirely from scratch by Cassius Fox, FlixVault is <strong>primarily a movie & TV series rating and trailer vault</strong> where you can discover, rate, and track content - with the occasional free movie as a bonus treat.
+              Built entirely from scratch by Cassius Fox, GamerGrid is <strong>primarily a movie & TV series rating and trailer vault</strong> where you can discover, rate, and track content - with the occasional free movie as a bonus treat.
             </p>
           </div>
 
@@ -76,11 +76,11 @@ const AboutFlixVault = ({ isOpen, onClose }) => {
             <div className="space-y-3 text-white/80">
               <p className="leading-relaxed">
                 <strong className="text-purple-300">Cassius Fox</strong>, born September 30, 1988 in Upper Sandusky, Ohio, 
-                is the 37-year-old founder and sole creator of FlixVault. What started as a vision to revolutionize 
+                is the 37-year-old founder and sole creator of GamerGrid. What started as a vision to revolutionize 
                 how people discover movies and watch trailers became a reality through determination and innovation.
               </p>
               <p className="leading-relaxed">
-                Building FlixVault was a journey of learning, iterating, and pushing boundaries. From conceptualizing 
+                Building GamerGrid was a journey of learning, iterating, and pushing boundaries. From conceptualizing 
                 the user experience to implementing every feature you see today, Cassius handled it all - design, 
                 development, testing, and deployment. Every movie card, every rating system, every smooth animation 
                 was crafted with care.
@@ -88,10 +88,10 @@ const AboutFlixVault = ({ isOpen, onClose }) => {
               <p className="leading-relaxed">
                 The challenges were real: integrating massive movie databases, creating an intuitive interface that 
                 works seamlessly across devices, implementing review systems, building admin controls, and making it 
-                all work together flawlessly. But through persistence and a commitment to quality, FlixVault came to life.
+                all work together flawlessly. But through persistence and a commitment to quality, GamerGrid came to life.
               </p>
               <p className="leading-relaxed font-semibold text-purple-300">
-                This is just version 1.0. Future versions of FlixVault will bring even more groundbreaking features, 
+                This is just version 1.0. Future versions of GamerGrid will bring even more groundbreaking features, 
                 all continuing the mission: making movie & TV series discovery better, smarter, and more enjoyable for everyone.
               </p>
             </div>
@@ -122,7 +122,7 @@ const AboutFlixVault = ({ isOpen, onClose }) => {
 
           {/* Why Install */}
           <div className="bg-gradient-to-r from-purple-600/20 to-blue-600/20 rounded-lg p-6 border border-purple-500/30">
-            <h3 className="text-xl font-semibold text-white mb-3">Why Install FlixVault?</h3>
+            <h3 className="text-xl font-semibold text-white mb-3">Why Install GamerGrid?</h3>
             <ul className="space-y-2 text-white/80">
               <li className="flex items-start gap-2">
                 <span className="text-purple-400 font-bold">✓</span>
@@ -164,4 +164,4 @@ const AboutFlixVault = ({ isOpen, onClose }) => {
   );
 };
 
-export default AboutFlixVault;
+export default AboutGamerGrid;

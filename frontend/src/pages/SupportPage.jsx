@@ -24,7 +24,7 @@ const SupportPage = () => {
     if (!user) {
       toast({
         title: 'Sign in required',
-        description: 'Please sign in to support FlixVault',
+        description: 'Please sign in to support GamerGrid',
         variant: 'destructive',
       });
       return;
@@ -72,7 +72,7 @@ const SupportPage = () => {
     if (!user) {
       toast({
         title: 'Sign in required',
-        description: 'Please sign in to support FlixVault',
+        description: 'Please sign in to support GamerGrid',
         variant: 'destructive',
       });
       return;
@@ -148,10 +148,10 @@ const SupportPage = () => {
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-            Support <span className="text-purple-400">FlixVault</span>
+            Support <span className="text-purple-400">GamerGrid</span>
           </h1>
           <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-            Help us keep FlixVault free and ad-free for everyone. Your support means the world! 💜
+            Help us keep GamerGrid free and ad-free for everyone. Your support means the world! 💜
           </p>
         </div>
 
@@ -161,7 +161,7 @@ const SupportPage = () => {
             <div className="flex-1 text-white">
               <div className="flex items-center gap-2 mb-2">
                 <Crown className="w-8 h-8 text-yellow-300" />
-                <h2 className="text-3xl font-bold">FlixVault Pro</h2>
+                <h2 className="text-3xl font-bold">GamerGrid Pro</h2>
               </div>
               <p className="text-lg mb-4">Unlock premium features for just $4.99/month</p>
 
@@ -214,7 +214,7 @@ const SupportPage = () => {
             Or Send a One-Time Tip
           </h2>
           <p className="text-gray-400 text-center mb-8">
-            Every contribution helps us improve FlixVault
+            Every contribution helps us improve GamerGrid
           </p>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -309,7 +309,7 @@ const SupportPage = () => {
             <div>
               <p className="font-semibold mb-2">💚 Ad-Free Experience</p>
               <p className="text-sm">
-                Help us keep FlixVault clean and ad-free for everyone
+                Help us keep GamerGrid clean and ad-free for everyone
               </p>
             </div>
           </div>

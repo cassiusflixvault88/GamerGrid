@@ -146,7 +146,7 @@ const AdminDashboard = () => {
 
       toast({
         title: 'Movie approved!',
-        description: 'The movie has been added to FlixVault',
+        description: 'The movie has been added to GamerGrid',
       });
 
       loadDashboardData();

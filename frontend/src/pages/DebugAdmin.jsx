@@ -89,10 +89,10 @@ const DebugAdmin = () => {
           <h2 className="text-xl font-semibold mb-4">Expected Email:</h2>
           <p className="text-sm">
             To be auto-promoted, you must log in with:<br />
-            <code className="bg-black px-2 py-1 rounded text-green-400">cassius@flixvault.com</code>
+            <code className="bg-black px-2 py-1 rounded text-green-400">cassius@gamergrid.com</code>
           </p>
           <p className="text-sm mt-2 text-gray-400">
-            (Case doesn't matter - Cassius@FlixVault.com works too)
+            (Case doesn't matter - Cassius@GamerGrid.com works too)
           </p>
         </div>
       </div>

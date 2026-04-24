@@ -376,7 +376,7 @@ const AdminDashboard = () => {
                       {users.length === 0 ? (
                         <tr>
                           <td colSpan="5" className="px-6 py-12 text-center text-white/50">
-                            No users found. Share FlixVault to get your first users!
+                            No users found. Share GamerGrid to get your first users!
                           </td>
                         </tr>
                       ) : (

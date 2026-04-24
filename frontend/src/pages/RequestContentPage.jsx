@@ -240,7 +240,7 @@ const RequestContentPage = () => {
                 id="reason"
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                placeholder="Tell us why you'd like to see this on FlixVault..."
+                placeholder="Tell us why you'd like to see this on GamerGrid..."
                 className="bg-white/10 border-white/20 text-white placeholder:text-white/40 min-h-[80px]"
                 rows={3}
               />

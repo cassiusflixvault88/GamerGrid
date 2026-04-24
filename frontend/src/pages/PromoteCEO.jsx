@@ -33,7 +33,7 @@ const PromoteCEO = () => {
 
       setResult(response.data);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to promote. Make sure you\'re using Cassius@FlixVault.com');
+      setError(err.response?.data?.detail || 'Failed to promote. Make sure you\'re using Cassius@GamerGrid.com');
     } finally {
       setPromoting(false);
     }
@@ -92,7 +92,7 @@ const PromoteCEO = () => {
             </Button>
 
             <p className="text-white/50 text-xs text-center">
-              This only works if you're signed in with Cassius@FlixVault.com
+              This only works if you're signed in with Cassius@GamerGrid.com
             </p>
           </div>
         )}

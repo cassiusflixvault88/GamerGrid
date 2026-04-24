@@ -159,9 +159,9 @@ const SettingsPage = () => {
     }
   };
 
-  const useFlixVaultLogo = async () => {
-    console.log('🎬 Setting FlixVault logo as profile picture...');
-    const logoUrl = '/flixvault-icon.svg';
+  const useGamerGridLogo = async () => {
+    console.log('🎬 Setting GamerGrid logo as profile picture...');
+    const logoUrl = '/gamergrid-icon.svg';
     
     // Update local state FIRST
     setProfileData({ ...profileData, profile_picture_url: logoUrl });
@@ -184,13 +184,13 @@ const SettingsPage = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
       
-      console.log('✅ FlixVault logo saved to database');
+      console.log('✅ GamerGrid logo saved to database');
       
       // Refresh user context
       await refreshUser();
       
       toast({
-        title: 'FlixVault Logo Set',
+        title: 'GamerGrid Logo Set',
         description: 'Profile picture updated successfully!'
       });
       
@@ -198,7 +198,7 @@ const SettingsPage = () => {
       setTimeout(() => fetchUserProfile(), 500);
       
     } catch (error) {
-      console.error('❌ Failed to set FlixVault logo:', error);
+      console.error('❌ Failed to set GamerGrid logo:', error);
       toast({
         title: 'Error',
         description: 'Failed to update profile picture',
@@ -335,7 +335,7 @@ const SettingsPage = () => {
             <Moon className="w-5 h-5" />
             Appearance
           </h2>
-          <p className="text-white/60 text-sm mb-4">FlixVault is optimized for dark mode</p>
+          <p className="text-white/60 text-sm mb-4">GamerGrid is optimized for dark mode</p>
           
           <div className="flex items-center space-x-3 p-4 bg-white/5 border border-white/10 rounded-lg">
             <div className="p-3 bg-purple-600 rounded-lg">
@@ -436,11 +436,11 @@ const SettingsPage = () => {
                 <div className="flex gap-2">
                   <Button
                     type="button"
-                    onClick={useFlixVaultLogo}
+                    onClick={useGamerGridLogo}
                     className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
                   >
                     <Film className="w-4 h-4 mr-2" />
-                    Use FlixVault Logo
+                    Use GamerGrid Logo
                   </Button>
                 </div>
               </div>

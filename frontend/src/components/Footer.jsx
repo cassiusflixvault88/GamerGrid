@@ -15,7 +15,7 @@ const Footer = () => {
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <div className="flex items-center space-x-3">
               <img 
-                src="/flixvault-icon.svg" 
+                src="/gamergrid-icon.svg" 
                 alt="GamerGrid" 
                 className="w-8 h-8"
               />
@@ -70,7 +70,7 @@ const Footer = () => {
               About GamerGrid
             </button>
             <a 
-              href="mailto:cassiusflixvault@gmail.com" 
+              href="mailto:cassiusgamergrid@gmail.com" 
               className="hover:text-white transition-colors"
             >
               📧 Help & Support

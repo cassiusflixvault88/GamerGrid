@@ -96,7 +96,7 @@ Created by Cassius Fox | GamerGrid`;
             <div className="text-center mb-6">
               <div className="flex items-center justify-center gap-3 mb-3">
                 <img 
-                  src="/flixvault-icon.svg" 
+                  src="/gamergrid-icon.svg" 
                   alt="GamerGrid" 
                   className="w-16 h-16 animate-pulse"
                 />

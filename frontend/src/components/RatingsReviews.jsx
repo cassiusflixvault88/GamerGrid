@@ -258,7 +258,7 @@ const RatingsReviews = ({ contentId, contentTitle }) => {
 
   return (
     <div className="space-y-6">
-      {/* Overall Rating Display - FlixVault Style */}
+      {/* Overall Rating Display - GamerGrid Style */}
       <div className="bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/30 rounded-lg p-6">
         <div className="flex items-center justify-between">
           <div>

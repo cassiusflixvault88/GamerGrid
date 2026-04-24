@@ -122,7 +122,7 @@ const PaymentSuccessPage = () => {
           {isPro ? (
             <div>
               <p className="text-xl text-gray-300 mb-6">
-                Your FlixVault Pro subscription is now active!
+                Your GamerGrid Pro subscription is now active!
               </p>
 
               <div className="bg-purple-900/30 rounded-lg p-6 mb-6">
@@ -154,7 +154,7 @@ const PaymentSuccessPage = () => {
                 <span className="text-purple-400 font-bold">
                   ${(paymentInfo.amount_total / 100).toFixed(2)}
                 </span>{' '}
-                helps us keep FlixVault free and amazing for everyone. 💜
+                helps us keep GamerGrid free and amazing for everyone. 💜
               </p>
             </div>
           )}

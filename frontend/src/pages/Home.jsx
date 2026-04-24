@@ -176,7 +176,7 @@ const Home = () => {
             <div className="flex items-center justify-between flex-wrap gap-6">
               <div className="flex items-center gap-4">
                 <img 
-                  src="/flixvault-icon.svg" 
+                  src="/gamergrid-icon.svg" 
                   alt="GamerGrid" 
                   className="w-20 h-20 animate-pulse"
                 />

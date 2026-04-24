@@ -65,7 +65,7 @@ const Navbar = () => {
           <div className="flex items-center space-x-8">
             <Link to="/" className="flex items-center gap-2">
               <img 
-                src="/flixvault-icon.svg" 
+                src="/gamergrid-icon.svg" 
                 alt="GamerGrid" 
                 className="w-8 h-8"
               />
@@ -133,14 +133,14 @@ const Navbar = () => {
                         ? (user.profile_picture_url.startsWith('http') 
                             ? user.profile_picture_url 
                             : `${user.profile_picture_url}`)
-                        : '/flixvault-icon.svg'
+                        : '/gamergrid-icon.svg'
                     }
                     alt={user.username}
                     className="w-10 h-10 rounded-full object-cover border-2 border-purple-500 bg-gray-800 p-1"
                     onError={(e) => {
                       console.error('❌ Profile picture failed to load:', user.profile_picture_url);
-                      // Fallback to FlixVault logo
-                      e.target.src = '/flixvault-icon.svg';
+                      // Fallback to GamerGrid logo
+                      e.target.src = '/gamergrid-icon.svg';
                     }}
                   />
                   <span className="hidden md:inline text-sm">{user.username}</span>
@@ -157,12 +157,12 @@ const Navbar = () => {
                               ? (user.profile_picture_url.startsWith('http') 
                                   ? user.profile_picture_url 
                                   : `${user.profile_picture_url}`)
-                              : '/flixvault-icon.svg'
+                              : '/gamergrid-icon.svg'
                           }
                           alt={user.username}
                           className="w-12 h-12 rounded-full object-cover border-2 border-purple-500 bg-gray-800 p-1"
                           onError={(e) => {
-                            e.target.src = '/flixvault-icon.svg';
+                            e.target.src = '/gamergrid-icon.svg';
                           }}
                         />
                         <div className="flex-1">
@@ -204,10 +204,10 @@ const Navbar = () => {
                       className="flex items-center space-x-2 w-full px-4 py-2 text-purple-400 hover:bg-purple-900/20 transition-colors font-semibold"
                     >
                       <Heart className="w-4 h-4" />
-                      <span>💜 Support FlixVault</span>
+                      <span>💜 Support GamerGrid</span>
                     </button>
                     <a
-                      href="mailto:cassiusflixvault@gmail.com"
+                      href="mailto:cassiusgamergrid@gmail.com"
                       className="flex items-center space-x-2 px-4 py-2 text-white/90 hover:bg-white/10 transition-colors"
                       onClick={() => setShowUserMenu(false)}
                     >

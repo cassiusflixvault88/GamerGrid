@@ -172,10 +172,10 @@ const AppReviewsPage = () => {
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            Rate <span className="text-purple-500">FlixVault</span>
+            Rate <span className="text-purple-500">GamerGrid</span>
           </h1>
           <p className="text-gray-400 text-lg mb-6">
-            Share your experience with FlixVault - our movie & TV series discovery and trailer app!
+            Share your experience with GamerGrid - our movie & TV series discovery and trailer app!
           </p>
 
           {/* Average Rating Display */}
@@ -212,7 +212,7 @@ const AppReviewsPage = () => {
               <Textarea
                 value={userReview}
                 onChange={(e) => setUserReview(e.target.value)}
-                placeholder="Tell us what you think about FlixVault..."
+                placeholder="Tell us what you think about GamerGrid..."
                 className="bg-white/5 border-white/20 text-white min-h-[120px]"
                 rows={5}
               />
@@ -240,7 +240,7 @@ const AppReviewsPage = () => {
             <p className="text-center text-gray-400">Loading reviews...</p>
           ) : reviews.length === 0 ? (
             <Card className="bg-white/5 border-white/10 p-8 text-center">
-              <p className="text-gray-400">No reviews yet. Be the first to review FlixVault!</p>
+              <p className="text-gray-400">No reviews yet. Be the first to review GamerGrid!</p>
             </Card>
           ) : (
             <div className="space-y-4" key={`reviews-${totalReviews}-${reviews.length}`}>

@@ -82,7 +82,7 @@ const FeedbackPage = () => {
 
       toast({
         title: 'Feedback submitted!',
-        description: 'Thank you for helping us improve FlixVault.',
+        description: 'Thank you for helping us improve GamerGrid.',
       });
 
       // Reset form
@@ -161,7 +161,7 @@ const FeedbackPage = () => {
             Feedback & <span className="text-purple-500">Bug Reports</span>
           </h1>
           <p className="text-gray-400 text-lg">
-            Help us make FlixVault better! Report bugs or suggest new features.
+            Help us make GamerGrid better! Report bugs or suggest new features.
           </p>
         </div>
 

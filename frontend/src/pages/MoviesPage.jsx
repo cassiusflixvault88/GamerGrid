@@ -67,7 +67,7 @@ const MoviesPage = () => {
       setHorror(horrorMovies);
       setSciFi(sciFiMovies);
       
-      console.log(`✅ Loaded ${movies.length} movies from FlixVault catalog`);
+      console.log(`✅ Loaded ${movies.length} movies from GamerGrid catalog`);
     } catch (error) {
       console.error('Error loading movies:', error);
     } finally {
