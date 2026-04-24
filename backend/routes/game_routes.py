@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 ROOT_DIR = Path(__file__).parent.parent
 load_dotenv(ROOT_DIR / '.env')
 
-router = APIRouter(prefix="/api/games", tags=["games"])
+router = APIRouter(prefix="/games", tags=["games"])
 logger = logging.getLogger(__name__)
 
 # IGDB credentials
