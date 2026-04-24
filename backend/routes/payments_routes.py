@@ -76,6 +76,14 @@ async def create_tip_checkout(
         
         # Initialize Stripe
         stripe_key = os.getenv('STRIPE_API_KEY')
+        
+        # DEBUG: Verify we're using LIVE key
+        if not stripe_key or not stripe_key.startswith('sk_live_'):
+            logger.error(f"❌ CRITICAL: Using TEST key! Key prefix: {stripe_key[:15] if stripe_key else 'NONE'}")
+            raise HTTPException(500, "Stripe configuration error - contact support")
+        
+        logger.warning(f"✅ Using LIVE Stripe key: {stripe_key[:20]}...")
+        
         webhook_url = f"{request.origin_url}/api/payments/webhook/stripe"
         stripe_checkout = StripeCheckout(api_key=stripe_key, webhook_url=webhook_url)
         

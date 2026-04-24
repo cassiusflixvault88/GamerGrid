@@ -105,19 +105,8 @@ Created by Cassius Fox | FlixVault`;
               <p className="text-white/70">Help us grow by inviting your friends to test!</p>
             </div>
 
-            {/* Beta Testing Warning */}
-            <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-4 mb-4">
-              <div className="flex items-start gap-3">
-                <AlertTriangle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-bold text-red-300 mb-1">⚠️ Preview Environment - Expect Bugs!</p>
-                  <p className="text-red-200/90 text-sm">
-                    This is a <strong>beta testing version</strong>. You may encounter bugs, broken features, or UI glitches. 
-                    Please report any issues you find! Your account will <strong>NOT</strong> carry over when we launch officially.
-                  </p>
-                </div>
-              </div>
-            </div>
+            {/* Beta Testing Warning - REMOVED FOR PRODUCTION */}
+            {/* Production launch - all features live */}
 
             {/* PWA Installation Instructions */}
             <div className="bg-white/5 border border-white/10 rounded-lg p-4 mb-4">
@@ -183,7 +172,7 @@ Created by Cassius Fox | FlixVault`;
             <div className="bg-white/5 border border-white/10 rounded-lg p-6 mb-6">
               <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
                 <TestTube className="w-5 h-5 text-purple-400" />
-                Preview Testing Instructions
+                How to Use FlixVault
               </h3>
               
               <div className="space-y-3 text-white/80">
@@ -219,10 +208,9 @@ Created by Cassius Fox | FlixVault`;
                 </div>
               </div>
 
-              <div className="mt-4 p-3 bg-yellow-900/20 border border-yellow-500/30 rounded-lg">
-                <p className="text-yellow-300 text-sm">
-                  <strong>Important:</strong> This is a preview version for testing only. When we launch officially, 
-                  all test accounts and data will be wiped. You'll need to create a new account on the production site.
+              <div className="mt-4 p-3 bg-blue-900/20 border border-blue-500/30 rounded-lg">
+                <p className="text-blue-300 text-sm">
+                  <strong>Enjoy FlixVault!</strong> Explore movies, watch trailers, rate content, and discover new favorites!
                 </p>
               </div>
             </div>
