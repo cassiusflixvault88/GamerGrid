@@ -82,12 +82,12 @@ const Footer = () => {
               📱 Install App
             </button>
             <a 
-              href="https://www.themoviedb.org/" 
+              href="https://www.igdb.com/" 
               target="_blank" 
               rel="noopener noreferrer"
               className="hover:text-white transition-colors text-xs"
             >
-              Powered by TMDB
+              Powered by IGDB
             </a>
           </div>
         </div>

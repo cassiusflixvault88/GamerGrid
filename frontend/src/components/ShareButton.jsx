@@ -15,7 +15,7 @@ const ShareButton = ({ variant = 'default', size = 'default', showText = true })
 
 ✨ Features:
 • Watch trailers for thousands of movies
-• Rate & review like IMDb
+• Rate & review like IGN
 • Build your watchlist
 • FREE full-length movies available
 • Top 10 Rankings

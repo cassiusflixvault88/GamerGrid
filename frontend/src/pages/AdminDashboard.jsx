@@ -346,7 +346,7 @@ const AdminDashboard = () => {
                   <p>✅ All systems operational</p>
                   <p>📊 {stats?.total_users || 0} registered users</p>
                   <p>⭐ {stats?.total_reviews || 0} reviews from community</p>
-                  <p>🎬 Content powered by TMDB API</p>
+                  <p>🎬 Content powered by IGDB API</p>
                 </div>
               </Card>
             </div>
