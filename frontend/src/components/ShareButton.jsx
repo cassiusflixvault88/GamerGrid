@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Share2, Check, Copy, X, Film, Star, MessageSquare, TestTube, Smartphone, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
+import { Share2, Check, Copy, X, Film, Star, MessageSquare, TestTube, Smartphone, AlertTriangle, ChevronDown, ChevronUp, Gamepad2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Dialog, DialogContent } from './ui/dialog';
 import { useToast } from '../hooks/use-toast';

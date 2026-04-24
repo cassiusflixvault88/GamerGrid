@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Film, Tv, Star, Heart, Download, Share2, Play } from 'lucide-react';
+import { X, Film, Tv, Star, Heart, Download, Share2, Play, Gamepad2 } from 'lucide-react';
 import { Dialog, DialogContent } from './ui/dialog';
 import { Button } from './ui/button';
 
