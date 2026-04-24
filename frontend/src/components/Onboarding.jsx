@@ -37,7 +37,7 @@ const Onboarding = () => {
 
   const steps = [
     {
-      title: 'Welcome to FlixVault! 🎬',
+      title: 'Welcome to GamerGrid! 🎬',
       description: 'Your movie & TV series discovery vault - watch trailers, rate content, and explore films & shows!',
       icon: <Film className="w-16 h-16 text-purple-400" />,
       features: [
@@ -88,7 +88,7 @@ const Onboarding = () => {
     },
     {
       title: 'Install as an App 📱',
-      description: 'Get the full FlixVault experience by installing it on your device!',
+      description: 'Get the full GamerGrid experience by installing it on your device!',
       icon: <Download className="w-16 h-16 text-purple-400" />,
       features: [
         'Works like a native app',
@@ -98,7 +98,7 @@ const Onboarding = () => {
     },
     {
       title: 'Share with Friends 🚀',
-      description: 'Love FlixVault? Share it with your friends and family!',
+      description: 'Love GamerGrid? Share it with your friends and family!',
       icon: <Share2 className="w-16 h-16 text-green-400" />,
       features: [
         'Copy link instantly',

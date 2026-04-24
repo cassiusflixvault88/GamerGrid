@@ -66,11 +66,11 @@ const Navbar = () => {
             <Link to="/" className="flex items-center gap-2">
               <img 
                 src="/flixvault-icon.svg" 
-                alt="FlixVault" 
+                alt="GamerGrid" 
                 className="w-8 h-8"
               />
               <div className="text-3xl font-bold bg-gradient-to-r from-purple-500 to-blue-500 bg-clip-text text-transparent">
-                FlixVault
+                GamerGrid
               </div>
             </Link>
             <div className="hidden md:flex items-center space-x-6">

@@ -28,7 +28,7 @@ const AuthModal = ({ isOpen, onClose }) => {
         toast({ title: 'Welcome back!', description: 'You have successfully logged in.' });
       } else {
         await signup(email, username, password);
-        toast({ title: 'Account created!', description: 'Welcome to FlixVault!' });
+        toast({ title: 'Account created!', description: 'Welcome to GamerGrid!' });
       }
       onClose();
       resetForm();

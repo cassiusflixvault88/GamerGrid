@@ -177,18 +177,18 @@ const Home = () => {
               <div className="flex items-center gap-4">
                 <img 
                   src="/flixvault-icon.svg" 
-                  alt="FlixVault" 
+                  alt="GamerGrid" 
                   className="w-20 h-20 animate-pulse"
                 />
                 <div>
                   <h2 className="text-4xl font-bold text-white mb-3 flex items-center gap-3">
                     <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
-                      Rate FlixVault
+                      Rate GamerGrid
                     </span>
                     ⭐
                   </h2>
                   <p className="text-white/80 text-lg">
-                    Love FlixVault? Share your experience and help us improve!
+                    Love GamerGrid? Share your experience and help us improve!
                   </p>
                 </div>
               </div>
@@ -347,10 +347,10 @@ const Home = () => {
         )}
       </div>
 
-      {/* Share FlixVault Section */}
+      {/* Share GamerGrid Section */}
       <div className="px-6 lg:px-12 max-w-[1920px] mx-auto pb-12">
         <div className="bg-gradient-to-r from-purple-900/20 to-blue-900/20 border border-purple-500/30 rounded-2xl p-8 text-center">
-          <h2 className="text-3xl font-bold text-white mb-3">Love FlixVault? Share it! 🚀</h2>
+          <h2 className="text-3xl font-bold text-white mb-3">Love GamerGrid? Share it! 🚀</h2>
           <p className="text-white/70 mb-6">Help us grow by sharing with your friends and family</p>
           <ShareButton size="lg" />
         </div>

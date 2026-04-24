@@ -11,7 +11,7 @@ const ShareButton = ({ variant = 'default', size = 'default', showText = true })
   const { toast } = useToast();
   const shareUrl = 'https://hbo-max-app.emergent.host';
 
-  const shareMessage = `🎬 Check out FlixVault - Movie Discovery & Trailer App!
+  const shareMessage = `🎬 Check out GamerGrid - Movie Discovery & Trailer App!
 
 ✨ Features:
 • Watch trailers for thousands of movies
@@ -29,7 +29,7 @@ ${shareUrl}
 • Leave reviews
 • Request content you want to see
 
-Created by Cassius Fox | FlixVault`;
+Created by Cassius Fox | GamerGrid`;
 
   const handleCopyMessage = async () => {
     try {
@@ -50,7 +50,7 @@ Created by Cassius Fox | FlixVault`;
       await navigator.clipboard.writeText(shareUrl);
       toast({
         title: 'Link copied!',
-        description: 'Share FlixVault with your friends!',
+        description: 'Share GamerGrid with your friends!',
       });
     } catch (err) {
       console.error('Copy failed:', err);
@@ -61,8 +61,8 @@ Created by Cassius Fox | FlixVault`;
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'FlixVault - Movie Discovery App',
-          text: 'Check out FlixVault! Watch movie trailers, rate & review, plus free movies available!',
+          title: 'GamerGrid - Movie Discovery App',
+          text: 'Check out GamerGrid! Watch movie trailers, rate & review, plus free movies available!',
           url: shareUrl,
         });
       } catch (err) {
@@ -80,7 +80,7 @@ Created by Cassius Fox | FlixVault`;
         className="group"
       >
         <Share2 className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform" />
-        {showText && 'Share FlixVault'}
+        {showText && 'Share GamerGrid'}
       </Button>
 
       <Dialog open={showModal} onOpenChange={setShowModal}>
@@ -97,10 +97,10 @@ Created by Cassius Fox | FlixVault`;
               <div className="flex items-center justify-center gap-3 mb-3">
                 <img 
                   src="/flixvault-icon.svg" 
-                  alt="FlixVault" 
+                  alt="GamerGrid" 
                   className="w-16 h-16 animate-pulse"
                 />
-                <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">Share FlixVault! 🚀</h2>
+                <h2 className="text-3xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">Share GamerGrid! 🚀</h2>
               </div>
               <p className="text-white/70">Help us grow by inviting your friends to test!</p>
             </div>
@@ -116,7 +116,7 @@ Created by Cassius Fox | FlixVault`;
               >
                 <div className="flex items-center gap-2">
                   <Smartphone className="w-5 h-5 text-blue-400" />
-                  <h3 className="text-lg font-bold text-white">📱 Install FlixVault as an App (PWA)</h3>
+                  <h3 className="text-lg font-bold text-white">📱 Install GamerGrid as an App (PWA)</h3>
                 </div>
                 {showPWAInstructions ? (
                   <ChevronUp className="w-5 h-5 text-white/50 group-hover:text-white" />
@@ -131,9 +131,9 @@ Created by Cassius Fox | FlixVault`;
                     <div>
                       <p className="font-semibold text-white mb-1">🖥️ Chrome (Desktop/PC):</p>
                       <ol className="list-decimal list-inside space-y-1 text-white/70">
-                        <li>Open FlixVault in Chrome browser</li>
+                        <li>Open GamerGrid in Chrome browser</li>
                         <li>Click the <strong>⋮</strong> (three dots) menu in top-right</li>
-                        <li>Select <strong>"Install FlixVault"</strong> or <strong>"Add to Desktop"</strong></li>
+                        <li>Select <strong>"Install GamerGrid"</strong> or <strong>"Add to Desktop"</strong></li>
                         <li>Click <strong>"Install"</strong> in the popup</li>
                       </ol>
                     </div>
@@ -141,7 +141,7 @@ Created by Cassius Fox | FlixVault`;
                     <div>
                       <p className="font-semibold text-white mb-1">📱 iPhone/iOS (Safari):</p>
                       <ol className="list-decimal list-inside space-y-1 text-white/70">
-                        <li>Open FlixVault in <strong>Safari browser</strong> (not Chrome!)</li>
+                        <li>Open GamerGrid in <strong>Safari browser</strong> (not Chrome!)</li>
                         <li>Tap the <strong>Share</strong> button (square with arrow up)</li>
                         <li>Scroll down and tap <strong>"Add to Home Screen"</strong></li>
                         <li>Tap <strong>"Add"</strong> in top-right corner</li>
@@ -151,7 +151,7 @@ Created by Cassius Fox | FlixVault`;
                     <div>
                       <p className="font-semibold text-white mb-1">📱 Android (Chrome):</p>
                       <ol className="list-decimal list-inside space-y-1 text-white/70">
-                        <li>Open FlixVault in Chrome browser</li>
+                        <li>Open GamerGrid in Chrome browser</li>
                         <li>Tap the <strong>⋮</strong> (three dots) menu in top-right</li>
                         <li>Select <strong>"Add to Home screen"</strong> or <strong>"Install app"</strong></li>
                         <li>Tap <strong>"Add"</strong> or <strong>"Install"</strong></li>
@@ -172,7 +172,7 @@ Created by Cassius Fox | FlixVault`;
             <div className="bg-white/5 border border-white/10 rounded-lg p-6 mb-6">
               <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
                 <TestTube className="w-5 h-5 text-purple-400" />
-                How to Use FlixVault
+                How to Use GamerGrid
               </h3>
               
               <div className="space-y-3 text-white/80">
@@ -201,7 +201,7 @@ Created by Cassius Fox | FlixVault`;
                   <div>
                     <p className="font-semibold text-white">💬 Leave Feedback & Reviews:</p>
                     <p className="text-sm">
-                      Rate your experience on the <strong>"Rate FlixVault"</strong> page (footer link). 
+                      Rate your experience on the <strong>"Rate GamerGrid"</strong> page (footer link). 
                       You can also use <strong>"Report Issues"</strong> to request new features or suggest improvements!
                     </p>
                   </div>
@@ -210,7 +210,7 @@ Created by Cassius Fox | FlixVault`;
 
               <div className="mt-4 p-3 bg-blue-900/20 border border-blue-500/30 rounded-lg">
                 <p className="text-blue-300 text-sm">
-                  <strong>Enjoy FlixVault!</strong> Explore movies, watch trailers, rate content, and discover new favorites!
+                  <strong>Enjoy GamerGrid!</strong> Explore movies, watch trailers, rate content, and discover new favorites!
                 </p>
               </div>
             </div>

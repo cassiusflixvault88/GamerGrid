@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Download, X, HelpCircle, Info } from 'lucide-react';
 import { Button } from './ui/button';
 import InstallInstructions from './InstallInstructions';
-import AboutFlixVault from './AboutFlixVault';
+import AboutGamerGrid from './AboutGamerGrid';
 
 const InstallPWA = () => {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
@@ -42,7 +42,7 @@ const InstallPWA = () => {
   if (!showInstall) return (
     <>
       <InstallInstructions isOpen={showInstructions} onClose={() => setShowInstructions(false)} />
-      <AboutFlixVault isOpen={showAbout} onClose={() => setShowAbout(false)} />
+      <AboutGamerGrid isOpen={showAbout} onClose={() => setShowAbout(false)} />
     </>
   );
 
@@ -61,7 +61,7 @@ const InstallPWA = () => {
             <Download className="w-6 h-6" />
           </div>
           <div className="flex-1">
-            <h3 className="font-bold text-lg mb-1">Install FlixVault</h3>
+            <h3 className="font-bold text-lg mb-1">Install GamerGrid</h3>
             <p className="text-sm text-white/90 mb-3">
               Install our app for offline access, faster performance, and native app experience!
             </p>
@@ -94,7 +94,7 @@ const InstallPWA = () => {
       </div>
       
       <InstallInstructions isOpen={showInstructions} onClose={() => setShowInstructions(false)} />
-      <AboutFlixVault isOpen={showAbout} onClose={() => setShowAbout(false)} />
+      <AboutGamerGrid isOpen={showAbout} onClose={() => setShowAbout(false)} />
     </>
   );
 };

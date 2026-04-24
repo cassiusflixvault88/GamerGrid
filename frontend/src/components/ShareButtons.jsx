@@ -5,7 +5,7 @@ import { useToast } from '../hooks/use-toast';
 
 const ShareButtons = ({ content }) => {
   const { toast } = useToast();
-  const title = content?.title || content?.name || 'Check this out on FlixVault';
+  const title = content?.title || content?.name || 'Check this out on GamerGrid';
   const currentUrl = window.location.href;
   
   const shareUrl = `${window.location.origin}?content=${content?.id}`;
@@ -16,19 +16,19 @@ const ShareButtons = ({ content }) => {
   };
   
   const handleTwitterShare = () => {
-    const text = `Check out "${title}" on FlixVault! 🎬`;
+    const text = `Check out "${title}" on GamerGrid! 🎬`;
     const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`;
     window.open(url, '_blank', 'width=600,height=400');
   };
   
   const handleWhatsAppShare = () => {
-    const text = `Check out "${title}" on FlixVault! ${shareUrl}`;
+    const text = `Check out "${title}" on GamerGrid! ${shareUrl}`;
     const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
     window.open(url, '_blank');
   };
 
   const handleTelegramShare = () => {
-    const text = `Check out "${title}" on FlixVault! 🎬`;
+    const text = `Check out "${title}" on GamerGrid! 🎬`;
     const url = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(text)}`;
     window.open(url, '_blank', 'width=600,height=400');
   };

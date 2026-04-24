@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import ShareButton from './ShareButton';
 import InstallInstructions from './InstallInstructions';
-import AboutFlixVault from './AboutFlixVault';
+import AboutGamerGrid from './AboutGamerGrid';
 
 const Footer = () => {
   const [showInstructions, setShowInstructions] = useState(false);
@@ -16,11 +16,11 @@ const Footer = () => {
             <div className="flex items-center space-x-3">
               <img 
                 src="/flixvault-icon.svg" 
-                alt="FlixVault" 
+                alt="GamerGrid" 
                 className="w-8 h-8"
               />
               <span className="text-2xl font-bold bg-gradient-to-r from-purple-500 to-blue-500 bg-clip-text text-transparent">
-                FlixVault
+                GamerGrid
               </span>
             </div>
             
@@ -32,7 +32,7 @@ const Footer = () => {
                 </span>
               </p>
               <p className="text-white/40 text-xs">
-                © {new Date().getFullYear()} FlixVault. All rights reserved.
+                © {new Date().getFullYear()} GamerGrid. All rights reserved.
               </p>
             </div>
           </div>
@@ -49,7 +49,7 @@ const Footer = () => {
               to="/app-reviews"
               className="hover:text-white transition-colors text-yellow-400 font-semibold"
             >
-              ⭐ Rate FlixVault
+              ⭐ Rate GamerGrid
             </Link>
             <Link 
               to="/request-content"
@@ -67,7 +67,7 @@ const Footer = () => {
               onClick={() => setShowAbout(true)}
               className="hover:text-white transition-colors"
             >
-              About FlixVault
+              About GamerGrid
             </button>
             <a 
               href="mailto:cassiusflixvault@gmail.com" 
@@ -94,7 +94,7 @@ const Footer = () => {
       </footer>
 
       <InstallInstructions isOpen={showInstructions} onClose={() => setShowInstructions(false)} />
-      <AboutFlixVault isOpen={showAbout} onClose={() => setShowAbout(false)} />
+      <AboutGamerGrid isOpen={showAbout} onClose={() => setShowAbout(false)} />
     </>
   );
 };
