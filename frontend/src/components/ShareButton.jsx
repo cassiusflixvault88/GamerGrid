@@ -9,7 +9,7 @@ const ShareButton = ({ variant = 'default', size = 'default', showText = true })
   const [showModal, setShowModal] = useState(false);
   const [showPWAInstructions, setShowPWAInstructions] = useState(false);
   const { toast } = useToast();
-  const shareUrl = 'https://hbo-max-app.preview.emergentagent.com';
+  const shareUrl = 'https://hbo-max-app.emergent.host';
 
   const shareMessage = `🎬 Check out FlixVault - Movie Discovery & Trailer App!
 
