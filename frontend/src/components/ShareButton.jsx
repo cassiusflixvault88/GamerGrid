@@ -61,8 +61,8 @@ Created by Cassius Fox | GamerGrid`;
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'GamerGrid - Movie Discovery App',
-          text: 'Check out GamerGrid! Watch movie trailers, rate & review, plus free movies available!',
+          title: 'GamerGrid - Ultimate Gaming Hub',
+          text: 'Check out GamerGrid! Discover games, watch trailers, track releases on PS5, Xbox, PC & Switch!',
           url: shareUrl,
         });
       } catch (err) {
@@ -177,10 +177,10 @@ Created by Cassius Fox | GamerGrid`;
               
               <div className="space-y-3 text-white/80">
                 <div className="flex items-start gap-3">
-                  <Film className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
+                  <Gamepad2 className="w-5 h-5 text-green-400 flex-shrink-0 mt-0.5" />
                   <div>
                     <p className="font-semibold text-white">What You Can Do:</p>
-                    <p className="text-sm">Browse thousands of movies & shows, watch 35+ free movies, add to watchlist, rate content, explore Top 10 rankings</p>
+                    <p className="text-sm">Discover games across PS5, Xbox, PC & Switch • Watch gameplay trailers • Track Game Pass & PS Plus • Build your game library • Rate & review games</p>
                   </div>
                 </div>
                 
@@ -210,7 +210,7 @@ Created by Cassius Fox | GamerGrid`;
 
               <div className="mt-4 p-3 bg-blue-900/20 border border-blue-500/30 rounded-lg">
                 <p className="text-blue-300 text-sm">
-                  <strong>Enjoy GamerGrid!</strong> Explore movies, watch trailers, rate content, and discover new favorites!
+                  <strong>Enjoy GamerGrid!</strong> Discover games, watch trailers, track releases, and never miss a launch!
                 </p>
               </div>
             </div>

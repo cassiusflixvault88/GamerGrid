@@ -37,53 +37,53 @@ const Onboarding = () => {
 
   const steps = [
     {
-      title: 'Welcome to GamerGrid! 🎬',
-      description: 'Your movie & TV series discovery vault - watch trailers, rate content, and explore films & shows!',
-      icon: <Film className="w-16 h-16 text-purple-400" />,
+      title: 'Welcome to GamerGrid! 🎮',
+      description: 'Your ultimate gaming hub - discover games, watch trailers, track releases across PS5, Xbox, PC & Switch!',
+      icon: <Gamepad2 className="w-16 h-16 text-purple-400" />,
       features: [
-        'Browse movies with HD trailers',
-        'Free full-length movies available',
-        'Rate & review like IMDb'
+        'Browse games with HD trailers',
+        'Track releases on all platforms',
+        'Discover trending & upcoming games'
       ]
     },
     {
-      title: 'Watch Movie Trailers 🔥',
-      description: 'Browse movies with high-quality YouTube trailers.',
+      title: 'Discover Games 🔥',
+      description: 'Browse thousands of games across PS5, Xbox, PC, and Nintendo Switch with gameplay trailers.',
       icon: <Star className="w-16 h-16 text-yellow-400" />,
       features: [
-        'HD trailers for movies',
-        'What\'s Hot trending section',
-        'Discover by genre'
+        'HD gameplay trailers',
+        'What\'s Trending in gaming',
+        'Browse by platform & genre'
       ]
     },
     {
-      title: 'Build Your Watchlist 💜',
-      description: 'Save movies you want to watch and never lose track of your favorites.',
+      title: 'Track Your Games 💜',
+      description: 'Build your game library - track what you own, want to play, and have completed.',
       icon: <Heart className="w-16 h-16 text-red-400" />,
       features: [
-        'Add movies to watchlist',
-        'Sync across devices',
-        'Track what you want to watch'
+        'Add games to library',
+        'Track across platforms',
+        'Never miss a release'
       ]
     },
     {
-      title: 'Bonus: Free Movies! 🎉',
-      description: 'Enjoy classic public domain films completely free!',
+      title: 'Monthly Free Games 🎉',
+      description: 'Stay updated on Xbox Game Pass and PlayStation Plus monthly free games!',
       icon: <Play className="w-16 h-16 text-green-400" />,
       features: [
-        'Free full-length movies',
-        'Classic cinema & horror',
-        'No subscription needed'
+        'Xbox Game Pass games',
+        'PS Plus monthly titles',
+        'Never miss free games'
       ]
     },
     {
-      title: 'Rate & Review Movies 🎬',
-      description: 'Share your opinions! Rate movies and read community reviews.',
+      title: 'Rate & Review Games 🎮',
+      description: 'Share your gaming opinions! Rate games and read community reviews.',
       icon: <Share2 className="w-16 h-16 text-blue-400" />,
       features: [
-        'Rate movies like IMDb',
-        'Leave reviews',
-        'See what others think'
+        'Rate games like IGN/Metacritic',
+        'Leave detailed reviews',
+        'See community ratings'
       ]
     },
     {
@@ -97,13 +97,13 @@ const Onboarding = () => {
       ]
     },
     {
-      title: 'Share with Friends 🚀',
-      description: 'Love GamerGrid? Share it with your friends and family!',
+      title: 'Share with Gamers 🚀',
+      description: 'Love GamerGrid? Share it with your gaming friends!',
       icon: <Share2 className="w-16 h-16 text-green-400" />,
       features: [
         'Copy link instantly',
-        'Share on social media',
-        'Help us grow the community'
+        'Share on Discord/Twitter',
+        'Grow the gaming community'
       ]
     }
   ];
