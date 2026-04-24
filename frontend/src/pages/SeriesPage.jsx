@@ -72,7 +72,7 @@ const SeriesPage = () => {
       <div className="px-6 lg:px-12 max-w-[1920px] mx-auto pb-20">
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-white mb-2">📺 All TV Series</h1>
-          <p className="text-white/60">Discover thousands of TV shows</p>
+          <p className="text-white/60">Discover thousands of games</p>
         </div>
 
         <Tabs defaultValue="all" className="w-full">

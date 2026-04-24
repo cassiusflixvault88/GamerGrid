@@ -343,7 +343,7 @@ const SettingsPage = () => {
             </div>
             <div className="flex-1">
               <p className="text-white font-medium">Dark Mode</p>
-              <p className="text-white/60 text-sm">Perfect for movie & series viewing</p>
+              <p className="text-white/60 text-sm">Perfect for gaming</p>
             </div>
             <div className="px-3 py-1 bg-purple-600/20 text-purple-300 rounded-full text-sm font-medium">
               Active

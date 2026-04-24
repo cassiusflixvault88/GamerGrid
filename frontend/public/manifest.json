@@ -1,7 +1,7 @@
 {
-  "short_name": "FlixVault",
-  "name": "FlixVault - Your Premium Movie Vault",
-  "description": "Watch movies, TV shows, and classics. Rate with Vault Score. Created by Cassius Fox.",
+  "short_name": "GamerGrid",
+  "name": "GamerGrid - Your Gaming Hub",
+  "description": "Discover games, watch trailers, track releases. PS5, Xbox, PC & Switch.",
   "icons": [
     {
       "src": "/flixvault-icon.svg",
@@ -12,8 +12,8 @@
   ],
   "start_url": "/",
   "display": "standalone",
-  "theme_color": "#FFD700",
-  "background_color": "#000000",
+  "theme_color": "#8B5CF6",
+  "background_color": "#0F172A",
   "orientation": "portrait-primary",
-  "categories": ["entertainment", "video", "streaming"]
+  "categories": ["entertainment", "gaming", "games"]
 }

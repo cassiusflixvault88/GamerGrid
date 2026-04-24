@@ -7,7 +7,7 @@ const AboutFlixVault = ({ isOpen, onClose }) => {
     {
       icon: Play,
       title: 'Watch Movie & Series Trailers',
-      description: 'Browse movies and TV shows with high-quality trailers - discover what to watch next'
+      description: 'Browse games and TV shows with high-quality trailers - discover what to watch next'
     },
     {
       icon: Star,
@@ -57,7 +57,7 @@ const AboutFlixVault = ({ isOpen, onClose }) => {
             </h3>
             <p className="text-white/80 leading-relaxed mb-4">
               FlixVault is your <strong className="text-purple-300">movie & TV series discovery companion</strong> - like IMDb and Rotten Tomatoes combined. 
-              Browse movies and TV shows with trailers, rate and review what you've watched, and build your personal watchlist. 
+              Browse games and TV shows with trailers, rate and review what you've watched, and build your personal watchlist. 
               Discover what's hot, explore by genre, and find your next favorite film or series - all in one beautiful, 
               fast, and installable web app.
             </p>
