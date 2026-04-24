@@ -202,6 +202,55 @@ const Home = () => {
           </div>
         </div>
 
+        {/* BROWSE ALL GAMES - PLATFORM BUTTONS */}
+        <div className="px-6 lg:px-12 max-w-[1920px] mx-auto mb-12">
+          <div className="bg-gradient-to-r from-purple-900/40 via-blue-900/40 to-cyan-900/40 rounded-xl p-8 border border-purple-500/30">
+            <h2 className="text-3xl font-bold text-white mb-6 text-center">
+              🎮 Browse Games by Platform
+            </h2>
+            
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <a href="/games/playstation" className="group bg-gradient-to-br from-blue-600/20 to-blue-800/20 hover:from-blue-600/40 hover:to-blue-800/40 border border-blue-500/30 rounded-xl p-6 transition-all transform hover:scale-105">
+                <div className="text-center">
+                  <div className="text-4xl mb-3">🎮</div>
+                  <h3 className="text-xl font-bold text-white mb-2">PlayStation</h3>
+                  <p className="text-white/60 text-sm">PS5 & PS4</p>
+                </div>
+              </a>
+
+              <a href="/games/xbox" className="group bg-gradient-to-br from-green-600/20 to-green-800/20 hover:from-green-600/40 hover:to-green-800/40 border border-green-500/30 rounded-xl p-6 transition-all transform hover:scale-105">
+                <div className="text-center">
+                  <div className="text-4xl mb-3">🎯</div>
+                  <h3 className="text-xl font-bold text-white mb-2">Xbox</h3>
+                  <p className="text-white/60 text-sm">Series X/S & One</p>
+                </div>
+              </a>
+
+              <a href="/games/pc" className="group bg-gradient-to-br from-purple-600/20 to-purple-800/20 hover:from-purple-600/40 hover:to-purple-800/40 border border-purple-500/30 rounded-xl p-6 transition-all transform hover:scale-105">
+                <div className="text-center">
+                  <div className="text-4xl mb-3">💻</div>
+                  <h3 className="text-xl font-bold text-white mb-2">PC / Steam</h3>
+                  <p className="text-white/60 text-sm">Desktop Gaming</p>
+                </div>
+              </a>
+
+              <a href="/games/switch" className="group bg-gradient-to-br from-red-600/20 to-red-800/20 hover:from-red-600/40 hover:to-red-800/40 border border-red-500/30 rounded-xl p-6 transition-all transform hover:scale-105">
+                <div className="text-center">
+                  <div className="text-4xl mb-3">🕹️</div>
+                  <h3 className="text-xl font-bold text-white mb-2">Nintendo</h3>
+                  <p className="text-white/60 text-sm">Switch</p>
+                </div>
+              </a>
+            </div>
+
+            <div className="mt-6 text-center">
+              <a href="/games/all" className="inline-block px-10 py-4 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-700 hover:to-cyan-700 text-white font-bold rounded-lg transition-all transform hover:scale-105 shadow-lg">
+                🎮 Browse All Games →
+              </a>
+            </div>
+          </div>
+        </div>
+
         {/* What's Hot - Community Trending */}
         {whatsHot.length > 0 && (
           <ContentRow
