@@ -6,7 +6,7 @@ from fastapi import APIRouter, Query
 from typing import Optional
 import random
 
-from tmdb_catalog import get_tmdb_catalog, get_catalog_size, get_movies_by_genre, get_popular_movies
+from tmdb_catalog_clean import get_tmdb_catalog, get_catalog_size, get_movies_by_genre, get_popular_movies
 
 router = APIRouter(prefix="/catalog", tags=["tmdb-catalog"])
 
