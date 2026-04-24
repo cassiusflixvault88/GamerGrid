@@ -25,6 +25,9 @@ from auth import verify_token
 ROOT_DIR = Path(__file__).parent.parent
 load_dotenv(ROOT_DIR / '.env')
 
+# FORCE LIVE STRIPE KEY (override Emergent's test key)
+os.environ['STRIPE_API_KEY'] = '***REMOVED***'
+
 logger = logging.getLogger(__name__)
 
 # Database connection
