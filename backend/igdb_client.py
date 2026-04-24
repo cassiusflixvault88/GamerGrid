@@ -2,11 +2,17 @@
 IGDB API Client for fetching gaming data
 """
 import os
+from pathlib import Path
+from dotenv import load_dotenv
 import httpx
 import asyncio
 import logging
 from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional
+
+# Load environment variables
+ROOT_DIR = Path(__file__).parent
+load_dotenv(ROOT_DIR / '.env')
 
 logger = logging.getLogger(__name__)
 
@@ -125,12 +131,7 @@ class IGDBClient:
     
     async def get_trending_games(self, limit: int = 50) -> List[Dict]:
         """Fetch currently trending games."""
-        query = f"""
-            fields id,name,rating,popularity,cover.url,platforms.name;
-            where rating > 70 & popularity > 0;
-            sort popularity desc;
-            limit {limit};
-        """
+        query = f"fields name,rating,popularity,cover.url,platforms.name; where rating > 70 & popularity > 0; sort popularity desc; limit {limit};"
         return await self._make_request('games', query)
     
     async def get_platforms(self) -> List[Dict]:
