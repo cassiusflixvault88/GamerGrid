@@ -84,6 +84,24 @@ const Top10Page = () => {
                           🔥 Hot
                         </span>
                       )}
+                      {/* Daily delta indicator */}
+                      {g.delta === null || g.delta === undefined ? (
+                        <span className="px-2 py-0.5 rounded-full bg-blue-600/20 border border-blue-500/40 text-blue-200 text-[10px] font-bold tracking-wider uppercase">
+                          ✨ New
+                        </span>
+                      ) : g.delta > 0 ? (
+                        <span className="px-2 py-0.5 rounded-full bg-green-600/20 border border-green-500/40 text-green-300 text-[10px] font-bold tracking-wider">
+                          ▲ +{g.delta}
+                        </span>
+                      ) : g.delta < 0 ? (
+                        <span className="px-2 py-0.5 rounded-full bg-red-600/15 border border-red-500/30 text-red-300 text-[10px] font-bold tracking-wider">
+                          ▼ {g.delta}
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded-full bg-white/5 border border-white/15 text-white/50 text-[10px] font-bold tracking-wider">
+                          – No change
+                        </span>
+                      )}
                     </div>
                     {g.developer && (
                       <p className="text-white/60 text-sm mb-1">by <span className="text-white">{g.developer}</span></p>

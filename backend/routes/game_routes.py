@@ -333,14 +333,49 @@ async def get_trending_games(
         raise HTTPException(500, f"Failed to fetch trending: {e}")
 
 
+async def _fetch_blended_popularity(limit: int) -> list:
+    """Fetch and blend IGDB popularity from 4 sources to surface Fortnite, Crimson Desert,
+    Roblox, console-exclusive titles etc. Sources:
+      - type 5: Steam 24hr peak players
+      - type 3: IGDB Playing (cross-platform)
+      - type 34: 24hr Twitch hours watched
+      - type 9: Global Top Sellers
+    Returns list of {game_id, score} sorted by blended score desc.
+    """
+    types = [(5, 1.0), (3, 1.5), (34, 0.7), (9, 0.9)]
+    score_by_game: Dict[int, float] = {}
+    for ptype, weight in types:
+        try:
+            rows = await igdb_query(
+                "popularity_primitives",
+                f"fields game_id,value; where popularity_type = {ptype}; sort value desc; limit 50;",
+            )
+            if not rows:
+                continue
+            # Rank-based scoring (rank 1 = top score) since absolute values aren't comparable across types
+            for idx, r in enumerate(rows):
+                gid = r.get("game_id")
+                if not gid:
+                    continue
+                rank_score = (50 - idx) * weight
+                score_by_game[gid] = score_by_game.get(gid, 0) + rank_score
+        except Exception as e:
+            logger.warning(f"popularity type {ptype} failed: {e}")
+    return sorted(
+        [{"game_id": gid, "score": score} for gid, score in score_by_game.items()],
+        key=lambda x: x["score"],
+        reverse=True,
+    )[:limit]
+
+
 @router.get("/most-popular")
 async def get_most_popular(limit: int = Query(30, ge=1, le=500)):
-    """Most popular RIGHT NOW — uses IGDB popularity_primitives (Steam 24hr peak players).
+    """Most popular RIGHT NOW — blends Steam + IGDB Playing + Twitch + Top Sellers.
 
-    This is the live, real-world popularity signal — surfaces Counter-Strike 2,
-    PUBG, Elden Ring Nightreign, Apex Legends, Helldivers 2, Fortnite when active.
+    This surfaces real-world hits across all platforms: Fortnite, Roblox,
+    Crimson Desert, Counter-Strike 2, Elden Ring Nightreign, Helldivers 2, etc.
     """
-    cache_key = f"mostpopular_v2:{limit}"
+    cache_key = f"mostpopular_v3:{limit}"
     await _maybe_init_ttl()
     doc = await _cache_col.find_one({"_id": cache_key}, {"_id": 0, "data": 1, "expires_at": 1})
     if doc and doc.get("data") and doc.get("expires_at"):
@@ -355,33 +390,16 @@ async def get_most_popular(limit: int = Query(30, ge=1, le=500)):
         except Exception:
             pass
 
-    # Step 1: get top popular game IDs from IGDB popularity_primitives
-    pop_query = (
-        f"fields game_id,value; where popularity_type = 5;"
-        f" sort value desc; limit {limit};"
-    )
-    pop_rows = await igdb_query("popularity_primitives", pop_query)
-    if not pop_rows:
-        # Fallback to twitch hours-watched (popularity_type 34)
-        pop_query = (
-            f"fields game_id,value; where popularity_type = 34;"
-            f" sort value desc; limit {limit};"
-        )
-        pop_rows = await igdb_query("popularity_primitives", pop_query)
-
-    game_ids = [str(p["game_id"]) for p in pop_rows if p.get("game_id")]
-    if not game_ids:
+    blended = await _fetch_blended_popularity(limit)
+    if not blended:
         return {"results": [], "total": 0}
 
+    game_ids = [str(b["game_id"]) for b in blended]
     ids_str = ",".join(game_ids)
-    games_query = (
-        f"fields {LIST_FIELDS};"
-        f" where id = ({ids_str});"
-        f" limit {len(game_ids)};"
+    games = await igdb_query(
+        "games",
+        f"fields {LIST_FIELDS}; where id = ({ids_str}); limit {len(game_ids)};",
     )
-    games = await igdb_query("games", games_query)
-
-    # Preserve popularity ordering
     by_id = {g["id"]: g for g in games}
     ordered = [by_id[int(gid)] for gid in game_ids if int(gid) in by_id]
 
@@ -399,8 +417,12 @@ async def get_most_popular(limit: int = Query(30, ge=1, le=500)):
 
 @router.get("/top10")
 async def get_top10():
-    """Top 10 games right now — uses live IGDB popularity (Steam 24hr peak)."""
-    cache_key = "top10_v2"
+    """Top 10 games right now — blended popularity (Steam + IGDB Playing + Twitch + Top Sellers).
+
+    Each item also includes `delta` — change in rank vs yesterday's snapshot
+    (positive = climbing the chart, negative = falling, null = brand new entry).
+    """
+    cache_key = "top10_v3"
     await _maybe_init_ttl()
     doc = await _cache_col.find_one({"_id": cache_key}, {"_id": 0, "data": 1, "expires_at": 1})
     if doc and doc.get("data") and doc.get("expires_at"):
@@ -415,14 +437,11 @@ async def get_top10():
         except Exception:
             pass
 
-    pop_rows = await igdb_query(
-        "popularity_primitives",
-        "fields game_id,value; where popularity_type = 5; sort value desc; limit 10;",
-    )
-    game_ids = [str(p["game_id"]) for p in pop_rows if p.get("game_id")]
-    if not game_ids:
+    blended = await _fetch_blended_popularity(10)
+    if not blended:
         return {"results": [], "total": 0}
 
+    game_ids = [str(b["game_id"]) for b in blended]
     ids_str = ",".join(game_ids)
     games = await igdb_query(
         "games",
@@ -430,7 +449,39 @@ async def get_top10():
     )
     by_id = {g["id"]: g for g in games}
     ordered = [by_id[int(gid)] for gid in game_ids if int(gid) in by_id]
-    payload = {"results": [normalize_game(g) for g in ordered], "total": len(ordered)}
+    normalized = [normalize_game(g) for g in ordered]
+
+    # Daily snapshot for delta computation
+    today_key = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    snap_id = f"top10_snapshot:{today_key}"
+    today_snap = await _cache_col.find_one({"_id": snap_id}, {"_id": 0, "data": 1})
+    if not today_snap:
+        # Save today's ranking (BSON requires string keys)
+        await _cache_col.update_one(
+            {"_id": snap_id},
+            {"$set": {
+                "data": {str(n["id"]): i + 1 for i, n in enumerate(normalized)},
+                "expires_at": datetime.now(timezone.utc) + timedelta(days=8),
+            }},
+            upsert=True,
+        )
+
+    # Yesterday's ranking for delta
+    yesterday_key = (datetime.now(timezone.utc) - timedelta(days=1)).strftime("%Y-%m-%d")
+    y_snap = await _cache_col.find_one({"_id": f"top10_snapshot:{yesterday_key}"}, {"_id": 0, "data": 1})
+    yesterday_ranks = (y_snap or {}).get("data") or {}
+
+    for i, n in enumerate(normalized):
+        current = i + 1
+        prev_rank = yesterday_ranks.get(str(n["id"])) or yesterday_ranks.get(n["id"])
+        if prev_rank:
+            n["delta"] = prev_rank - current  # positive = climbed
+            n["prev_rank"] = prev_rank
+        else:
+            n["delta"] = None
+            n["prev_rank"] = None
+
+    payload = {"results": normalized, "total": len(normalized)}
     await _cache_col.update_one(
         {"_id": cache_key},
         {"$set": {"data": payload, "expires_at": datetime.now(timezone.utc) + timedelta(minutes=15)}},

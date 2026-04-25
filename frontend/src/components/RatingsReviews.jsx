@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Star, MessageSquare, ThumbsUp } from 'lucide-react';
+import { Star, MessageSquare, ThumbsUp, Pencil, Trash2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Textarea } from './ui/textarea';
 import { useAuth } from '../context/AuthContext';
@@ -18,9 +18,41 @@ const RatingsReviews = ({ contentId, contentTitle }) => {
   const [editingRatingId, setEditingRatingId] = useState(null);
   const [replyingToAdminId, setReplyingToAdminId] = useState(null);
   const [replyText, setReplyText] = useState('');
-  
+  const [editingReplyId, setEditingReplyId] = useState(null);
+  const [editReplyText, setEditReplyText] = useState('');
+
   const { user } = useAuth();
   const { toast } = useToast();
+  const isAdmin = Boolean(user && user.is_admin);
+
+  const handleEditReply = async (replyId) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`${API}/user-reply/${replyId}`, { reply_text: editReplyText }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setEditingReplyId(null);
+      setEditReplyText('');
+      await loadRatings();
+      toast({ title: 'Reply updated' });
+    } catch (e) {
+      toast({ title: 'Could not update reply', description: e.response?.data?.detail || 'Try again', variant: 'destructive' });
+    }
+  };
+
+  const handleDeleteReply = async (replyId) => {
+    if (!window.confirm('Delete this reply? This cannot be undone.')) return;
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`${API}/user-reply/${replyId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      await loadRatings();
+      toast({ title: 'Reply deleted' });
+    } catch (e) {
+      toast({ title: 'Could not delete reply', description: e.response?.data?.detail || 'Try again', variant: 'destructive' });
+    }
+  };
 
   useEffect(() => {
     loadRatings();
@@ -429,8 +461,37 @@ const RatingsReviews = ({ contentId, contentTitle }) => {
                           <span className="text-yellow-400 font-semibold text-sm">
                             {reply.admin_username}
                           </span>
+                          {reply.edited_at && (
+                            <span className="text-white/40 text-[10px] italic">(edited)</span>
+                          )}
                         </div>
-                        <p className="text-white/90 text-sm">{reply.reply_text}</p>
+                        {editingReplyId === reply.id ? (
+                          <div className="space-y-2">
+                            <Textarea
+                              value={editReplyText}
+                              onChange={(e) => setEditReplyText(e.target.value)}
+                              className="bg-white/10 border-white/20 text-white"
+                              rows={3}
+                              data-testid={`edit-reply-textarea-${reply.id}`}
+                            />
+                            <div className="flex gap-2 justify-end">
+                              <Button
+                                onClick={() => { setEditingReplyId(null); setEditReplyText(''); }}
+                                size="sm"
+                                variant="ghost"
+                                className="text-xs"
+                              >Cancel</Button>
+                              <Button
+                                onClick={() => handleEditReply(reply.id)}
+                                size="sm"
+                                className="bg-yellow-500 hover:bg-yellow-600 text-black text-xs"
+                                disabled={!editReplyText.trim()}
+                              >Save</Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-white/90 text-sm">{reply.reply_text}</p>
+                        )}
                         <div className="flex items-center justify-between mt-2">
                           <p className="text-white/40 text-xs">
                             {new Date(reply.created_at).toLocaleDateString('en-US', {
@@ -439,17 +500,40 @@ const RatingsReviews = ({ contentId, contentTitle }) => {
                               day: 'numeric'
                             })}
                           </p>
-                          {/* Reply to Admin button */}
-                          {user && (
-                            <Button
-                              onClick={() => setReplyingToAdminId(replyingToAdminId === reply.id ? null : reply.id)}
-                              size="sm"
-                              variant="ghost"
-                              className="h-6 px-2 text-xs text-yellow-400 hover:text-yellow-300 hover:bg-yellow-500/20"
-                            >
-                              {replyingToAdminId === reply.id ? 'Cancel' : 'Reply'}
-                            </Button>
-                          )}
+                          <div className="flex items-center gap-1">
+                            {/* Admin edit/delete (moderation) */}
+                            {isAdmin && editingReplyId !== reply.id && (
+                              <>
+                                <button
+                                  onClick={() => { setEditingReplyId(reply.id); setEditReplyText(reply.reply_text); }}
+                                  data-testid={`edit-reply-${reply.id}`}
+                                  className="p-1.5 rounded text-blue-400 hover:text-blue-300 hover:bg-blue-500/20 transition-colors"
+                                  title="Edit reply"
+                                >
+                                  <Pencil className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteReply(reply.id)}
+                                  data-testid={`delete-reply-${reply.id}`}
+                                  className="p-1.5 rounded text-red-400 hover:text-red-300 hover:bg-red-500/20 transition-colors"
+                                  title="Delete reply"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </>
+                            )}
+                            {/* Reply to Admin button */}
+                            {user && editingReplyId !== reply.id && (
+                              <Button
+                                onClick={() => setReplyingToAdminId(replyingToAdminId === reply.id ? null : reply.id)}
+                                size="sm"
+                                variant="ghost"
+                                className="h-6 px-2 text-xs text-yellow-400 hover:text-yellow-300 hover:bg-yellow-500/20"
+                              >
+                                {replyingToAdminId === reply.id ? 'Cancel' : 'Reply'}
+                              </Button>
+                            )}
+                          </div>
                         </div>
                       </div>
                       
