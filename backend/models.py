@@ -50,6 +50,9 @@ class UserResponse(BaseModel):
     autoplay_trailers: bool = True
     email_notifications: bool = True
     maturity_rating: str = "PG-13"
+    # Roles
+    is_admin: bool = False
+    is_pro: bool = False
 
 
 class UserProfileUpdate(BaseModel):

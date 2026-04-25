@@ -30,6 +30,74 @@ router = APIRouter(prefix="/auth", tags=["authentication"])
 profile_router = APIRouter(prefix="/user", tags=["user-profile"])
 
 
+async def _enrich_with_roles(user: dict) -> dict:
+    """Attach is_admin (from admins collection) and is_pro (from users doc)."""
+    if not user:
+        return user
+    user.setdefault("is_pro", bool(user.get("is_pro", False)))
+    admin = await db.admins.find_one({"user_id": user.get("id")}, {"_id": 0, "is_admin": 1})
+    user["is_admin"] = bool(admin and admin.get("is_admin"))
+    return user
+
+
+async def _send_welcome_email(email: str, username: str) -> None:
+    """Best-effort welcome email. Silently no-ops if RESEND_API_KEY is missing."""
+    api_key = os.environ.get("RESEND_API_KEY", "").strip()
+    if not api_key:
+        return
+    try:
+        import asyncio
+        import resend
+        resend.api_key = api_key
+        sender = os.environ.get("SENDER_EMAIL", "onboarding@resend.dev")
+        html = f"""
+<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0a0a0a;">
+<table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#0a0a0a;padding:24px 0;">
+  <tr><td align="center">
+    <table cellpadding="0" cellspacing="0" border="0" width="600" style="max-width:600px;background:#111;border-radius:12px;overflow:hidden;">
+      <tr><td style="padding:32px 24px;background:linear-gradient(135deg,#fbbf24,#f59e0b);text-align:center;">
+        <div style="font-family:Arial Black,sans-serif;font-size:32px;font-weight:900;color:#000;letter-spacing:1px;">GAMERGRID</div>
+        <div style="font-family:Arial,sans-serif;font-size:14px;color:#1a1a1a;margin-top:6px;">Welcome to your gaming hub</div>
+      </td></tr>
+      <tr><td style="padding:32px 24px;font-family:Arial,sans-serif;color:#fff;">
+        <h2 style="margin:0 0 12px 0;color:#fbbf24;font-size:22px;">Hey {username} — welcome aboard! 🎮</h2>
+        <p style="line-height:1.6;color:#ddd;font-size:15px;">
+          You just joined the only gaming discovery hub built for real gamers — track new releases across PS5, Xbox, PC and Switch,
+          watch trailers, find live deals, and read community reviews.
+        </p>
+        <p style="line-height:1.6;color:#ddd;font-size:15px;">Here's what to do first:</p>
+        <ul style="line-height:1.8;color:#ddd;font-size:14px;">
+          <li>Browse the <strong style="color:#fbbf24;">Top 10</strong> trending games right now</li>
+          <li>Add games to your <strong style="color:#fbbf24;">Library</strong> to track them</li>
+          <li>Catch the latest gaming news on the <strong style="color:#fbbf24;">News</strong> page</li>
+          <li>Subscribe for the weekly Top 10 digest (auto-enabled — opt out anytime in Settings)</li>
+        </ul>
+      </td></tr>
+      <tr><td style="padding:0 24px 32px 24px;text-align:center;">
+        <a href="https://gamergrid.com" style="display:inline-block;background:#fbbf24;color:#000;text-decoration:none;padding:14px 32px;border-radius:8px;font-family:Arial,sans-serif;font-weight:bold;font-size:14px;">Start Exploring →</a>
+      </td></tr>
+      <tr><td style="padding:16px 24px;background:#000;border-top:1px solid #1f1f1f;font-family:Arial,sans-serif;color:#666;font-size:11px;text-align:center;">
+        Made by Cassius Fox · You can unsubscribe from emails in Settings.
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body></html>
+"""
+        await asyncio.to_thread(
+            resend.Emails.send,
+            {
+                "from": sender,
+                "to": [email],
+                "subject": "🎮 Welcome to GamerGrid — let's get you playing",
+                "html": html,
+            },
+        )
+        logger.info(f"Welcome email sent to {email}")
+    except Exception as e:
+        logger.warning(f"Welcome email failed for {email}: {e}")
+
+
 @router.post("/signup", response_model=Token)
 async def signup(user_data: UserCreate):
     """Register a new user"""
@@ -66,11 +134,15 @@ async def signup(user_data: UserCreate):
         logger.info(f"🎉 Auto-promoted CEO: {user_data.email} to admin!")
     
     access_token = create_access_token(data={"sub": user.id})
-    
+
+    # Send welcome email (best effort)
+    await _send_welcome_email(user.email, user.username)
+
+    user_dict = await _enrich_with_roles(user.model_dump())
     return Token(
         access_token=access_token,
         token_type="bearer",
-        user=UserResponse(**user.model_dump())
+        user=UserResponse(**user_dict)
     )
 
 
@@ -79,7 +151,7 @@ async def login(credentials: UserLogin):
     """Login with email and password"""
     user = await db.users.find_one(
         {"email": credentials.email},
-        {"_id": 0, "email": 1, "id": 1, "username": 1, "hashed_password": 1, "created_at": 1, "watchlist": 1, "favorites": 1, "profile_picture_url": 1}
+        {"_id": 0, "email": 1, "id": 1, "username": 1, "hashed_password": 1, "created_at": 1, "watchlist": 1, "favorites": 1, "profile_picture_url": 1, "is_pro": 1}
     )
     
     logger.info(f"Login attempt for {credentials.email}: user_found={user is not None}")
@@ -115,7 +187,8 @@ async def login(credentials: UserLogin):
             logger.info(f"🎉 Auto-promoted CEO on login: {credentials.email}")
     
     access_token = create_access_token(data={"sub": user["id"]})
-    
+
+    user = await _enrich_with_roles(user)
     return Token(
         access_token=access_token,
         token_type="bearer",
@@ -130,10 +203,11 @@ async def get_current_user(token_data: dict = Depends(verify_token)):
         {"id": token_data["user_id"]},
         {"_id": 0, "id": 1, "email": 1, "username": 1, "created_at": 1, "watchlist": 1, "favorites": 1, 
          "display_name": 1, "phone": 1, "address": 1, "profile_picture_url": 1,
-         "autoplay_trailers": 1, "email_notifications": 1, "maturity_rating": 1}
+         "autoplay_trailers": 1, "email_notifications": 1, "maturity_rating": 1, "is_pro": 1}
     )
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    user = await _enrich_with_roles(user)
     return UserResponse(**user)
 
 
