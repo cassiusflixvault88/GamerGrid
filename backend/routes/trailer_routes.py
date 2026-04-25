@@ -49,7 +49,9 @@ def _extract_direct_url(youtube_id: str):
     """Use yt-dlp synchronously to find the best progressive MP4 URL.
 
     We prefer 'progressive' formats (single file with audio+video) so the
-    browser can download a proper playable mp4. Returns (direct_url, title, ext).
+    browser can download a proper playable mp4. Returns (direct_url, title, ext, http_headers).
+    The http_headers MUST be used when fetching the URL — otherwise googlevideo.com
+    returns 403 because the signed URL is locked to the User-Agent that requested it.
     """
     import yt_dlp
 
@@ -60,7 +62,9 @@ def _extract_direct_url(youtube_id: str):
         "noplaylist": True,
         # Prefer single-file MP4 with audio (best quality up to 720p typically).
         "format": "best[ext=mp4][acodec!=none][vcodec!=none]/best[ext=mp4]/best",
-        "extractor_args": {"youtube": {"player_client": ["android", "web"]}},
+        # iOS client returns progressive MP4s AND tolerates non-iOS user-agents
+        # better than the Android client. Fall back to Android if iOS fails.
+        "extractor_args": {"youtube": {"player_client": ["ios", "android"]}},
     }
     url = f"https://www.youtube.com/watch?v={youtube_id}"
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -68,18 +72,22 @@ def _extract_direct_url(youtube_id: str):
         direct = info.get("url")
         title = info.get("title") or "trailer"
         ext = info.get("ext") or "mp4"
+        http_headers = info.get("http_headers") or {}
+
         if not direct:
             # Fallback: pick from formats list
             for f in (info.get("formats") or []):
                 if f.get("ext") == "mp4" and f.get("url") and f.get("acodec") != "none":
                     direct = f["url"]
+                    http_headers = f.get("http_headers") or http_headers
                     break
+
         if not direct:
             raise HTTPException(
                 status_code=502,
-                detail="Could not extract a direct video URL. YouTube may be throttling — try again in a minute.",
+                detail="Could not extract a direct video URL. The trailer may be age-restricted or region-locked.",
             )
-        return direct, title, ext
+        return direct, title, ext, http_headers
 
 
 def _safe_filename(title: str) -> str:
@@ -101,7 +109,7 @@ async def trailer_info(youtube_id: str, token_data: dict = Depends(verify_token)
     if not _YT_ID_RE.match(youtube_id):
         raise HTTPException(status_code=400, detail="Invalid YouTube ID")
     try:
-        direct, title, ext = await _run_in_thread(_extract_direct_url, youtube_id)
+        direct, title, ext, _headers = await _run_in_thread(_extract_direct_url, youtube_id)
         return {
             "direct_url": direct,
             "title": title,
@@ -128,7 +136,7 @@ async def trailer_download(youtube_id: str, token_data: dict = Depends(verify_to
         raise HTTPException(status_code=400, detail="Invalid YouTube ID")
 
     try:
-        direct, title, ext = await _run_in_thread(_extract_direct_url, youtube_id)
+        direct, title, ext, http_headers = await _run_in_thread(_extract_direct_url, youtube_id)
     except HTTPException:
         raise
     except Exception as e:
@@ -137,17 +145,24 @@ async def trailer_download(youtube_id: str, token_data: dict = Depends(verify_to
 
     safe_name = f"{_safe_filename(title)}.{ext}"
 
+    # Use yt-dlp's returned headers — googlevideo.com returns 403 if the
+    # User-Agent doesn't match the client that signed the URL.
+    fetch_headers = {
+        "User-Agent": http_headers.get(
+            "User-Agent",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+            "(KHTML, like Gecko) Chrome/120.0 Safari/537.36",
+        ),
+    }
+    # Forward any other relevant headers from yt-dlp
+    for k in ("Accept", "Accept-Language", "Cookie", "Origin", "Referer", "X-YouTube-Client-Name", "X-YouTube-Client-Version"):
+        if k in http_headers:
+            fetch_headers[k] = http_headers[k]
+
     async def stream_video():
-        timeout = httpx.Timeout(60.0, read=120.0)
+        timeout = httpx.Timeout(60.0, read=180.0)
         async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as hc:
-            async with hc.stream(
-                "GET",
-                direct,
-                headers={
-                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
-                                  "(KHTML, like Gecko) Chrome/120.0 Safari/537.36",
-                },
-            ) as resp:
+            async with hc.stream("GET", direct, headers=fetch_headers) as resp:
                 resp.raise_for_status()
                 async for chunk in resp.aiter_bytes(chunk_size=64 * 1024):
                     yield chunk
