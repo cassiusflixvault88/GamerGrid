@@ -1,8 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { X, ExternalLink, Maximize2, Minimize2, Download } from 'lucide-react';
+import { X, ExternalLink, Maximize2, Minimize2, Download, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle } from './ui/dialog';
 import { Button } from './ui/button';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../hooks/use-toast';
+import axios from 'axios';
+
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 /**
  * Cross-browser fullscreen helpers (handle webkit/moz prefixes for iOS Safari).
@@ -57,7 +61,9 @@ const VideoPlayer = ({ video, isOpen, onClose }) => {
   const containerRef = useRef(null);
   const iframeRef = useRef(null);
   const [isFs, setIsFs] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const { user } = useAuth();
+  const { toast } = useToast();
   const canDownload = Boolean(user && (user.is_admin || user.is_pro));
 
   const watchOnYouTube = () => {
@@ -65,10 +71,56 @@ const VideoPlayer = ({ video, isOpen, onClose }) => {
     onClose();
   };
 
-  const downloadTrailer = () => {
-    // Opens a YouTube downloader helper (ssyoutube.com) in a new tab.
-    // Works for any YouTube video ID.
-    window.open(`https://ssyoutube.com/watch?v=${video?.key}`, '_blank');
+  const downloadTrailer = async () => {
+    if (!video?.key || downloading) return;
+    setDownloading(true);
+    toast({
+      title: 'Preparing download…',
+      description: 'Fetching the trailer from YouTube. This may take 10-30 seconds.',
+    });
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API}/trailer/download/${video.key}`, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: 'blob',
+        timeout: 180000, // 3 min
+      });
+      const blob = new Blob([response.data], { type: 'video/mp4' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const safeName = (video?.name || 'trailer').replace(/[^a-z0-9_-]/gi, '_').slice(0, 80);
+      a.download = `${safeName}.mp4`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => window.URL.revokeObjectURL(url), 2000);
+      toast({
+        title: 'Download complete ✅',
+        description: 'Check your Downloads folder.',
+      });
+    } catch (e) {
+      let msg = 'Download failed. Try again in a moment.';
+      if (e.response?.data) {
+        try {
+          // Backend may return JSON error inside a blob
+          const text = await e.response.data.text?.();
+          if (text) {
+            const j = JSON.parse(text);
+            msg = j.detail || msg;
+          }
+        } catch { /* keep default */ }
+      } else if (e.message) {
+        msg = e.message;
+      }
+      toast({
+        title: 'Download failed',
+        description: msg,
+        variant: 'destructive',
+      });
+    } finally {
+      setDownloading(false);
+    }
   };
 
   // Track fullscreen state across vendor prefixes
@@ -179,13 +231,23 @@ const VideoPlayer = ({ video, isOpen, onClose }) => {
                 <Button
                   onClick={downloadTrailer}
                   data-testid="video-download"
+                  disabled={downloading}
                   variant="outline"
                   size="sm"
-                  className="bg-purple-600 hover:bg-purple-700 text-white border-0"
+                  className="bg-purple-600 hover:bg-purple-700 text-white border-0 disabled:opacity-60"
                   title={user?.is_admin ? 'CEO / Admin — Download trailer' : 'GamerGrid Pro — Download trailer'}
                 >
-                  <Download className="w-4 h-4 mr-2" />
-                  Download Trailer
+                  {downloading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Downloading…
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-4 h-4 mr-2" />
+                      Download Trailer
+                    </>
+                  )}
                 </Button>
               )}
               <Button

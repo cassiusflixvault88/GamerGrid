@@ -52,6 +52,7 @@ _(I'll add to this list every time you mention something casually so we don't lo
 - [Feb 25] Bug found: admin/CEO not seeing Download Trailer button — ✅ FIXED Feb 25 (was missing `is_admin`/`is_pro` in user response)
 - [Feb 25] Wants to see EVERY real visitor (not own refreshes) and a list of who visited — ✅ DONE: admin visits now auto-excluded + Recent Visitors live feed added
 - [Feb 25] Eventually buying a domain to make this a website too (not just app) — keep in mind for future SEO/sitemap work
+- [Feb 25] Bug: ssyoutube.com (download link) shut down in US in 2020 — ✅ FIXED Feb 25 with proper server-side yt-dlp extractor at `/api/trailer/download/{youtube_id}`
 
 ---
 
