@@ -184,7 +184,7 @@ const SupportPage = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="w-5 h-5 text-green-300" />
-                  <span>Download Trailers</span>
+                  <span>Save Trailers</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="w-5 h-5 text-green-300" />
