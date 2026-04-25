@@ -18,7 +18,17 @@ support payments.
 - Hosting: Emergent (preview + deploy)
 
 ## Implemented (✅ as of 2026-02-25)
-### Iteration 8–9 (this turn)
+### Iteration 10 (this turn)
+- **Public profile page `/u/:username`** — shareable per-user landing page with avatar, display name, "Gamer since" date, library count, reviews count, average rating, full library grid, and reviews list. **Sensitive fields (email/phone/address) are NEVER exposed**.
+- **CheapShark price tracker** — new `GET /api/games/deals?title=` endpoint (free, no API key). Returns top live PC deals (Steam, GOG, Epic, Humble, GreenManGaming, etc.) with sale/normal price + savings %. Cached 2h. Surfaced in `ContentModal` as a "💰 Live PC deals" grid with deep links via `cheapshark.com/redirect`.
+- **AdSense scaffolding** — env-gated `<AdSlot />` component. Placeholder shown in dev/preview; real `<ins class="adsbygoogle">` rendered when `REACT_APP_ADSENSE_CLIENT` and `REACT_APP_ADSENSE_SLOT_<NAME>` env vars are set. Slots placed on Home (between New Releases and platform rails) and Public Profile (between Library and Reviews).
+- **Amazon Affiliate tag** — already wired in backend; set `AMAZON_AFFILIATE_TAG=your-tag-20` in `/app/backend/.env` to start earning.
+- **Developers/publishers on cards** — `normalize_game()` now exposes `developer`, `publisher`, `developers[]`, `publishers[]`. Card hover overlay shows "by Rockstar North" under the title.
+- **AuthModal a11y** — added `sr-only` `DialogTitle` + `DialogDescription`. Zero Radix warnings now.
+- **Backend cleanup** — removed the **3 duplicate** `/api/user/profile` handlers from `server.py`. Only `routes/auth_routes.profile_router` serves the canonical path now.
+- **Navbar** — added **My Profile** link to user menu (`data-testid='nav-my-profile'`, links to `/u/<username>`).
+
+### Iteration 8–9
 - **Critical bug fix — Service Worker was caching `/api/*`** indefinitely, causing stale `profile_picture_url` (and likely other API data) on reload. `service-worker.js` rewritten:
   - Bypasses any `/api/*` request and any non-GET method.
   - Cache-first for static assets only.
