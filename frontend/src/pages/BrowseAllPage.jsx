@@ -65,13 +65,12 @@ const BrowseAllPage = () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      params.set('limit', '100');
+      params.set('limit', '200');
       if (genre) params.set('genre', genre);
       if (year && year !== 'Any') params.set('year', year);
 
       let url;
       if (activePlatform === 'all') {
-        // Pull from 6 IGDB rails simultaneously → ~500 unique games
         const mkUrl = (endpoint) => `${API}/games/${endpoint}?${params.toString()}`;
         const [trending, top, popular, newRel, ps, xbox, pc, switchGames] = await Promise.all([
           axios.get(mkUrl('trending')).then((x) => x.data?.results || []).catch(() => []),
@@ -144,7 +143,10 @@ const BrowseAllPage = () => {
       <div className="max-w-7xl mx-auto px-4 py-8 mt-20">
         <div className="mb-8">
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">🎮 Browse Games</h1>
-          <p className="text-white/60 text-lg">Filter by platform, genre and release year — powered by IGDB</p>
+          <p className="text-white/60 text-lg">
+            <span className="text-purple-300 font-bold">{games.length > 0 ? `${games.length}+ games` : 'Thousands of games'}</span>
+            {' '}to discover — filter by platform, genre and release year. Powered by IGDB.
+          </p>
         </div>
 
         {/* Platform chips */}
@@ -270,9 +272,22 @@ const BrowseAllPage = () => {
                 <ContentCard key={g.id} content={g} onClick={setSelectedContent} />
               ))}
               {filtered.length === 0 && (
-                <p className="text-white/60 py-16 text-center w-full">
-                  No games match your filters. Try clearing them or selecting a different platform.
-                </p>
+                <div className="w-full py-16 text-center">
+                  <p className="text-white/60 text-lg mb-4">
+                    {searchQuery
+                      ? `No matches for "${searchQuery}".`
+                      : 'No games match your filters.'}
+                  </p>
+                  {searchQuery && (
+                    <a
+                      href={`/request-content?title=${encodeURIComponent(searchQuery)}`}
+                      data-testid="request-missing-game"
+                      className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold rounded-lg transition-all transform hover:scale-105 shadow-lg"
+                    >
+                      📥 Didn't find it? Request "{searchQuery}"
+                    </a>
+                  )}
+                </div>
               )}
             </div>
           </>

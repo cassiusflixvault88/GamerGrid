@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Gamepad2, Calendar, Sparkles, Send, Clock, CheckCircle, XCircle } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import BackNavigation from '../components/BackNavigation';
@@ -15,7 +15,9 @@ import { useToast } from '../hooks/use-toast';
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const RequestContentPage = () => {
-  const [title, setTitle] = useState('');
+  const [searchParams] = useSearchParams();
+  const prefilledTitle = searchParams.get('title') || '';
+  const [title, setTitle] = useState(prefilledTitle);
   const [contentType, setContentType] = useState('game');
   const [description, setDescription] = useState('');
   const [reason, setReason] = useState('');

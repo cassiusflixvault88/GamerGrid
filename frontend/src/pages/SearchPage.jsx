@@ -88,9 +88,18 @@ const SearchPage = () => {
           </div>
         ) : (
           <div className="text-center py-20">
-            <p className="text-white/70 text-lg">
+            <p className="text-white/70 text-lg mb-6">
               {query ? `No games found for "${query}"` : 'Start typing to search games...'}
             </p>
+            {query && (
+              <a
+                href={`/request-content?title=${encodeURIComponent(query)}`}
+                data-testid="search-request-missing-game"
+                className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold rounded-lg transition-all transform hover:scale-105 shadow-lg"
+              >
+                📥 Didn't find it? Request "{query}"
+              </a>
+            )}
           </div>
         )}
       </div>

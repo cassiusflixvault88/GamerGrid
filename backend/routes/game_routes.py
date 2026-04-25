@@ -309,7 +309,7 @@ async def list_genres():
 
 @router.get("/trending")
 async def get_trending_games(
-    limit: int = Query(30, ge=1, le=100),
+    limit: int = Query(30, ge=1, le=500),
     genre: Optional[int] = None,
     year: Optional[int] = Query(None, ge=1970, le=2100),
 ):
@@ -334,7 +334,7 @@ async def get_trending_games(
 
 
 @router.get("/most-popular")
-async def get_most_popular(limit: int = Query(30, ge=1, le=100)):
+async def get_most_popular(limit: int = Query(30, ge=1, le=500)):
     """Most followed/hyped games — different from 'trending' (rating-based).
 
     IGDB's 'follows' is sparse, so we mix follows + hypes into a where-OR clause.
@@ -396,7 +396,7 @@ async def get_game_of_the_year(year: Optional[int] = Query(None, ge=1990, le=210
 
 @router.get("/top-rated")
 async def get_top_rated(
-    limit: int = Query(30, ge=1, le=100),
+    limit: int = Query(30, ge=1, le=500),
     genre: Optional[int] = None,
     year: Optional[int] = Query(None, ge=1970, le=2100),
 ):
@@ -423,7 +423,7 @@ async def get_top_rated(
 @router.get("/upcoming")
 async def get_upcoming_releases(
     days_ahead: int = Query(180, ge=1, le=365),
-    limit: int = Query(30, ge=1, le=100),
+    limit: int = Query(30, ge=1, le=500),
     genre: Optional[int] = None,
 ):
     now = int(time.time())
@@ -448,7 +448,7 @@ async def get_upcoming_releases(
 @router.get("/new-releases")
 async def get_new_releases(
     days_back: int = Query(90, ge=1, le=365),
-    limit: int = Query(30, ge=1, le=100),
+    limit: int = Query(30, ge=1, le=500),
     genre: Optional[int] = None,
 ):
     now = int(time.time())
@@ -473,7 +473,7 @@ async def get_new_releases(
 @router.get("/platform/{platform_name}")
 async def get_games_by_platform(
     platform_name: str,
-    limit: int = Query(40, ge=1, le=100),
+    limit: int = Query(40, ge=1, le=500),
     sort: str = Query("rating", pattern="^(rating|release|popular)$"),
     genre: Optional[int] = None,
     year: Optional[int] = Query(None, ge=1970, le=2100),

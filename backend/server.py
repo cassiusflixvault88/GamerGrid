@@ -754,6 +754,52 @@ async def user_reply_to_admin(reply_data: UserReplyCreate, token_data: dict = De
     )
     
     await db.user_replies.insert_one(reply.model_dump())
+    return {"message": "Reply posted successfully"}
+
+
+# ============= EDIT / DELETE REPLIES =============
+
+class ReplyEdit(BaseModel):
+    reply_text: str
+
+
+@api_router.put("/user-reply/{reply_id}")
+async def edit_user_reply(reply_id: str, body: ReplyEdit, token_data: dict = Depends(verify_token)):
+    """User edits their own reply (any of: user_replies, review_replies, app_review_replies)."""
+    me = await db.users.find_one({"id": token_data["user_id"]}, {"_id": 0, "is_admin": 1}) or {}
+    is_admin = bool(me.get("is_admin"))
+    for col_name in ("user_replies", "review_replies", "app_review_replies"):
+        col = db[col_name]
+        existing = await col.find_one({"id": reply_id}, {"_id": 0})
+        if not existing:
+            continue
+        owner_id = existing.get("user_id") or existing.get("admin_id")
+        if owner_id != token_data["user_id"] and not is_admin:
+            raise HTTPException(status_code=403, detail="Can only edit your own replies")
+        await col.update_one(
+            {"id": reply_id},
+            {"$set": {"reply_text": body.reply_text, "edited_at": datetime.now(timezone.utc).isoformat()}}
+        )
+        return {"message": "Reply updated", "reply_id": reply_id}
+    raise HTTPException(status_code=404, detail="Reply not found")
+
+
+@api_router.delete("/user-reply/{reply_id}")
+async def delete_user_reply(reply_id: str, token_data: dict = Depends(verify_token)):
+    """User deletes their own reply. Admins/CEOs can delete any reply (moderation)."""
+    me = await db.users.find_one({"id": token_data["user_id"]}, {"_id": 0, "is_admin": 1}) or {}
+    is_admin = bool(me.get("is_admin"))
+    for col_name in ("user_replies", "review_replies", "app_review_replies"):
+        col = db[col_name]
+        existing = await col.find_one({"id": reply_id}, {"_id": 0})
+        if not existing:
+            continue
+        owner_id = existing.get("user_id") or existing.get("admin_id")
+        if owner_id != token_data["user_id"] and not is_admin:
+            raise HTTPException(status_code=403, detail="Can only delete your own replies")
+        await col.delete_one({"id": reply_id})
+        return {"message": "Reply deleted", "reply_id": reply_id}
+    raise HTTPException(status_code=404, detail="Reply not found")
 
 
 @api_router.delete("/ratings/{rating_id}")
@@ -771,9 +817,6 @@ async def delete_rating(rating_id: str, token_data: dict = Depends(verify_token)
     await db.ratings.delete_one({"id": rating_id})
     
     return {"message": "Rating deleted successfully"}
-
-    
-    return {"message": "Reply posted successfully"}
 
 
 # ============= WATCH HISTORY / CONTINUE WATCHING ROUTES =============
