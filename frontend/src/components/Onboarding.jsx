@@ -94,7 +94,8 @@ const Onboarding = () => {
         '100% ad-free browsing',
         'Save trailers to your personal library',
         'Early access to new features',
-        'Priority support from the founder'
+        'Priority support from the founder',
+        'More Pro perks coming as the app grows — at no extra cost'
       ]
     },
     {

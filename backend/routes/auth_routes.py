@@ -121,9 +121,10 @@ async def signup(user_data: UserCreate):
     
     await db.users.insert_one(user.model_dump())
     
-    # Auto-promote CEO email to admin
+    # Auto-promote CEO email to admin (CEO is auto-verified, no email gate)
     ceo_emails = ["cassius@flixvault.com", "cassiusflixvault@gmail.com"]
-    if user_data.email.lower() in ceo_emails:
+    is_ceo = user_data.email.lower() in ceo_emails
+    if is_ceo:
         admin_config = {
             "user_id": user.id,
             "is_admin": True,
@@ -132,12 +133,19 @@ async def signup(user_data: UserCreate):
             "created_at": datetime.now(timezone.utc).isoformat()
         }
         await db.admins.insert_one(admin_config)
+        await db.users.update_one({"id": user.id}, {"$set": {"email_verified": True}})
         logger.info(f"🎉 Auto-promoted CEO: {user_data.email} to admin!")
     
     access_token = create_access_token(data={"sub": user.id})
 
-    # Send welcome email (best effort)
+    # Send welcome email + verification email (best effort)
     await _send_welcome_email(user.email, user.username)
+    if not is_ceo:
+        try:
+            from routes.auth_extras_routes import send_verification, ResendVerifyPayload
+            await send_verification(ResendVerifyPayload(email=user_data.email))
+        except Exception as e:
+            logger.warning(f"Verification email failed: {e}")
 
     user_dict = await _enrich_with_roles(user.model_dump())
     return Token(

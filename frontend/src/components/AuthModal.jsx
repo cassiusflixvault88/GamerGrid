@@ -28,7 +28,10 @@ const AuthModal = ({ isOpen, onClose }) => {
         toast({ title: 'Welcome back!', description: 'You have successfully logged in.' });
       } else {
         await signup(email, username, password);
-        toast({ title: 'Account created!', description: 'Welcome to GamerGrid!' });
+        toast({
+          title: 'Account created! Check your email 📬',
+          description: 'We sent a verification link. Verify your email to fully activate your account.',
+        });
       }
       onClose();
       resetForm();
@@ -41,6 +44,11 @@ const AuthModal = ({ isOpen, onClose }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleForgotPassword = () => {
+    onClose();
+    window.location.href = '/forgot-password';
   };
 
   const resetForm = () => {
@@ -138,6 +146,19 @@ const AuthModal = ({ isOpen, onClose }) => {
             >
               {loading ? 'Please wait...' : (isLogin ? 'Sign In' : 'Sign Up')}
             </Button>
+
+            {isLogin && (
+              <div className="mt-3 text-center">
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  className="text-white/50 hover:text-yellow-400 text-sm transition-colors"
+                  data-testid="forgot-password-link"
+                >
+                  Forgot password?
+                </button>
+              </div>
+            )}
           </form>
 
           <div className="mt-6 text-center">

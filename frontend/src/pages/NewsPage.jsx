@@ -4,6 +4,7 @@ import Navbar from '../components/Navbar';
 import BackNavigation from '../components/BackNavigation';
 import Footer from '../components/Footer';
 import AdSlot from '../components/AdSlot';
+import NewsArticleSocial from '../components/NewsArticleSocial';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -114,48 +115,55 @@ const NewsPage = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {articles.map((a, i) => (
-              <a
+              <div
                 key={a.id || a.link || i}
-                href={a.link}
-                target="_blank"
-                rel="noopener noreferrer"
                 data-testid={`news-card-${i}`}
-                className="group bg-white/5 hover:bg-white/10 border border-white/10 hover:border-purple-500/50 rounded-xl overflow-hidden transition-all transform hover:scale-[1.02] flex flex-col"
+                className="group bg-white/5 hover:bg-white/10 border border-white/10 hover:border-purple-500/50 rounded-xl overflow-hidden transition-all flex flex-col"
               >
-                <div className="aspect-video bg-white/5 overflow-hidden relative">
-                  {a.image ? (
-                    <img
-                      src={a.image}
-                      alt={a.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      loading="lazy"
-                      onError={(e) => { e.target.style.display = 'none'; }}
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-white/20 text-4xl">
-                      🎮
-                    </div>
-                  )}
-                  <span
-                    className="absolute top-3 left-3 px-2 py-1 rounded text-[10px] font-bold tracking-wider uppercase"
-                    style={{ backgroundColor: a.source_color, color: '#000' }}
-                  >
-                    {a.source}
-                  </span>
-                </div>
-                <div className="p-4 flex-1 flex flex-col">
-                  <h3 className="font-bold text-white group-hover:text-purple-300 transition-colors line-clamp-2 mb-2">
-                    {a.title}
-                  </h3>
-                  {a.summary && (
-                    <p className="text-white/60 text-sm line-clamp-3 flex-1">{a.summary}</p>
-                  )}
-                  <div className="flex items-center justify-between mt-3 text-xs text-white/40">
-                    <span>{a.author || ''}</span>
-                    <span>{timeAgo(a.published)}</span>
+                <a
+                  href={a.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block"
+                >
+                  <div className="aspect-video bg-white/5 overflow-hidden relative">
+                    {a.image ? (
+                      <img
+                        src={a.image}
+                        alt={a.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        loading="lazy"
+                        onError={(e) => { e.target.style.display = 'none'; }}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-white/20 text-4xl">
+                        🎮
+                      </div>
+                    )}
+                    <span
+                      className="absolute top-3 left-3 px-2 py-1 rounded text-[10px] font-bold tracking-wider uppercase"
+                      style={{ backgroundColor: a.source_color, color: '#000' }}
+                    >
+                      {a.source}
+                    </span>
                   </div>
+                </a>
+                <div className="p-4 flex-1 flex flex-col">
+                  <a href={a.link} target="_blank" rel="noopener noreferrer" className="block">
+                    <h3 className="font-bold text-white group-hover:text-purple-300 transition-colors line-clamp-2 mb-2">
+                      {a.title}
+                    </h3>
+                    {a.summary && (
+                      <p className="text-white/60 text-sm line-clamp-3 flex-1">{a.summary}</p>
+                    )}
+                    <div className="flex items-center justify-between mt-3 text-xs text-white/40">
+                      <span>{a.author || ''}</span>
+                      <span>{timeAgo(a.published)}</span>
+                    </div>
+                  </a>
+                  <NewsArticleSocial article={a} />
                 </div>
-              </a>
+              </div>
             ))}
           </div>
         )}

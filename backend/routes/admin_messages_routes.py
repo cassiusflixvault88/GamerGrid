@@ -154,3 +154,43 @@ async def mark_message_read(message_id: str, token_data: dict = Depends(verify_t
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Message not found")
     return {"ok": True}
+
+
+@router.post("/messages/{message_id}/reply")
+async def user_reply_to_admin_message(
+    message_id: str,
+    payload: dict,
+    token_data: dict = Depends(verify_token),
+):
+    """User replies to an admin message they received. Reply is delivered to that admin."""
+    text = (payload.get("text") or "").strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Reply cannot be empty")
+    if len(text) > 2000:
+        raise HTTPException(status_code=400, detail="Reply too long (max 2000 chars)")
+
+    original = await db.admin_messages.find_one(
+        {"id": message_id, "user_id": token_data["user_id"]}, {"_id": 0}
+    )
+    if not original:
+        raise HTTPException(status_code=404, detail="Original message not found")
+
+    sender = await db.users.find_one(
+        {"id": token_data["user_id"]}, {"_id": 0, "username": 1, "email": 1}
+    ) or {}
+
+    # Deliver the reply to the admin who originally sent the message
+    reply_msg = {
+        "id": str(uuid.uuid4()),
+        "user_id": original["from_admin_id"],
+        "from_admin_id": token_data["user_id"],
+        "from_admin_username": sender.get("username", "User") + " (reply)",
+        "subject": f"Re: {original.get('subject', 'message')}",
+        "body": text,
+        "severity": "info",
+        "read": False,
+        "in_reply_to": message_id,
+        "sent_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.admin_messages.insert_one(reply_msg)
+    return {"ok": True, "reply_id": reply_msg["id"]}

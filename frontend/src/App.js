@@ -23,6 +23,9 @@ import PublicProfilePage from "./pages/PublicProfilePage";
 import Top10Page from "./pages/Top10Page";
 import NewsPage from "./pages/NewsPage";
 import AdminAnalyticsPage from "./pages/AdminAnalyticsPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
+import VerifyEmailPage from "./pages/VerifyEmailPage";
 import PageTracker from "./components/PageTracker";
 
 function App() {
@@ -53,6 +56,9 @@ function App() {
               <Route path="/top10" element={<Top10Page />} />
               <Route path="/news" element={<NewsPage />} />
               <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
+              <Route path="/verify-email" element={<VerifyEmailPage />} />
             </Routes>
             <InstallPWA />
             <Toaster />

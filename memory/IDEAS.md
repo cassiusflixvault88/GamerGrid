@@ -60,6 +60,14 @@ _(I'll add to this list every time you mention something casually so we don't lo
 - [Feb 25] Deleting a user now also deletes their saved trailers + admin messages — ✅ DONE
 - [Feb 25] Suppress dev-mode "Script error" overlay on preview — ✅ DONE
 - [Feb 25] Domain pick: leaning toward `gamergrid.com` + `gamergrid.gg` (buy both, .com primary, .gg redirects)
+- [Feb 25] Tour Pro section now mentions "More Pro perks coming as the app grows — at no extra cost" — ✅ DONE
+- [Feb 25] Email verification on signup (anti-spam, no reCAPTCHA needed) — ✅ DONE
+- [Feb 25] Forgot-password / reset flow via email — ✅ DONE
+- [Feb 25] User can reply to admin messages from Inbox — ✅ DONE
+- [Feb 25] Admins/CEO can now delete ANY review (not just their own) — ✅ DONE
+- [Feb 25] News articles now have like/dislike + comments (admins can delete any comment, users only their own) — ✅ DONE
+- [Feb 25] 10-minute auto-logout already exists in AuthContext — ✅ confirmed
+- [Feb 25] CEO protection: only OG CEO email can demote/delete admins, CEO cannot delete self — ✅ DONE
 
 ---
 

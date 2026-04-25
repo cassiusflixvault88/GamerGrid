@@ -23,7 +23,7 @@ from auth import (
 from public_domain_videos_clean import get_public_domain_movies, get_public_domain_by_id
 
 # Import route modules
-from routes import auth_routes, watchlist_routes, payments_routes, game_routes, public_profile_routes, news_routes, analytics_routes, email_routes, trailer_routes, saved_trailers_routes, admin_messages_routes
+from routes import auth_routes, watchlist_routes, payments_routes, game_routes, public_profile_routes, news_routes, analytics_routes, email_routes, trailer_routes, saved_trailers_routes, admin_messages_routes, auth_extras_routes, news_social_routes
 
 
 ROOT_DIR = Path(__file__).parent
@@ -69,6 +69,8 @@ api_router.include_router(email_routes.router)
 api_router.include_router(trailer_routes.router)
 api_router.include_router(saved_trailers_routes.router)
 api_router.include_router(admin_messages_routes.router)
+api_router.include_router(auth_extras_routes.router)
+api_router.include_router(news_social_routes.router)
 
 
 # Define Models
@@ -810,18 +812,19 @@ async def delete_user_reply(reply_id: str, token_data: dict = Depends(verify_tok
 
 @api_router.delete("/ratings/{rating_id}")
 async def delete_rating(rating_id: str, token_data: dict = Depends(verify_token)):
-    """Delete user's own rating/review"""
-    # Check if rating exists and belongs to user
+    """Delete a rating/review. Users can delete their own; admins can delete any (moderation)."""
     existing = await db.ratings.find_one({"id": rating_id}, {"_id": 0})
     if not existing:
         raise HTTPException(status_code=404, detail="Rating not found")
-    
-    if existing["user_id"] != token_data["user_id"]:
+
+    # Check admin status
+    admin_doc = await db.admins.find_one({"user_id": token_data["user_id"]}, {"_id": 0, "is_admin": 1})
+    is_admin = bool(admin_doc and admin_doc.get("is_admin"))
+
+    if existing["user_id"] != token_data["user_id"] and not is_admin:
         raise HTTPException(status_code=403, detail="Can only delete your own reviews")
-    
-    # Delete rating
+
     await db.ratings.delete_one({"id": rating_id})
-    
     return {"message": "Rating deleted successfully"}
 
 
