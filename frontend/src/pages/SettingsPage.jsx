@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sun, Moon, Monitor, Save, User as UserIcon, Home, ArrowLeft, Crown, Sparkles, CreditCard } from 'lucide-react';
+import { Sun, Moon, Monitor, Save, User as UserIcon, Home, ArrowLeft, Crown, Sparkles, CreditCard, Bookmark, Trash2, Play, Inbox, AlertCircle } from 'lucide-react';
 import axios from 'axios';
 import Navbar from '../components/Navbar';
 import BackNavigation from '../components/BackNavigation';
@@ -23,6 +23,8 @@ const SettingsPage = () => {
   
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [savedTrailers, setSavedTrailers] = useState([]);
+  const [inboxMessages, setInboxMessages] = useState([]);
   const [profileData, setProfileData] = useState({
     username: '',
     display_name: '',
@@ -42,6 +44,8 @@ const SettingsPage = () => {
     if (user) {
       // Load user profile data
       fetchUserProfile();
+      loadSavedTrailers();
+      loadInbox();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, loading, navigate]);
@@ -87,6 +91,53 @@ const SettingsPage = () => {
         variant: 'destructive',
       });
     }
+  };
+
+  const loadSavedTrailers = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const r = await axios.get(`${API}/saved-trailers`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setSavedTrailers(r.data.trailers || []);
+    } catch { /* silent */ }
+  };
+
+  const loadInbox = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const r = await axios.get(`${API}/messages/inbox`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setInboxMessages(r.data.messages || []);
+    } catch { /* silent */ }
+  };
+
+  const removeSavedTrailer = async (trailerId) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`${API}/saved-trailers/${trailerId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setSavedTrailers(prev => prev.filter(t => t.id !== trailerId));
+      toast({ title: 'Removed from your library' });
+    } catch (e) {
+      toast({
+        title: 'Could not remove',
+        description: e.response?.data?.detail || 'Try again',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const markMessageRead = async (messageId) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(`${API}/messages/${messageId}/read`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setInboxMessages(prev => prev.map(m => m.id === messageId ? { ...m, read: true } : m));
+    } catch { /* silent */ }
   };
 
   const handleImageUpload = async (event) => {
@@ -386,7 +437,7 @@ const SettingsPage = () => {
             </div>
             <ul className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-white/80">
               <li className="flex items-center gap-2"><Sparkles className="w-4 h-4 text-yellow-400" /> 100% ad-free</li>
-              <li className="flex items-center gap-2"><Sparkles className="w-4 h-4 text-yellow-400" /> Download trailers</li>
+              <li className="flex items-center gap-2"><Sparkles className="w-4 h-4 text-yellow-400" /> Save trailers to your library</li>
               <li className="flex items-center gap-2"><Sparkles className="w-4 h-4 text-yellow-400" /> Early access to new features</li>
               <li className="flex items-center gap-2"><Sparkles className="w-4 h-4 text-yellow-400" /> Priority support</li>
             </ul>
@@ -404,7 +455,7 @@ const SettingsPage = () => {
             </div>
             <ul className="my-4 grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-white/80">
               <li className="flex items-center gap-2"><Sparkles className="w-4 h-4 text-yellow-400" /> 100% ad-free experience</li>
-              <li className="flex items-center gap-2"><Sparkles className="w-4 h-4 text-yellow-400" /> Download any trailer</li>
+              <li className="flex items-center gap-2"><Sparkles className="w-4 h-4 text-yellow-400" /> Save trailers to your library</li>
               <li className="flex items-center gap-2"><Sparkles className="w-4 h-4 text-yellow-400" /> Early access to new features</li>
               <li className="flex items-center gap-2"><Sparkles className="w-4 h-4 text-yellow-400" /> Priority support</li>
             </ul>
@@ -418,6 +469,116 @@ const SettingsPage = () => {
             </Button>
           </div>
         )}
+
+        {/* Inbox / Admin Messages */}
+        {inboxMessages.length > 0 && (
+          <div className="bg-white/5 backdrop-blur-sm rounded-lg p-6 mb-6 border border-white/10" data-testid="inbox-section">
+            <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+              <Inbox className="w-5 h-5 text-blue-400" />
+              Inbox
+              {inboxMessages.some(m => !m.read) && (
+                <span className="px-2 py-0.5 bg-red-500 text-white text-xs font-bold rounded-full">
+                  {inboxMessages.filter(m => !m.read).length}
+                </span>
+              )}
+            </h2>
+            <div className="space-y-3">
+              {inboxMessages.map(m => {
+                const sevColor = m.severity === 'violation' ? 'border-red-500/50 bg-red-500/5'
+                  : m.severity === 'warning' ? 'border-yellow-500/50 bg-yellow-500/5'
+                  : 'border-blue-500/50 bg-blue-500/5';
+                const sevIcon = m.severity === 'violation' ? <AlertCircle className="w-4 h-4 text-red-400" />
+                  : m.severity === 'warning' ? <AlertCircle className="w-4 h-4 text-yellow-400" />
+                  : <Inbox className="w-4 h-4 text-blue-400" />;
+                return (
+                  <div
+                    key={m.id}
+                    className={`p-4 rounded-lg border ${sevColor} ${!m.read ? 'ring-1 ring-white/20' : 'opacity-70'}`}
+                    onClick={() => !m.read && markMessageRead(m.id)}
+                    data-testid={`inbox-message-${m.id}`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      {sevIcon}
+                      <span className="text-white font-semibold text-sm">{m.subject}</span>
+                      {!m.read && <span className="ml-auto text-xs px-2 py-0.5 bg-red-500 text-white rounded">NEW</span>}
+                    </div>
+                    <p className="text-white/80 text-sm whitespace-pre-wrap">{m.body}</p>
+                    <p className="text-white/40 text-xs mt-2">
+                      From {m.from_admin_username} · {new Date(m.sent_at).toLocaleString()}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Saved Trailers Library */}
+        <div className="bg-white/5 backdrop-blur-sm rounded-lg p-6 mb-6 border border-white/10" data-testid="saved-trailers-section">
+          <h2 className="text-xl font-semibold text-white mb-1 flex items-center gap-2">
+            <Bookmark className="w-5 h-5 text-purple-400" />
+            Saved Trailers
+            <span className="text-white/50 text-sm font-normal ml-2">{savedTrailers.length}</span>
+          </h2>
+          <p className="text-white/60 text-sm mb-4">Trailers you've saved from any game.</p>
+          {savedTrailers.length === 0 ? (
+            <div className="text-center py-8 border border-dashed border-white/10 rounded-lg">
+              <Bookmark className="w-8 h-8 text-white/20 mx-auto mb-2" />
+              <p className="text-white/40 text-sm">No saved trailers yet</p>
+              <p className="text-white/30 text-xs mt-1">
+                Open any game trailer and tap the purple <span className="text-purple-400 font-semibold">Save Trailer</span> button.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {savedTrailers.map(t => (
+                <div
+                  key={t.id}
+                  className="group relative bg-black/40 rounded-lg overflow-hidden border border-white/10 hover:border-purple-500/50 transition-colors"
+                  data-testid={`saved-trailer-${t.id}`}
+                >
+                  <a
+                    href={`https://www.youtube.com/watch?v=${t.youtube_id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block aspect-video bg-gradient-to-br from-purple-900/30 to-black relative"
+                  >
+                    {t.thumbnail && (
+                      <img
+                        src={t.thumbnail}
+                        alt={t.title}
+                        className="w-full h-full object-cover"
+                        onError={(e) => { e.target.style.display = 'none'; }}
+                      />
+                    )}
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <Play className="w-12 h-12 text-white" />
+                    </div>
+                  </a>
+                  <div className="p-3">
+                    <p className="text-white text-sm font-medium line-clamp-2" title={t.title}>{t.title}</p>
+                    {t.game_title && (
+                      <p className="text-white/50 text-xs mt-1 truncate">{t.game_title}</p>
+                    )}
+                    <div className="flex items-center justify-between mt-2">
+                      <span className="text-white/30 text-xs">
+                        {new Date(t.saved_at).toLocaleDateString()}
+                      </span>
+                      <button
+                        onClick={() => removeSavedTrailer(t.id)}
+                        className="text-white/40 hover:text-red-400 transition-colors p-1"
+                        title="Remove"
+                        data-testid={`remove-trailer-${t.id}`}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Profile Information */}
         <div className="bg-white/5 backdrop-blur-sm rounded-lg p-6 mb-6 border border-white/10">

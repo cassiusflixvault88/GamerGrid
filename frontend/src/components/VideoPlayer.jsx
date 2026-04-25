@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { X, ExternalLink, Maximize2, Minimize2, Download, Loader2 } from 'lucide-react';
+import { X, ExternalLink, Maximize2, Minimize2, Bookmark, BookmarkCheck, Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle } from './ui/dialog';
 import { Button } from './ui/button';
 import { useAuth } from '../context/AuthContext';
@@ -57,69 +57,50 @@ const isLandscapeOrientation = () => {
   return window.matchMedia('(orientation: landscape)').matches;
 };
 
-const VideoPlayer = ({ video, isOpen, onClose }) => {
+const VideoPlayer = ({ video, isOpen, onClose, gameId, gameTitle }) => {
   const containerRef = useRef(null);
   const iframeRef = useRef(null);
   const [isFs, setIsFs] = useState(false);
-  const [downloading, setDownloading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
-  const canDownload = Boolean(user && (user.is_admin || user.is_pro));
+  const canSave = Boolean(user && (user.is_admin || user.is_pro));
 
   const watchOnYouTube = () => {
     window.open(`https://www.youtube.com/watch?v=${video?.key}`, '_blank');
     onClose();
   };
 
-  const downloadTrailer = async () => {
-    if (!video?.key || downloading) return;
-    setDownloading(true);
-    toast({
-      title: 'Preparing download…',
-      description: 'Fetching the trailer from YouTube. This may take 10-30 seconds.',
-    });
+  const saveTrailer = async () => {
+    if (!video?.key || saving || saved) return;
+    setSaving(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(`${API}/trailer/download/${video.key}`, {
-        headers: { Authorization: `Bearer ${token}` },
-        responseType: 'blob',
-        timeout: 180000, // 3 min
-      });
-      const blob = new Blob([response.data], { type: 'video/mp4' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      const safeName = (video?.name || 'trailer').replace(/[^a-z0-9_-]/gi, '_').slice(0, 80);
-      a.download = `${safeName}.mp4`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(() => window.URL.revokeObjectURL(url), 2000);
+      const res = await axios.post(
+        `${API}/saved-trailers/save`,
+        {
+          youtube_id: video.key,
+          title: video.name || gameTitle || 'Trailer',
+          game_id: gameId || null,
+          game_title: gameTitle || null,
+          thumbnail: `https://img.youtube.com/vi/${video.key}/hqdefault.jpg`,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setSaved(true);
       toast({
-        title: 'Download complete ✅',
-        description: 'Check your Downloads folder.',
+        title: res.data.already_saved ? 'Already in your library' : 'Saved! ✅',
+        description: 'Find it in Settings → Saved Trailers',
       });
     } catch (e) {
-      let msg = 'Download failed. Try again in a moment.';
-      if (e.response?.data) {
-        try {
-          // Backend may return JSON error inside a blob
-          const text = await e.response.data.text?.();
-          if (text) {
-            const j = JSON.parse(text);
-            msg = j.detail || msg;
-          }
-        } catch { /* keep default */ }
-      } else if (e.message) {
-        msg = e.message;
-      }
       toast({
-        title: 'Download failed',
-        description: msg,
+        title: 'Save failed',
+        description: e.response?.data?.detail || 'Try again in a moment',
         variant: 'destructive',
       });
     } finally {
-      setDownloading(false);
+      setSaving(false);
     }
   };
 
@@ -227,25 +208,30 @@ const VideoPlayer = ({ video, isOpen, onClose }) => {
               📱 Rotate your phone for fullscreen
             </p>
             <div className="flex items-center gap-2 flex-wrap">
-              {canDownload && (
+              {canSave && (
                 <Button
-                  onClick={downloadTrailer}
-                  data-testid="video-download"
-                  disabled={downloading}
+                  onClick={saveTrailer}
+                  data-testid="video-save"
+                  disabled={saving || saved}
                   variant="outline"
                   size="sm"
                   className="bg-purple-600 hover:bg-purple-700 text-white border-0 disabled:opacity-60"
-                  title={user?.is_admin ? 'CEO / Admin — Download trailer' : 'GamerGrid Pro — Download trailer'}
+                  title={user?.is_admin ? 'CEO / Admin — Save trailer' : 'GamerGrid Pro — Save trailer to your library'}
                 >
-                  {downloading ? (
+                  {saving ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Downloading…
+                      Saving…
+                    </>
+                  ) : saved ? (
+                    <>
+                      <BookmarkCheck className="w-4 h-4 mr-2" />
+                      Saved
                     </>
                   ) : (
                     <>
-                      <Download className="w-4 h-4 mr-2" />
-                      Download Trailer
+                      <Bookmark className="w-4 h-4 mr-2" />
+                      Save Trailer
                     </>
                   )}
                 </Button>

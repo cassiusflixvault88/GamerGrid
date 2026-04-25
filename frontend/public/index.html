@@ -54,6 +54,8 @@
         </script>
         END GA4 -->
         <script>window.addEventListener("error",function(e){if(e.error instanceof DOMException&&e.error.name==="DataCloneError"&&e.message&&e.message.includes("PerformanceServerTiming")){e.stopImmediatePropagation();e.preventDefault()}},true);</script>
+        <!-- Suppress cross-origin "Script error." dev overlay (PostHog/AdSense/etc are external) -->
+        <script>window.addEventListener("error",function(e){if(e&&e.message&&(e.message==="Script error."||e.message==="Script error")){e.stopImmediatePropagation();e.preventDefault()}},true);window.addEventListener("unhandledrejection",function(e){var m=e&&e.reason&&(e.reason.message||String(e.reason));if(m&&(m==="Script error."||m==="Script error")){e.stopImmediatePropagation();e.preventDefault()}},true);</script>
         <script src="https://assets.emergent.sh/scripts/emergent-main.js"></script>
     </head>
     <body>

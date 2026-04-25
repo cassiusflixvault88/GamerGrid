@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { ArrowLeft, User, Mail, Calendar, Star, Heart, Film, MessageSquare, Shield, ShieldOff } from 'lucide-react';
+import { ArrowLeft, User, Mail, Calendar, Star, Heart, Film, MessageSquare, Shield, ShieldOff, Send, Trash2 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import BackNavigation from '../components/BackNavigation';
 import Footer from '../components/Footer';
@@ -9,6 +9,10 @@ import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 import { useToast } from '../hooks/use-toast';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../components/ui/dialog';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { Textarea } from '../components/ui/textarea';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -17,6 +21,12 @@ const UserDetailPage = () => {
   const [userDetails, setUserDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [messageOpen, setMessageOpen] = useState(false);
+  const [msgSubject, setMsgSubject] = useState('');
+  const [msgBody, setMsgBody] = useState('');
+  const [msgSeverity, setMsgSeverity] = useState('info');
+  const [sendingMsg, setSendingMsg] = useState(false);
+  const [deletingUser, setDeletingUser] = useState(false);
   
   const { user: currentUser } = useAuth();
   const navigate = useNavigate();
@@ -83,6 +93,60 @@ const UserDetailPage = () => {
     }
   };
 
+  const handleSendMessage = async () => {
+    if (!msgSubject.trim() || !msgBody.trim()) {
+      toast({ title: 'Subject and body are required', variant: 'destructive' });
+      return;
+    }
+    setSendingMsg(true);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(
+        `${API}/admin/send-message`,
+        { user_id: userId, subject: msgSubject.trim(), body: msgBody.trim(), severity: msgSeverity },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      toast({
+        title: 'Message sent ✅',
+        description: `Delivered to ${userDetails?.user?.username}. They'll see it in their Settings inbox.`,
+      });
+      setMessageOpen(false);
+      setMsgSubject('');
+      setMsgBody('');
+      setMsgSeverity('info');
+    } catch (e) {
+      toast({
+        title: 'Send failed',
+        description: e.response?.data?.detail || 'Try again',
+        variant: 'destructive',
+      });
+    } finally {
+      setSendingMsg(false);
+    }
+  };
+
+  const handleDeleteUser = async () => {
+    const confirmText = `Permanently delete ${userDetails?.user?.username}? This removes their account, reviews, library, and all data. This cannot be undone.`;
+    if (!window.confirm(confirmText)) return;
+    setDeletingUser(true);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`${API}/admin/delete-user/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      toast({ title: 'User deleted', description: 'Account and all related data removed.' });
+      navigate('/admin');
+    } catch (e) {
+      toast({
+        title: 'Delete failed',
+        description: e.response?.data?.detail || 'Try again',
+        variant: 'destructive',
+      });
+    } finally {
+      setDeletingUser(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-black">
@@ -141,12 +205,21 @@ const UserDetailPage = () => {
             </div>
 
             {/* Admin Actions */}
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3">
+              <Button
+                onClick={() => setMessageOpen(true)}
+                className="bg-blue-600 hover:bg-blue-700"
+                data-testid="message-user-btn"
+              >
+                <Send className="w-4 h-4 mr-2" />
+                Send Message
+              </Button>
               {user.is_admin ? (
                 <Button
                   onClick={() => handleAdminAction('demote')}
                   disabled={actionLoading || user.id === currentUser.id}
                   className="bg-red-600 hover:bg-red-700"
+                  data-testid="demote-admin-btn"
                 >
                   <ShieldOff className="w-4 h-4 mr-2" />
                   {user.id === currentUser.id ? 'Cannot Demote Self' : 'Remove Admin'}
@@ -156,9 +229,22 @@ const UserDetailPage = () => {
                   onClick={() => handleAdminAction('promote')}
                   disabled={actionLoading}
                   className="bg-yellow-600 hover:bg-yellow-700"
+                  data-testid="promote-admin-btn"
                 >
                   <Shield className="w-4 h-4 mr-2" />
                   Promote to Admin
+                </Button>
+              )}
+              {user.id !== currentUser.id && (
+                <Button
+                  onClick={handleDeleteUser}
+                  disabled={deletingUser}
+                  variant="outline"
+                  className="bg-red-900/30 border-red-500/40 text-red-300 hover:bg-red-900/50"
+                  data-testid="delete-user-btn"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  {deletingUser ? 'Deleting…' : 'Delete User'}
                 </Button>
               )}
             </div>
@@ -271,6 +357,86 @@ const UserDetailPage = () => {
           </Card>
         )}
       </div>
+
+      {/* Send Message Dialog */}
+      <Dialog open={messageOpen} onOpenChange={setMessageOpen}>
+        <DialogContent className="bg-zinc-900 border-white/10 text-white max-w-lg" data-testid="send-message-dialog">
+          <DialogHeader>
+            <DialogTitle className="text-white">
+              Send message to {userDetails?.user?.username}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <Label className="text-white/80 text-sm">Severity</Label>
+              <div className="flex gap-2 mt-1">
+                {[
+                  { v: 'info', label: 'Info', cls: 'bg-blue-600' },
+                  { v: 'warning', label: 'Warning', cls: 'bg-yellow-600' },
+                  { v: 'violation', label: 'Violation', cls: 'bg-red-600' },
+                ].map(opt => (
+                  <button
+                    key={opt.v}
+                    onClick={() => setMsgSeverity(opt.v)}
+                    className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${
+                      msgSeverity === opt.v ? `${opt.cls} text-white` : 'bg-white/10 text-white/60 hover:bg-white/20'
+                    }`}
+                    data-testid={`severity-${opt.v}`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="msg-subject" className="text-white/80 text-sm">Subject</Label>
+              <Input
+                id="msg-subject"
+                value={msgSubject}
+                onChange={(e) => setMsgSubject(e.target.value)}
+                placeholder="e.g. Reminder about review guidelines"
+                className="bg-white/5 border-white/20 text-white"
+                data-testid="msg-subject"
+              />
+            </div>
+            <div>
+              <Label htmlFor="msg-body" className="text-white/80 text-sm">Message</Label>
+              <Textarea
+                id="msg-body"
+                value={msgBody}
+                onChange={(e) => setMsgBody(e.target.value)}
+                placeholder="Write your message…"
+                rows={6}
+                className="bg-white/5 border-white/20 text-white resize-none"
+                data-testid="msg-body"
+              />
+              <p className="text-white/40 text-xs mt-1">
+                {userDetails?.user?.email
+                  ? `Will also email ${userDetails.user.email} (if Resend is configured).`
+                  : 'In-app delivery only.'}
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => setMessageOpen(false)}
+              className="text-white/70 hover:text-white"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSendMessage}
+              disabled={sendingMsg || !msgSubject.trim() || !msgBody.trim()}
+              className="bg-blue-600 hover:bg-blue-700"
+              data-testid="msg-send-btn"
+            >
+              <Send className="w-4 h-4 mr-2" />
+              {sendingMsg ? 'Sending…' : 'Send Message'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Footer />
     </div>

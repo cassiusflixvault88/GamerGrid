@@ -48,11 +48,18 @@ _(items being worked on right now)_
 _(I'll add to this list every time you mention something casually so we don't lose ideas)_
 
 - [Feb 25] Want analytics for visitors who don't sign up — ✅ DONE
-- [Feb 25] Want monetization explained: AdSense + Amazon Affiliates + $4.99 Pro tier (Pro = ad-free + downloads)
+- [Feb 25] Want monetization explained: AdSense + Amazon Affiliates + $4.99 Pro tier (Pro = ad-free + saves trailers)
 - [Feb 25] Bug found: admin/CEO not seeing Download Trailer button — ✅ FIXED Feb 25 (was missing `is_admin`/`is_pro` in user response)
 - [Feb 25] Wants to see EVERY real visitor (not own refreshes) and a list of who visited — ✅ DONE: admin visits now auto-excluded + Recent Visitors live feed added
 - [Feb 25] Eventually buying a domain to make this a website too (not just app) — keep in mind for future SEO/sitemap work
-- [Feb 25] Bug: ssyoutube.com (download link) shut down in US in 2020 — ✅ FIXED Feb 25 with proper server-side yt-dlp extractor at `/api/trailer/download/{youtube_id}`
+- [Feb 25] Bug: ssyoutube.com (download link) shut down in US in 2020 — ✅ initial server-side downloader built but YouTube blocks datacenter IPs site-wide
+- [Feb 25] **PIVOT**: Replaced "Download Trailer" with "Save Trailer to Library" (pro feature). Pro users get a Saved Trailers section in Settings ✅ DONE
+- [Feb 25] Admin can send direct messages to any user (info/warning/violation severity) — ✅ DONE, also auto-emails them
+- [Feb 25] Inbox section in Settings page shows admin messages with unread badges — ✅ DONE
+- [Feb 25] Only the original CEO email can demote/delete other admins — ✅ DONE, enforced server-side
+- [Feb 25] Deleting a user now also deletes their saved trailers + admin messages — ✅ DONE
+- [Feb 25] Suppress dev-mode "Script error" overlay on preview — ✅ DONE
+- [Feb 25] Domain pick: leaning toward `gamergrid.com` + `gamergrid.gg` (buy both, .com primary, .gg redirects)
 
 ---
 

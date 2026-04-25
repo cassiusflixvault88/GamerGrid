@@ -23,7 +23,7 @@ from auth import (
 from public_domain_videos_clean import get_public_domain_movies, get_public_domain_by_id
 
 # Import route modules
-from routes import auth_routes, watchlist_routes, payments_routes, game_routes, public_profile_routes, news_routes, analytics_routes, email_routes, trailer_routes
+from routes import auth_routes, watchlist_routes, payments_routes, game_routes, public_profile_routes, news_routes, analytics_routes, email_routes, trailer_routes, saved_trailers_routes, admin_messages_routes
 
 
 ROOT_DIR = Path(__file__).parent
@@ -67,6 +67,8 @@ api_router.include_router(news_routes.router)
 api_router.include_router(analytics_routes.router)
 api_router.include_router(email_routes.router)
 api_router.include_router(trailer_routes.router)
+api_router.include_router(saved_trailers_routes.router)
+api_router.include_router(admin_messages_routes.router)
 
 
 # Define Models
@@ -1089,21 +1091,35 @@ async def delete_review(review_id: str, token_data: dict = Depends(verify_admin)
 
 @api_router.delete("/admin/delete-user/{user_id}")
 async def delete_user(user_id: str, token_data: dict = Depends(verify_admin)):
-    """Delete a user and all their data"""
+    """Delete a user and all their data. Only the original CEO can delete admins."""
     # Check if user exists
-    user_to_delete = await db.users.find_one({"id": user_id}, {"_id": 0, "is_admin": 1})
-    
+    user_to_delete = await db.users.find_one({"id": user_id}, {"_id": 0, "email": 1})
+
     if not user_to_delete:
         raise HTTPException(status_code=404, detail="User not found")
-    
-    # Prevent deleting admin users
-    if user_to_delete.get("is_admin", False):
-        raise HTTPException(status_code=403, detail="Cannot delete admin users")
+
+    # Determine if target is admin
+    target_admin = await db.admins.find_one({"user_id": user_id}, {"_id": 0, "is_admin": 1})
+    target_is_admin = bool(target_admin and target_admin.get("is_admin"))
+
+    # CEO check: only the original CEO email can delete other admins
+    if target_is_admin:
+        actor = await db.users.find_one({"id": token_data["user_id"]}, {"_id": 0, "email": 1})
+        actor_email = (actor.get("email") if actor else "").lower()
+        ceo_emails = ["cassius@flixvault.com", "cassiusflixvault@gmail.com"]
+        if actor_email not in ceo_emails:
+            raise HTTPException(status_code=403, detail="Only the CEO can delete admins")
+        # Even the CEO cannot delete themselves
+        if user_id == token_data["user_id"]:
+            raise HTTPException(status_code=403, detail="You cannot delete your own CEO account")
     
     # Delete user and all related data
     await db.users.delete_one({"id": user_id})
     await db.ratings.delete_many({"user_id": user_id})
     await db.watch_history.delete_many({"user_id": user_id})
+    await db.admins.delete_many({"user_id": user_id})
+    await db.saved_trailers.delete_many({"user_id": user_id})
+    await db.admin_messages.delete_many({"user_id": user_id})
     
     return {"message": "User deleted successfully", "user_id": user_id}
 
@@ -1535,7 +1551,14 @@ async def manage_admin_status(action: AdminAction, token_data: dict = Depends(ve
         # Prevent demoting self
         if action.user_id == token_data['user_id']:
             raise HTTPException(status_code=400, detail="Cannot demote yourself")
-        
+
+        # CEO check: only the original CEO email can demote other admins
+        actor = await db.users.find_one({"id": token_data["user_id"]}, {"_id": 0, "email": 1})
+        actor_email = (actor.get("email") if actor else "").lower()
+        ceo_emails = ["cassius@flixvault.com", "cassiusflixvault@gmail.com"]
+        if actor_email not in ceo_emails:
+            raise HTTPException(status_code=403, detail="Only the CEO can demote admins")
+
         # Remove from admins collection
         result = await db.admins.delete_one({"user_id": action.user_id})
         if result.deleted_count == 0:
