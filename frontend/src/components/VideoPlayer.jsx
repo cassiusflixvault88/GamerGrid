@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { X, ExternalLink, Maximize2, Minimize2 } from 'lucide-react';
+import { X, ExternalLink, Maximize2, Minimize2, Download } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle } from './ui/dialog';
 import { Button } from './ui/button';
+import { useAuth } from '../context/AuthContext';
 
 /**
  * Cross-browser fullscreen helpers (handle webkit/moz prefixes for iOS Safari).
@@ -56,10 +57,18 @@ const VideoPlayer = ({ video, isOpen, onClose }) => {
   const containerRef = useRef(null);
   const iframeRef = useRef(null);
   const [isFs, setIsFs] = useState(false);
+  const { user } = useAuth();
+  const canDownload = Boolean(user && (user.is_admin || user.is_pro));
 
   const watchOnYouTube = () => {
     window.open(`https://www.youtube.com/watch?v=${video?.key}`, '_blank');
     onClose();
+  };
+
+  const downloadTrailer = () => {
+    // Opens a YouTube downloader helper (ssyoutube.com) in a new tab.
+    // Works for any YouTube video ID.
+    window.open(`https://ssyoutube.com/watch?v=${video?.key}`, '_blank');
   };
 
   // Track fullscreen state across vendor prefixes
@@ -165,15 +174,30 @@ const VideoPlayer = ({ video, isOpen, onClose }) => {
             <p className="text-white/60 text-xs">
               📱 Rotate your phone for fullscreen
             </p>
-            <Button
-              onClick={watchOnYouTube}
-              variant="outline"
-              size="sm"
-              className="bg-red-600 hover:bg-red-700 text-white border-0"
-            >
-              <ExternalLink className="w-4 h-4 mr-2" />
-              Open in YouTube
-            </Button>
+            <div className="flex items-center gap-2 flex-wrap">
+              {canDownload && (
+                <Button
+                  onClick={downloadTrailer}
+                  data-testid="video-download"
+                  variant="outline"
+                  size="sm"
+                  className="bg-purple-600 hover:bg-purple-700 text-white border-0"
+                  title={user?.is_admin ? 'CEO / Admin — Download trailer' : 'GamerGrid Pro — Download trailer'}
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download Trailer
+                </Button>
+              )}
+              <Button
+                onClick={watchOnYouTube}
+                variant="outline"
+                size="sm"
+                className="bg-red-600 hover:bg-red-700 text-white border-0"
+              >
+                <ExternalLink className="w-4 h-4 mr-2" />
+                Open in YouTube
+              </Button>
+            </div>
           </div>
         </div>
       </DialogContent>

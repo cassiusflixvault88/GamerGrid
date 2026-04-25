@@ -65,20 +65,26 @@ const BrowseAllPage = () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      params.set('limit', '80');
+      params.set('limit', '100');
       if (genre) params.set('genre', genre);
       if (year && year !== 'Any') params.set('year', year);
 
       let url;
       if (activePlatform === 'all') {
-        // Combine trending + top-rated for "All"
-        params.set('limit', '50');
-        const [t, r] = await Promise.all([
-          axios.get(`${API}/games/trending?${params.toString()}`).then((x) => x.data?.results || []),
-          axios.get(`${API}/games/top-rated?${params.toString()}`).then((x) => x.data?.results || []),
+        // Pull from 6 IGDB rails simultaneously → ~500 unique games
+        const mkUrl = (endpoint) => `${API}/games/${endpoint}?${params.toString()}`;
+        const [trending, top, popular, newRel, ps, xbox, pc, switchGames] = await Promise.all([
+          axios.get(mkUrl('trending')).then((x) => x.data?.results || []).catch(() => []),
+          axios.get(mkUrl('top-rated')).then((x) => x.data?.results || []).catch(() => []),
+          axios.get(mkUrl('most-popular')).then((x) => x.data?.results || []).catch(() => []),
+          axios.get(mkUrl('new-releases')).then((x) => x.data?.results || []).catch(() => []),
+          axios.get(`${API}/games/platform/playstation?${params.toString()}&sort=popular`).then((x) => x.data?.results || []).catch(() => []),
+          axios.get(`${API}/games/platform/xbox?${params.toString()}&sort=popular`).then((x) => x.data?.results || []).catch(() => []),
+          axios.get(`${API}/games/platform/pc?${params.toString()}&sort=popular`).then((x) => x.data?.results || []).catch(() => []),
+          axios.get(`${API}/games/platform/switch?${params.toString()}&sort=popular`).then((x) => x.data?.results || []).catch(() => []),
         ]);
         const seen = new Set();
-        const merged = [...t, ...r].filter((g) => {
+        const merged = [...popular, ...trending, ...top, ...newRel, ...ps, ...xbox, ...pc, ...switchGames].filter((g) => {
           if (!g || seen.has(g.id)) return false;
           seen.add(g.id);
           return true;
