@@ -663,7 +663,10 @@ DETAIL_FIELDS = (
     "involved_companies.developer,involved_companies.publisher,cover.url,"
     "screenshots.url,artworks.url,videos.video_id,videos.name,similar_games.name,"
     "similar_games.cover.url,similar_games.rating,similar_games.id,"
-    "game_modes.name,themes.name,websites.url,websites.type"
+    "game_modes.name,themes.name,websites.url,websites.type,"
+    "expansions.id,expansions.name,expansions.cover.url,expansions.first_release_date,expansions.summary,"
+    "dlcs.id,dlcs.name,dlcs.cover.url,dlcs.first_release_date,dlcs.summary,"
+    "remakes.id,remakes.name,remakes.cover.url,remakes.first_release_date"
 )
 
 # IGDB website types (v4 uses `type`, not `category`)
@@ -793,6 +796,28 @@ async def get_game_details(game_id: int):
                 ][:12],
                 "websites": [w.get("url") for w in (game.get("websites") or []) if isinstance(w, dict) and w.get("url")],
                 "buy_links": _build_buy_links(game, normalized),
+                "dlcs": [
+                    {
+                        "id": d.get("id"),
+                        "name": d.get("name"),
+                        "summary": d.get("summary"),
+                        "release_date": _release_date(d.get("first_release_date")),
+                        "poster_path": _img((d.get("cover") or {}).get("url"), "t_cover_big"),
+                    }
+                    for d in (game.get("dlcs") or [])
+                    if isinstance(d, dict)
+                ],
+                "expansions": [
+                    {
+                        "id": e.get("id"),
+                        "name": e.get("name"),
+                        "summary": e.get("summary"),
+                        "release_date": _release_date(e.get("first_release_date")),
+                        "poster_path": _img((e.get("cover") or {}).get("url"), "t_cover_big"),
+                    }
+                    for e in (game.get("expansions") or [])
+                    if isinstance(e, dict)
+                ],
             }
         )
         await _cache_col.update_one(

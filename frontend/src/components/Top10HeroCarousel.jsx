@@ -53,22 +53,8 @@ const Top10HeroCarousel = ({ items = [], onPlayClick, onInfoClick, intervalMs = 
       </div>
 
       <div className="relative h-full max-w-[1920px] mx-auto px-6 lg:px-12 flex items-center">
-        <div className="flex items-end gap-4 lg:gap-8 w-full">
-          {/* Massive rank number */}
-          <span
-            data-testid="top10-rank"
-            className="select-none font-black leading-none text-transparent bg-clip-text bg-gradient-to-br from-purple-300 via-purple-500 to-blue-600 drop-shadow-2xl"
-            style={{
-              fontSize: 'clamp(8rem, 22vw, 24rem)',
-              WebkitTextStroke: '2px rgba(255,255,255,0.18)',
-              textShadow: '0 12px 40px rgba(139,92,246,0.45)',
-              lineHeight: 0.85,
-            }}
-          >
-            {rank}
-          </span>
-
-          <div className="max-w-2xl space-y-4 mt-12 pb-10 lg:pb-16">
+        <div className="w-full">
+          <div className="max-w-2xl space-y-4 pb-10 lg:pb-16">
             <div className="flex items-center gap-2 flex-wrap">
               <a
                 href="/top10"

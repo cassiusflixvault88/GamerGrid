@@ -105,6 +105,13 @@ const Navbar = () => {
                 Switch
               </Link>
               <Link
+                to="/news"
+                className="text-white/90 hover:text-white transition-colors text-sm font-medium"
+                data-testid="nav-news"
+              >
+                📰 News
+              </Link>
+              <Link
                 to="/games/all"
                 className="text-white/90 hover:text-white transition-colors text-sm font-medium bg-gradient-to-r from-purple-600/20 to-blue-600/20 px-3 py-1 rounded-md"
               >

@@ -21,6 +21,7 @@ import PromoteCEO from "./pages/PromoteCEO";
 import DebugAdmin from "./pages/DebugAdmin";
 import PublicProfilePage from "./pages/PublicProfilePage";
 import Top10Page from "./pages/Top10Page";
+import NewsPage from "./pages/NewsPage";
 
 function App() {
   return (
@@ -47,6 +48,7 @@ function App() {
               <Route path="/debug-admin" element={<DebugAdmin />} />
               <Route path="/u/:username" element={<PublicProfilePage />} />
               <Route path="/top10" element={<Top10Page />} />
+              <Route path="/news" element={<NewsPage />} />
             </Routes>
             <InstallPWA />
             <Toaster />

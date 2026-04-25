@@ -20,6 +20,7 @@ import {
   getGOTY,
   getMostPopular,
   getTop10,
+  getVideos,
 } from '../services/tmdb';
 
 const Home = () => {
@@ -125,7 +126,31 @@ const Home = () => {
     setModalOpen(true);
   };
 
-  const handlePlayClick = (content) => {
+  const handlePlayClick = async (content) => {
+    // Try to play trailer directly first (skip the modal)
+    try {
+      if (content.youtube_video_id) {
+        setCurrentVideo({
+          key: content.youtube_video_id,
+          name: `${content.title || content.name} - Trailer`,
+          site: 'YouTube',
+          type: 'Trailer',
+        });
+        setVideoPlayerOpen(true);
+        return;
+      }
+      // Fallback: fetch videos for this game
+      const vids = await getVideos('game', content.id).catch(() => []);
+      const trailer = vids.find((v) => v.type === 'Trailer' && v.site === 'YouTube') || vids[0];
+      if (trailer && trailer.key) {
+        setCurrentVideo(trailer);
+        setVideoPlayerOpen(true);
+        return;
+      }
+    } catch (err) {
+      console.error('handlePlayClick:', err);
+    }
+    // No trailer found → open modal as fallback
     setSelectedContent(content);
     setModalOpen(true);
   };

@@ -26,8 +26,8 @@ const AboutGamerGrid = ({ isOpen, onClose }) => {
     },
     {
       icon: Film,
-      title: 'Bonus: Movie Trailers',
-      description: 'Explore 9,000+ movie and TV show trailers as a bonus feature alongside gaming content'
+      title: 'Live Patches & DLC Tracking',
+      description: 'Auto-fetched DLC, expansions, patches and announcements straight from IGDB and major gaming outlets'
     },
     {
       icon: Shield,
@@ -61,12 +61,10 @@ const AboutGamerGrid = ({ isOpen, onClose }) => {
               favorite game - all in one beautiful, fast, and installable web app.
             </p>
             <p className="text-white/80 leading-relaxed mb-4">
-              <strong className="text-blue-300">Bonus Feature:</strong> We also include 9,000+ movie and TV show trailers! 
-              Discover entertainment beyond gaming - all in one platform.
+              <strong className="text-blue-300">Always Up-to-Date:</strong> The catalog auto-fetches new releases, patches, DLC drops and gaming news every few minutes. Zero manual work — discover your next favorite game the moment it's announced.
             </p>
             <p className="text-white/80 leading-relaxed">
-              Built from scratch by Cassius Fox, GamerGrid is <strong>the gamer's hub for discovery, reviews, and tracking</strong> - 
-              with a bonus movie section for when you need a break from gaming.
+              Built from scratch by Cassius Fox, GamerGrid is <strong>the gamer's hub for discovery, reviews, and tracking</strong> - with live news from IGN, GameSpot, PCGamer and more.
             </p>
           </div>
 

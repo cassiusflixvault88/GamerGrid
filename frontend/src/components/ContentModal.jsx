@@ -456,6 +456,49 @@ const ContentModal = ({ content, isOpen, onClose, onPlayTrailer, onSelectContent
               </div>
             )}
 
+            {/* DLCs + Expansions (auto-fetched from IGDB) */}
+            {(((details?.expansions || []).length > 0) || ((details?.dlcs || []).length > 0)) && (
+              <div className="pt-4" data-testid="dlc-section">
+                <h3 className="text-xl font-semibold text-white mb-3">
+                  📦 DLC, Expansions &amp; Updates
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {[...(details.expansions || []).map((x) => ({ ...x, kind: 'Expansion' })),
+                    ...(details.dlcs || []).map((x) => ({ ...x, kind: 'DLC' }))].slice(0, 9).map((d) => (
+                    <div
+                      key={`${d.kind}-${d.id}`}
+                      className="flex gap-3 p-3 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition-all"
+                      data-testid={`dlc-${d.id}`}
+                    >
+                      {d.poster_path ? (
+                        <img
+                          src={d.poster_path}
+                          alt={d.name}
+                          className="w-14 h-20 rounded object-cover bg-white/5 flex-shrink-0 border border-white/10"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="w-14 h-20 rounded bg-white/5 flex items-center justify-center text-white/30 text-xl flex-shrink-0">📦</div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wider mb-1 ${
+                          d.kind === 'Expansion'
+                            ? 'bg-purple-500/30 text-purple-200 border border-purple-500/40'
+                            : 'bg-blue-500/30 text-blue-200 border border-blue-500/40'
+                        }`}>
+                          {d.kind}
+                        </span>
+                        <p className="font-semibold text-white text-sm line-clamp-2">{d.name}</p>
+                        {d.release_date && (
+                          <p className="text-white/40 text-[10px] mt-0.5">{d.release_date}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {(content.screenshots && content.screenshots.length > 0) && (
               <div className="pt-4">
                 <h3 className="text-xl font-semibold text-white mb-4">Screenshots</h3>

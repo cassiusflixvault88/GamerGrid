@@ -57,6 +57,13 @@ const Footer = () => {
             >
               🎮 Request a Game
             </Link>
+            <Link
+              to="/news"
+              className="text-purple-400 hover:text-purple-300 transition-colors flex items-center justify-center gap-2"
+              data-testid="footer-news"
+            >
+              📰 Gaming News
+            </Link>
             <Link 
               to="/feedback"
               className="hover:text-white transition-colors text-red-400 font-semibold"
