@@ -1,6 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -11,8 +12,26 @@ const _genId = () => {
 
 const PageTracker = () => {
   const location = useLocation();
+  const { user, loading } = useAuth();
+  const lastTrackedRef = useRef({ path: null, ts: 0 });
 
   useEffect(() => {
+    // Wait for auth to finish loading so we KNOW whether the user is logged in
+    // (otherwise the tracker fires before the token is available and the backend
+    // can't tell admins apart from anonymous visitors).
+    if (loading) return;
+
+    // Dedupe — React StrictMode double-mounts in dev, and rapid back-button
+    // navigation can fire the same path twice within milliseconds.
+    const now = Date.now();
+    if (
+      lastTrackedRef.current.path === location.pathname &&
+      now - lastTrackedRef.current.ts < 3000
+    ) {
+      return;
+    }
+    lastTrackedRef.current = { path: location.pathname, ts: now };
+
     try {
       // Persistent visitor ID (across sessions) — anonymous
       let vid = localStorage.getItem('gg_vid');
@@ -49,7 +68,8 @@ const PageTracker = () => {
     } catch (e) {
       // never break the app over analytics
     }
-  }, [location.pathname]);
+    // Re-run when path or auth state changes (so we re-fire properly after login)
+  }, [location.pathname, loading, user]);
 
   return null;
 };

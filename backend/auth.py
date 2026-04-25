@@ -1,11 +1,18 @@
 from datetime import datetime, timedelta
 from typing import Optional
+from pathlib import Path
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from dotenv import load_dotenv
 import os
 import secrets
+
+# Load .env FIRST so JWT_SECRET_KEY is available when this module imports.
+# (server.py imports auth before its own load_dotenv() runs, which would
+# otherwise cause a fresh random secret on every restart and invalidate tokens.)
+load_dotenv(Path(__file__).parent / '.env')
 
 # Generate secure secret if not in env
 SECRET_KEY = os.environ.get("JWT_SECRET_KEY")
