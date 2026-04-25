@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <!-- Vault Gold Gradient -->
+    <linearGradient id="vaultGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFD700;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#FFA500;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FF8C00;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Dark Background Gradient -->
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a1a;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0a0a0a;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="512" height="512" fill="url(#bgGradient)" rx="100"/>
+  
+  <!-- Vault Door Circle -->
+  <circle cx="256" cy="256" r="180" fill="url(#vaultGradient)" opacity="0.2"/>
+  <circle cx="256" cy="256" r="160" fill="none" stroke="url(#vaultGradient)" stroke-width="8"/>
+  
+  <!-- Vault Lock Mechanism -->
+  <circle cx="256" cy="256" r="120" fill="url(#vaultGradient)"/>
+  <circle cx="256" cy="256" r="100" fill="#1a1a1a"/>
+  
+  <!-- Lock Spokes (8 spokes) -->
+  <g transform="translate(256, 256)">
+    <line x1="0" y1="-80" x2="0" y2="-100" stroke="url(#vaultGradient)" stroke-width="6" stroke-linecap="round"/>
+    <line x1="56.6" y1="-56.6" x2="70.7" y2="-70.7" stroke="url(#vaultGradient)" stroke-width="6" stroke-linecap="round"/>
+    <line x1="80" y1="0" x2="100" y2="0" stroke="url(#vaultGradient)" stroke-width="6" stroke-linecap="round"/>
+    <line x1="56.6" y1="56.6" x2="70.7" y2="70.7" stroke="url(#vaultGradient)" stroke-width="6" stroke-linecap="round"/>
+    <line x1="0" y1="80" x2="0" y2="100" stroke="url(#vaultGradient)" stroke-width="6" stroke-linecap="round"/>
+    <line x1="-56.6" y1="56.6" x2="-70.7" y2="70.7" stroke="url(#vaultGradient)" stroke-width="6" stroke-linecap="round"/>
+    <line x1="-80" y1="0" x2="-100" y2="0" stroke="url(#vaultGradient)" stroke-width="6" stroke-linecap="round"/>
+    <line x1="-56.6" y1="-56.6" x2="-70.7" y2="-70.7" stroke="url(#vaultGradient)" stroke-width="6" stroke-linecap="round"/>
+  </g>
+  
+  <!-- Center Lock -->
+  <circle cx="256" cy="256" r="35" fill="url(#vaultGradient)"/>
+  <circle cx="256" cy="256" r="25" fill="#1a1a1a"/>
+  
+  <!-- Play Button in Center -->
+  <path d="M 240 240 L 280 256 L 240 272 Z" fill="url(#vaultGradient)"/>
+  
+  <!-- FV Letters (Modern, Bold) -->
+  <text x="256" y="420" font-family="Arial, sans-serif" font-size="100" font-weight="900" fill="url(#vaultGradient)" text-anchor="middle">FV</text>
+</svg>
