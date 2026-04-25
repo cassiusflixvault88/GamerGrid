@@ -341,7 +341,17 @@ const AdminDashboard = () => {
 
               {/* Quick Info */}
               <Card className="bg-white/5 border-white/10 p-6">
-                <h2 className="text-2xl font-bold text-white mb-4">Platform Overview</h2>
+                <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+                  <h2 className="text-2xl font-bold text-white">Platform Overview</h2>
+                  <Button
+                    onClick={() => navigate('/admin/analytics')}
+                    className="bg-yellow-500 hover:bg-yellow-600 text-black font-semibold"
+                    data-testid="goto-analytics-btn"
+                  >
+                    <TrendingUp className="w-4 h-4 mr-2" />
+                    View Analytics
+                  </Button>
+                </div>
                 <div className="space-y-3 text-white/80">
                   <p>✅ All systems operational</p>
                   <p>📊 {stats?.total_users || 0} registered users</p>

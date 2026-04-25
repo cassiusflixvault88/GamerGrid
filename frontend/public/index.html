@@ -37,6 +37,22 @@
         Learn how to configure a non-root public URL by running `npm run build`.
         -->
         <title>GamerGrid - Discover & Track Games</title>
+
+        <!--
+          GOOGLE ANALYTICS 4 (GA4) - OPTIONAL
+          To enable: replace G-XXXXXXXXXX below with your real GA4 Measurement ID
+          (get one free at https://analytics.google.com → Admin → Data Streams → Web).
+          Once you set the ID, GA4 + the in-app PageTracker will both record visits.
+        -->
+        <!-- BEGIN GA4 (uncomment + set ID to enable)
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+        <script>
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'G-XXXXXXXXXX');
+        </script>
+        END GA4 -->
         <script>window.addEventListener("error",function(e){if(e.error instanceof DOMException&&e.error.name==="DataCloneError"&&e.message&&e.message.includes("PerformanceServerTiming")){e.stopImmediatePropagation();e.preventDefault()}},true);</script>
         <script src="https://assets.emergent.sh/scripts/emergent-main.js"></script>
     </head>

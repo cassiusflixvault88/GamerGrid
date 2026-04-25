@@ -22,6 +22,8 @@ import DebugAdmin from "./pages/DebugAdmin";
 import PublicProfilePage from "./pages/PublicProfilePage";
 import Top10Page from "./pages/Top10Page";
 import NewsPage from "./pages/NewsPage";
+import AdminAnalyticsPage from "./pages/AdminAnalyticsPage";
+import PageTracker from "./components/PageTracker";
 
 function App() {
   return (
@@ -29,6 +31,7 @@ function App() {
       <ThemeProvider>
         <AuthProvider>
           <BrowserRouter>
+            <PageTracker />
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/search" element={<SearchPage />} />
@@ -49,6 +52,7 @@ function App() {
               <Route path="/u/:username" element={<PublicProfilePage />} />
               <Route path="/top10" element={<Top10Page />} />
               <Route path="/news" element={<NewsPage />} />
+              <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
             </Routes>
             <InstallPWA />
             <Toaster />
