@@ -18,7 +18,23 @@ support payments.
 - Hosting: Emergent (preview + deploy)
 
 ## Implemented (✅ as of 2026-02-25)
-### Iteration 7 (this turn)
+### Iteration 8–9 (this turn)
+- **Critical bug fix — Service Worker was caching `/api/*`** indefinitely, causing stale `profile_picture_url` (and likely other API data) on reload. `service-worker.js` rewritten:
+  - Bypasses any `/api/*` request and any non-GET method.
+  - Cache-first for static assets only.
+  - Network-first for HTML navigations (so deploys take effect quickly).
+  - `activate` deletes old caches (`streamflix-v1`, `gamergrid-v*`) + `self.clients.claim()`.
+  - Cache name bumped to `gamergrid-v3`.
+- **Settings preset avatars grid** — pick one of GamerGrid, PlayStation, Xbox, Nintendo Switch, PC/Steam Deck. Click → instant save. Selection is highlighted with a purple ring; persists across reload (verified).
+- **Custom avatar URL** still supported (paste any image URL or upload via the existing upload-profile-picture endpoint).
+- **Pydantic User model**: `profile_picture_url` default changed from `"/flixvault-icon.svg"` to `None`. Migrated 7 existing users to clear the bad default.
+- **Support page** — removed all movie/TV-show copy. First feature card now says "🎮 More Games / IGDB-powered catalog". "Unlimited Watchlist" → "Unlimited Library", "Early Access to Content" → "Early Access to New Games".
+- **MongoDB TTL index** on `games_cache.expires_at` (`expireAfterSeconds=0`) — auto-evicts expired entries. `expires_at` stored as native BSON Date (was ISO string). Auto-init on first `cached_query()` call.
+- **Game of the Year rail** — `GET /api/games/goty` (defaults to last completed year, accepts `?year=`). New `👑 Game of the Year — 2025` rail on Home page between Trending and Coming Soon.
+- **Platform abbreviation badges** — every `ContentCard` now shows up to 3 compact badges (PS5 / PS4 / XSX / XB1 / SWITCH / PC) in the bottom-left.
+- **Watchlist → Library rename** — Navbar menu, page heading, breadcrumb, top nav tooltip, ContentModal toasts and tooltip.
+
+### Iteration 7
 - **MongoDB-backed cache** for IGDB list responses (`games_cache` collection).
   TTLs: trending=1h, top-rated=6h, upcoming=30m, new-releases=30m, platform=2h, details=24h.
   Sub-100ms after first hit (vs ~700ms cold call).
