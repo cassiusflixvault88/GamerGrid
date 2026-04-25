@@ -2,7 +2,7 @@
 Admin Messages Routes
 - Admins can send direct messages to any user (e.g., warnings, announcements)
 - Users see their messages in their settings/inbox
-- Original CEO (cassiusflixvault@gmail.com) is protected from being deleted/demoted
+- Original CEO emails are protected from being deleted/demoted (configurable via CEO_EMAILS env var)
 """
 from fastapi import APIRouter, Depends, HTTPException
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -24,7 +24,7 @@ client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
 
-CEO_EMAILS = {"cassius@flixvault.com", "cassiusflixvault@gmail.com"}
+CEO_EMAILS = {"cassius@flixvault.com", "cassiusflixvault@gmail.com", "cassiusgamergrid@gmail.com"}
 
 
 async def _ensure_admin(token_data: dict):

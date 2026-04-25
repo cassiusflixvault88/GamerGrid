@@ -112,7 +112,7 @@ async def signup(user_data: UserCreate):
     await db.users.insert_one(user.model_dump())
     
     # Auto-promote CEO email to admin
-    ceo_emails = ["cassius@flixvault.com", "cassiusflixvault@gmail.com"]
+    ceo_emails = ["cassius@flixvault.com", "cassiusflixvault@gmail.com", "cassiusgamergrid@gmail.com"]
     if user_data.email.lower() in ceo_emails:
         admin_config = {
             "user_id": user.id,
@@ -159,7 +159,7 @@ async def login(credentials: UserLogin):
         )
     
     # Auto-promote CEO email to admin if not already
-    ceo_emails = ["cassius@flixvault.com", "cassiusflixvault@gmail.com"]
+    ceo_emails = ["cassius@flixvault.com", "cassiusflixvault@gmail.com", "cassiusgamergrid@gmail.com"]
     if credentials.email.lower() in ceo_emails:
         existing_admin = await db.admins.find_one({"user_id": user["id"]})
         if not existing_admin:
@@ -1109,7 +1109,7 @@ async def delete_user(user_id: str, token_data: dict = Depends(verify_admin)):
     if target_is_admin:
         actor = await db.users.find_one({"id": token_data["user_id"]}, {"_id": 0, "email": 1})
         actor_email = (actor.get("email") if actor else "").lower()
-        ceo_emails = ["cassius@flixvault.com", "cassiusflixvault@gmail.com"]
+        ceo_emails = ["cassius@flixvault.com", "cassiusflixvault@gmail.com", "cassiusgamergrid@gmail.com"]
         if actor_email not in ceo_emails:
             raise HTTPException(status_code=403, detail="Only the CEO can delete admins")
         # Even the CEO cannot delete themselves
@@ -1281,7 +1281,7 @@ async def promote_ceo_endpoint(token_data: dict = Depends(verify_token)):
         raise HTTPException(status_code=404, detail="User not found")
     
     # Check if this is the CEO email
-    ceo_emails = ["cassius@flixvault.com", "cassiusflixvault@gmail.com"]
+    ceo_emails = ["cassius@flixvault.com", "cassiusflixvault@gmail.com", "cassiusgamergrid@gmail.com"]
     if user["email"].lower() not in ceo_emails:
         raise HTTPException(
             status_code=403, 
@@ -1358,7 +1358,7 @@ async def submit_movie(submission: MovieSubmission, token_data: dict = Depends(v
 @api_router.post("/admin/force-reset-ceo-password")
 async def force_reset_ceo_password():
     """Emergency endpoint to reset CEO password - USE ONCE then remove"""
-    ceo_email = "cassiusflixvault@gmail.com"
+    ceo_email = "cassiusgamergrid@gmail.com"
     new_password = "FlixVault2026!"
     
     # Hash the new password
@@ -1558,7 +1558,7 @@ async def manage_admin_status(action: AdminAction, token_data: dict = Depends(ve
         # CEO check: only the original CEO email can demote other admins
         actor = await db.users.find_one({"id": token_data["user_id"]}, {"_id": 0, "email": 1})
         actor_email = (actor.get("email") if actor else "").lower()
-        ceo_emails = ["cassius@flixvault.com", "cassiusflixvault@gmail.com"]
+        ceo_emails = ["cassius@flixvault.com", "cassiusflixvault@gmail.com", "cassiusgamergrid@gmail.com"]
         if actor_email not in ceo_emails:
             raise HTTPException(status_code=403, detail="Only the CEO can demote admins")
 

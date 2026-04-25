@@ -122,7 +122,7 @@ async def signup(user_data: UserCreate):
     await db.users.insert_one(user.model_dump())
     
     # Auto-promote CEO email to admin (CEO is auto-verified, no email gate)
-    ceo_emails = ["cassius@flixvault.com", "cassiusflixvault@gmail.com"]
+    ceo_emails = ["cassius@flixvault.com", "cassiusflixvault@gmail.com", "cassiusgamergrid@gmail.com"]
     is_ceo = user_data.email.lower() in ceo_emails
     if is_ceo:
         admin_config = {
@@ -181,7 +181,7 @@ async def login(credentials: UserLogin):
         )
     
     # Auto-promote CEO email to admin if not already
-    ceo_emails = ["cassius@flixvault.com", "cassiusflixvault@gmail.com"]
+    ceo_emails = ["cassius@flixvault.com", "cassiusflixvault@gmail.com", "cassiusgamergrid@gmail.com"]
     if credentials.email.lower() in ceo_emails:
         existing_admin = await db.admins.find_one({"user_id": user["id"]})
         if not existing_admin:
