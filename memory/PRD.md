@@ -18,7 +18,15 @@ support payments.
 - Hosting: Emergent (preview + deploy)
 
 ## Implemented (✅ as of 2026-02-25)
-### Iteration 11 (this turn)
+### Iteration 12 (this turn)
+- 🏆 **Top 10 hero carousel** — `Top10HeroCarousel.jsx` replaces the single hero on Home. Giant rank number (1–10) glows behind each game with a "#N IN TOP 10 GAMES TODAY" badge, "by <developer>" attribution, prev/next arrows, dot indicators. Auto-rotates every 6s. Backed by new `GET /api/games/top10` endpoint (rating ≥ 80 AND vote_count > 100, sort by total_rating_count, 2h TTL).
+- 🌟 **Most Popular Right Now** rail — separate from Trending. Backed by `GET /api/games/most-popular` which sorts by IGDB `follows` (with `hypes` fallback). 30m TTL.
+- 🗓️ **Coming Soon highlighted section** — moved up to **right after Trending** and wrapped in a vivid orange→pink→purple gradient panel with its own border, sub-heading and "View All →" link.
+- 🎮 **Request page rebrand** — `RequestContentPage` is now "**Request a Game**" with three new types: **Game / Upcoming / DLC · Expansion** (Gamepad / Calendar / Sparkles icons). Title placeholder shows actual game examples. All movie/TV/documentary copy gone. Also fixed an eager redirect-to-home bug (now waits for `AuthContext` `loading` to settle).
+- 🦴 **Footer** — "🎬 Request Content" → "🎮 Request a Game".
+- ❎ **Xbox preset avatar** — replaced helix-style SVG with **classic green circle + white X**.
+
+### Iteration 11
 - 🔄 **Auto-rotate to fullscreen** in `VideoPlayer.jsx`: when the user opens a trailer and rotates their phone to landscape, the YouTube iframe automatically goes fullscreen. Returns to portrait → exits fullscreen. Uses both `screen.orientation.change` and the legacy `orientationchange` events. Cross-browser fullscreen helpers (webkit/moz prefixes) for iOS Safari support. Added a manual fullscreen toggle button (Maximize2/Minimize2 icons) in the top-right of the player as a fallback for desktop and devices that block auto-rotate. Added a "📱 Rotate your phone for fullscreen" hint.
 - 🔓 **PWA orientation unlock** — `manifest.json` `orientation` changed from `"portrait-primary"` (which prevented rotation entirely on installed PWAs) to `"any"`. Updated manifest icon path from `/flixvault-icon.svg` → `/gamergrid-icon.svg`.
 - 🪟 **Viewport** — added `viewport-fit=cover` so notched devices use the full screen during landscape playback.
