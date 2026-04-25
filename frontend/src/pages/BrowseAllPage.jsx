@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import Navbar from '../components/Navbar';
 import BackNavigation from '../components/BackNavigation';
 import Footer from '../components/Footer';
 import ContentModal from '../components/ContentModal';
 import ContentCard from '../components/ContentCard';
-import { getByPlatform, getTrending, getTopRated, search as searchGames } from '../services/tmdb';
+import { search as searchGames } from '../services/tmdb';
+
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const PLATFORMS = [
   { key: 'all', label: 'All Games', emoji: '🎮' },
@@ -21,18 +24,24 @@ const SORTS = [
   { key: 'release', label: 'Newest' },
 ];
 
+const CURRENT_YEAR = new Date().getFullYear();
+const YEARS = ['Any', ...Array.from({ length: 30 }, (_, i) => CURRENT_YEAR - i)];
+
 const BrowseAllPage = () => {
   const { platform } = useParams();
   const navigate = useNavigate();
 
   const initialPlatform = useMemo(() => {
     if (!platform) return 'all';
-    const match = PLATFORMS.find((p) => p.key === platform);
-    return match ? match.key : 'all';
+    return PLATFORMS.find((p) => p.key === platform)?.key || 'all';
   }, [platform]);
 
   const [activePlatform, setActivePlatform] = useState(initialPlatform);
   const [sort, setSort] = useState('rating');
+  const [genre, setGenre] = useState(null); // genre id or null
+  const [year, setYear] = useState('Any');
+  const [genres, setGenres] = useState([]);
+
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -42,30 +51,44 @@ const BrowseAllPage = () => {
     setActivePlatform(initialPlatform);
   }, [initialPlatform]);
 
+  // Load genres once
+  useEffect(() => {
+    axios.get(`${API}/games/genres`).then((r) => setGenres(r.data || [])).catch(() => setGenres([]));
+  }, []);
+
   useEffect(() => {
     loadGames();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activePlatform, sort]);
+  }, [activePlatform, sort, genre, year]);
 
   const loadGames = async () => {
     setLoading(true);
     try {
+      const params = new URLSearchParams();
+      params.set('limit', '80');
+      if (genre) params.set('genre', genre);
+      if (year && year !== 'Any') params.set('year', year);
+
+      let url;
       if (activePlatform === 'all') {
-        // Load a larger "all" feed from multiple sources
-        const [trending, top] = await Promise.all([
-          getTrending().catch(() => []),
-          getTopRated().catch(() => []),
+        // Combine trending + top-rated for "All"
+        params.set('limit', '50');
+        const [t, r] = await Promise.all([
+          axios.get(`${API}/games/trending?${params.toString()}`).then((x) => x.data?.results || []),
+          axios.get(`${API}/games/top-rated?${params.toString()}`).then((x) => x.data?.results || []),
         ]);
         const seen = new Set();
-        const merged = [...trending, ...top].filter((g) => {
+        const merged = [...t, ...r].filter((g) => {
           if (!g || seen.has(g.id)) return false;
           seen.add(g.id);
           return true;
         });
         setGames(merged);
       } else {
-        const list = await getByPlatform(activePlatform, sort, 80);
-        setGames(list);
+        params.set('sort', sort);
+        url = `${API}/games/platform/${activePlatform}?${params.toString()}`;
+        const res = await axios.get(url);
+        setGames(res.data?.results || []);
       }
     } catch (err) {
       console.error('Browse load error:', err);
@@ -99,6 +122,14 @@ const BrowseAllPage = () => {
     }
   };
 
+  const clearFilters = () => {
+    setGenre(null);
+    setYear('Any');
+    setSort('rating');
+  };
+
+  const hasFilters = genre || year !== 'Any' || sort !== 'rating';
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 via-black to-gray-900" data-testid="browse-all-page">
       <Navbar />
@@ -106,10 +137,8 @@ const BrowseAllPage = () => {
 
       <div className="max-w-7xl mx-auto px-4 py-8 mt-20">
         <div className="mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">
-            🎮 Browse Games
-          </h1>
-          <p className="text-white/60 text-lg">Discover trending and top-rated games across every platform</p>
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">🎮 Browse Games</h1>
+          <p className="text-white/60 text-lg">Filter by platform, genre and release year — powered by IGDB</p>
         </div>
 
         {/* Platform chips */}
@@ -131,25 +160,84 @@ const BrowseAllPage = () => {
           ))}
         </div>
 
-        {/* Sort + Search */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6">
-          <div className="flex items-center gap-2">
-            <span className="text-white/60 text-sm">Sort:</span>
-            {SORTS.map((s) => (
+        {/* Genre chips */}
+        {genres.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-4">
+            <button
+              onClick={() => setGenre(null)}
+              data-testid="genre-chip-any"
+              className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                !genre
+                  ? 'bg-blue-600 border-blue-500 text-white'
+                  : 'bg-white/5 border-white/20 text-white/80 hover:bg-white/10'
+              }`}
+            >
+              All Genres
+            </button>
+            {genres.map((g) => (
               <button
-                key={s.key}
-                onClick={() => setSort(s.key)}
-                disabled={activePlatform === 'all'}
-                className={`px-3 py-1 rounded-md text-xs font-semibold transition-all ${
-                  sort === s.key && activePlatform !== 'all'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white/5 text-white/70 hover:bg-white/10'
-                } ${activePlatform === 'all' ? 'opacity-40 cursor-not-allowed' : ''}`}
+                key={g.id}
+                onClick={() => setGenre(g.id)}
+                data-testid={`genre-chip-${g.id}`}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                  genre === g.id
+                    ? 'bg-blue-600 border-blue-500 text-white'
+                    : 'bg-white/5 border-white/20 text-white/80 hover:bg-white/10'
+                }`}
               >
-                {s.label}
+                {g.name}
               </button>
             ))}
           </div>
+        )}
+
+        {/* Year + Sort + Search row */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2">
+              <span className="text-white/60 text-sm">Year:</span>
+              <select
+                value={year}
+                onChange={(e) => setYear(e.target.value === 'Any' ? 'Any' : parseInt(e.target.value, 10))}
+                data-testid="year-select"
+                className="bg-white/10 border border-white/20 text-white text-xs rounded-md px-3 py-1.5 focus:outline-none focus:border-purple-500"
+              >
+                {YEARS.map((y) => (
+                  <option key={y} value={y} className="bg-gray-900">{y}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-white/60 text-sm">Sort:</span>
+              {SORTS.map((s) => (
+                <button
+                  key={s.key}
+                  onClick={() => setSort(s.key)}
+                  disabled={activePlatform === 'all'}
+                  data-testid={`sort-${s.key}`}
+                  className={`px-3 py-1 rounded-md text-xs font-semibold transition-all ${
+                    sort === s.key && activePlatform !== 'all'
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-white/5 text-white/70 hover:bg-white/10'
+                  } ${activePlatform === 'all' ? 'opacity-40 cursor-not-allowed' : ''}`}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+
+            {hasFilters && (
+              <button
+                onClick={clearFilters}
+                data-testid="clear-filters"
+                className="text-xs text-purple-300 hover:text-purple-200 underline"
+              >
+                Clear filters
+              </button>
+            )}
+          </div>
+
           <form onSubmit={onSearchSubmit} className="flex-1 md:max-w-md">
             <input
               type="text"
@@ -176,7 +264,9 @@ const BrowseAllPage = () => {
                 <ContentCard key={g.id} content={g} onClick={setSelectedContent} />
               ))}
               {filtered.length === 0 && (
-                <p className="text-white/60 py-16 text-center w-full">No games found. Try a different platform or search.</p>
+                <p className="text-white/60 py-16 text-center w-full">
+                  No games match your filters. Try clearing them or selecting a different platform.
+                </p>
               )}
             </div>
           </>

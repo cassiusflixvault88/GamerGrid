@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { X, Play, Plus, ThumbsUp, Check } from 'lucide-react';
-import { Dialog, DialogContent } from './ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from './ui/dialog';
 import { Button } from './ui/button';
 import { Separator } from './ui/separator';
 import { getImageUrl, getDetails, getVideos } from '../services/tmdb';
@@ -149,6 +149,7 @@ const ContentModal = ({ content, isOpen, onClose, onPlayTrailer, onSelectContent
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0 bg-[#141414] border-0 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
+        <DialogTitle className="sr-only">{title || 'Content details'}</DialogTitle>
         <div className="relative">
           {/* Backdrop Image - Smaller on mobile */}
           <div className="relative w-full h-[40vh] md:h-[50vh] lg:aspect-video">
@@ -336,6 +337,40 @@ const ContentModal = ({ content, isOpen, onClose, onPlayTrailer, onSelectContent
                 </div>
                 <div className="px-3 py-1 rounded bg-green-600/20 border border-green-500/40 text-green-300 text-sm font-bold">
                   IGDB User Score: {content.vote_average}/10
+                </div>
+              </div>
+            )}
+
+            {details?.buy_links && details.buy_links.length > 0 && (
+              <div className="pt-2">
+                <p className="text-white/50 text-sm mb-2">Where to play / buy:</p>
+                <div className="flex flex-wrap gap-2" data-testid="buy-links">
+                  {details.buy_links.map((b) => {
+                    const colors = {
+                      steam: 'bg-blue-600/20 border-blue-500/40 text-blue-200 hover:bg-blue-600/40',
+                      epicgames: 'bg-gray-700/40 border-gray-500/40 text-gray-100 hover:bg-gray-700/60',
+                      gog: 'bg-purple-700/30 border-purple-500/40 text-purple-200 hover:bg-purple-700/50',
+                      itch: 'bg-pink-600/20 border-pink-500/40 text-pink-200 hover:bg-pink-600/40',
+                      official: 'bg-white/10 border-white/30 text-white hover:bg-white/20',
+                      psn: 'bg-blue-700/30 border-blue-400/50 text-blue-100 hover:bg-blue-700/50',
+                      xbox: 'bg-green-700/30 border-green-500/40 text-green-100 hover:bg-green-700/50',
+                      nintendo: 'bg-red-700/30 border-red-500/40 text-red-100 hover:bg-red-700/50',
+                      amazon: 'bg-orange-600/20 border-orange-500/40 text-orange-200 hover:bg-orange-600/40',
+                    };
+                    const cls = colors[b.kind] || 'bg-white/10 border-white/30 text-white hover:bg-white/20';
+                    return (
+                      <a
+                        key={b.kind}
+                        href={b.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        data-testid={`buy-link-${b.kind}`}
+                        className={`px-3 py-1.5 rounded-md text-xs font-semibold border transition-all ${cls}`}
+                      >
+                        {b.label} →
+                      </a>
+                    );
+                  })}
                 </div>
               </div>
             )}

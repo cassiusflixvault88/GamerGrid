@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Film, Tv, Star, Heart, Download, Share2, Play, Gamepad2 } from 'lucide-react';
-import { Dialog, DialogContent } from './ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from './ui/dialog';
 import { Button } from './ui/button';
 
 const Onboarding = () => {
@@ -113,6 +113,7 @@ const Onboarding = () => {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0 bg-gradient-to-br from-gray-900 via-black to-purple-900/20 border-purple-500/30">
+        <DialogTitle className="sr-only">{currentStepData.title}</DialogTitle>
         <div className="relative p-8 max-h-full overflow-y-auto">
           {/* Close button */}
           <button

@@ -1,13 +1,16 @@
 """
 Gaming routes for GamerGrid - Using IGDB API (Twitch)
 
-Normalizes IGDB responses into TMDB-shaped payloads so the existing
-frontend components (ContentCard, HeroBanner, ContentModal) keep working
-with minimal changes.
+Normalizes IGDB responses into TMDB-shaped payloads so existing frontend
+components work with minimal changes. Adds:
+  - MongoDB-backed response cache (sub-second loads after first hit)
+  - genre + year filters on list endpoints
+  - Store/buy links on game details (Steam, GOG, Epic, Itch, PSN, Xbox, Nintendo, Amazon)
 """
 from fastapi import APIRouter, HTTPException, Query
 from typing import List, Optional, Dict, Any
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
+from urllib.parse import quote_plus
 import asyncio
 import logging
 import time
@@ -15,6 +18,7 @@ import httpx
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+from motor.motor_asyncio import AsyncIOMotorClient
 
 ROOT_DIR = Path(__file__).parent.parent
 load_dotenv(ROOT_DIR / ".env")
@@ -25,7 +29,14 @@ logger = logging.getLogger(__name__)
 IGDB_CLIENT_ID = os.getenv("IGDB_CLIENT_ID")
 IGDB_CLIENT_SECRET = os.getenv("IGDB_CLIENT_SECRET")
 
-# ---------- Token cache ----------
+# ---------- DB ----------
+_mongo_client = AsyncIOMotorClient(os.environ["MONGO_URL"])
+_db = _mongo_client[os.environ["DB_NAME"]]
+_cache_col = _db["games_cache"]
+_genres_col = _db["games_genres"]
+
+
+# ---------- Token cache (process-local; tokens are cheap to regenerate) ----------
 _token_cache: Dict[str, Any] = {"token": None, "expires": 0.0}
 _token_lock = asyncio.Lock()
 
@@ -66,18 +77,28 @@ async def igdb_query(endpoint: str, query: str) -> list:
         return resp.json()
 
 
-# ---------- In-memory response cache ----------
-_response_cache: Dict[str, Any] = {}
-_CACHE_TTL = 60 * 30  # 30 min
+# ---------- MongoDB-backed cache ----------
+async def cached_query(key: str, endpoint: str, query: str, ttl_seconds: int = 60 * 60) -> list:
+    """Return cached data if fresh, else hit IGDB and cache the result."""
+    now = datetime.now(timezone.utc)
+    doc = await _cache_col.find_one({"_id": key}, {"_id": 0, "data": 1, "expires_at": 1})
+    if doc and doc.get("expires_at"):
+        try:
+            exp = doc["expires_at"]
+            if isinstance(exp, str):
+                exp = datetime.fromisoformat(exp)
+            if exp > now and doc.get("data") is not None:
+                return doc["data"]
+        except Exception:
+            pass
 
-
-async def cached_query(key: str, endpoint: str, query: str, ttl: int = _CACHE_TTL):
-    now = time.time()
-    entry = _response_cache.get(key)
-    if entry and now < entry["exp"]:
-        return entry["data"]
     data = await igdb_query(endpoint, query)
-    _response_cache[key] = {"data": data, "exp": now + ttl}
+    expires = (now + timedelta(seconds=ttl_seconds)).isoformat()
+    await _cache_col.update_one(
+        {"_id": key},
+        {"$set": {"data": data, "expires_at": expires, "updated_at": now.isoformat()}},
+        upsert=True,
+    )
     return data
 
 
@@ -86,18 +107,17 @@ IGDB_IMG = "https://images.igdb.com/igdb/image/upload"
 
 
 def _img(url: Optional[str], size: str) -> Optional[str]:
-    """Convert IGDB image url to full https URL with requested size."""
     if not url:
         return None
-    # url arrives like '//images.igdb.com/igdb/image/upload/t_thumb/abc.jpg'
     u = url
     if u.startswith("//"):
         u = "https:" + u
-    # Replace size token
-    for tok in ("t_thumb", "t_cover_small", "t_cover_big", "t_720p", "t_1080p", "t_screenshot_med", "t_screenshot_big", "t_screenshot_huge"):
+    for tok in (
+        "t_thumb", "t_cover_small", "t_cover_big", "t_720p", "t_1080p",
+        "t_screenshot_med", "t_screenshot_big", "t_screenshot_huge",
+    ):
         if f"/{tok}/" in u:
-            u = u.replace(f"/{tok}/", f"/{size}/")
-            return u
+            return u.replace(f"/{tok}/", f"/{size}/")
     return u
 
 
@@ -112,7 +132,6 @@ def _backdrop_url(game: dict) -> Optional[str]:
     shots = game.get("screenshots") or []
     if shots and isinstance(shots[0], dict):
         return _img(shots[0].get("url"), "t_1080p")
-    # fall back to artwork, then cover in larger size
     arts = game.get("artworks") or []
     if arts and isinstance(arts[0], dict):
         return _img(arts[0].get("url"), "t_1080p")
@@ -129,17 +148,11 @@ def _release_date(ts: Optional[int]) -> Optional[str]:
 
 
 def _platforms(game: dict) -> List[str]:
-    plats = game.get("platforms") or []
-    out = []
-    for p in plats:
-        if isinstance(p, dict) and p.get("name"):
-            out.append(p["name"])
-    return out
+    return [p["name"] for p in (game.get("platforms") or []) if isinstance(p, dict) and p.get("name")]
 
 
 def _genres(game: dict) -> List[str]:
-    gs = game.get("genres") or []
-    return [g.get("name") for g in gs if isinstance(g, dict) and g.get("name")]
+    return [g["name"] for g in (game.get("genres") or []) if isinstance(g, dict) and g.get("name")]
 
 
 def _youtube_id(game: dict) -> Optional[str]:
@@ -164,7 +177,6 @@ def _video_ids(game: dict) -> List[Dict[str, Any]]:
 
 
 def normalize_game(game: dict) -> dict:
-    """Transform an IGDB game into a TMDB-shaped object consumed by the UI."""
     rating_10 = None
     if game.get("rating") is not None:
         rating_10 = round(game["rating"] / 10.0, 1)
@@ -187,14 +199,14 @@ def normalize_game(game: dict) -> dict:
         "screenshots": _screenshot_urls(game),
         "videos": _video_ids(game),
         "youtube_video_id": _youtube_id(game),
-        "metacritic_aggregate": game.get("aggregated_rating"),  # Meta/IGN from IGDB aggregated
+        "metacritic_aggregate": game.get("aggregated_rating"),
         "aggregated_rating_count": game.get("aggregated_rating_count") or 0,
         "media_type": "game",
         "is_game": True,
     }
 
 
-# Fields used across most list endpoints
+# Standard list fields
 LIST_FIELDS = (
     "id,name,summary,rating,total_rating,total_rating_count,aggregated_rating,"
     "aggregated_rating_count,first_release_date,genres.name,platforms.name,"
@@ -202,29 +214,76 @@ LIST_FIELDS = (
 )
 
 
-# ---------- Platform presets ----------
+# ---------- Platform & filter presets ----------
 PLATFORM_MAP = {
-    # Key -> (label, IGDB platform ids)
-    "playstation": ("PlayStation", [167, 48]),         # PS5, PS4
-    "xbox": ("Xbox", [169, 49]),                       # Series X|S, Xbox One
-    "pc": ("PC / Steam", [6]),                         # PC (Windows)
-    "switch": ("Nintendo Switch", [130]),              # Switch
+    "playstation": ("PlayStation", [167, 48]),  # PS5, PS4
+    "xbox": ("Xbox", [169, 49]),                # Series X|S, Xbox One
+    "pc": ("PC / Steam", [6]),                  # PC (Windows)
+    "switch": ("Nintendo Switch", [130]),
     "nintendo": ("Nintendo Switch", [130]),
 }
 
 
+def _year_window(year: Optional[int]) -> Optional[str]:
+    if not year:
+        return None
+    start = int(datetime(year, 1, 1, tzinfo=timezone.utc).timestamp())
+    end = int(datetime(year + 1, 1, 1, tzinfo=timezone.utc).timestamp())
+    return f"first_release_date >= {start} & first_release_date < {end}"
+
+
+def _build_where(parts: List[str]) -> str:
+    parts = [p for p in parts if p]
+    return f"where {' & '.join(parts)};" if parts else ""
+
+
 # ---------- Endpoints ----------
+@router.get("/genres")
+async def list_genres():
+    """Return IGDB genre list (cached)."""
+    cached = await _genres_col.find_one({"_id": "all"}, {"_id": 0, "data": 1, "expires_at": 1})
+    if cached:
+        try:
+            exp = cached.get("expires_at")
+            if isinstance(exp, str):
+                exp = datetime.fromisoformat(exp)
+            if exp and exp > datetime.now(timezone.utc):
+                return cached["data"]
+        except Exception:
+            pass
+    rows = await igdb_query("genres", "fields id,name; limit 50; sort name asc;")
+    data = [{"id": r["id"], "name": r["name"]} for r in rows if r.get("name")]
+    await _genres_col.update_one(
+        {"_id": "all"},
+        {"$set": {
+            "data": data,
+            "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
+        }},
+        upsert=True,
+    )
+    return data
+
+
 @router.get("/trending")
-async def get_trending_games(limit: int = Query(30, ge=1, le=100)):
-    """Currently trending games (by total rating count on highly rated titles)."""
+async def get_trending_games(
+    limit: int = Query(30, ge=1, le=100),
+    genre: Optional[int] = None,
+    year: Optional[int] = Query(None, ge=1970, le=2100),
+):
+    where_parts = ["rating >= 75", "total_rating_count > 50"]
+    if genre:
+        where_parts.append(f"genres = ({genre})")
+    yw = _year_window(year)
+    if yw:
+        where_parts.append(yw)
     q = (
         f"fields {LIST_FIELDS};"
-        " where rating >= 75 & total_rating_count > 50;"
+        f" {_build_where(where_parts)}"
         " sort total_rating_count desc;"
         f" limit {limit};"
     )
     try:
-        games = await cached_query(f"trending:{limit}", "games", q)
+        games = await cached_query(f"trending:{limit}:{genre}:{year}", "games", q, ttl_seconds=60 * 60)
         return {"results": [normalize_game(g) for g in games], "total": len(games)}
     except Exception as e:
         logger.error(f"trending error: {e}")
@@ -232,15 +291,25 @@ async def get_trending_games(limit: int = Query(30, ge=1, le=100)):
 
 
 @router.get("/top-rated")
-async def get_top_rated(limit: int = Query(30, ge=1, le=100)):
+async def get_top_rated(
+    limit: int = Query(30, ge=1, le=100),
+    genre: Optional[int] = None,
+    year: Optional[int] = Query(None, ge=1970, le=2100),
+):
+    where_parts = ["rating >= 85", "total_rating_count > 100"]
+    if genre:
+        where_parts.append(f"genres = ({genre})")
+    yw = _year_window(year)
+    if yw:
+        where_parts.append(yw)
     q = (
         f"fields {LIST_FIELDS};"
-        " where rating >= 85 & total_rating_count > 100;"
+        f" {_build_where(where_parts)}"
         " sort rating desc;"
         f" limit {limit};"
     )
     try:
-        games = await cached_query(f"toprated:{limit}", "games", q)
+        games = await cached_query(f"toprated:{limit}:{genre}:{year}", "games", q, ttl_seconds=60 * 60 * 6)
         return {"results": [normalize_game(g) for g in games], "total": len(games)}
     except Exception as e:
         logger.error(f"top-rated error: {e}")
@@ -251,17 +320,21 @@ async def get_top_rated(limit: int = Query(30, ge=1, le=100)):
 async def get_upcoming_releases(
     days_ahead: int = Query(180, ge=1, le=365),
     limit: int = Query(30, ge=1, le=100),
+    genre: Optional[int] = None,
 ):
     now = int(time.time())
     future = now + (days_ahead * 86400)
+    where_parts = [f"first_release_date > {now}", f"first_release_date < {future}", "hypes > 1"]
+    if genre:
+        where_parts.append(f"genres = ({genre})")
     q = (
         f"fields {LIST_FIELDS};"
-        f" where first_release_date > {now} & first_release_date < {future} & hypes > 1;"
+        f" {_build_where(where_parts)}"
         " sort first_release_date asc;"
         f" limit {limit};"
     )
     try:
-        games = await cached_query(f"upcoming:{days_ahead}:{limit}", "games", q)
+        games = await cached_query(f"upcoming:{days_ahead}:{limit}:{genre}", "games", q, ttl_seconds=60 * 30)
         return {"results": [normalize_game(g) for g in games], "total": len(games)}
     except Exception as e:
         logger.error(f"upcoming error: {e}")
@@ -269,18 +342,24 @@ async def get_upcoming_releases(
 
 
 @router.get("/new-releases")
-async def get_new_releases(days_back: int = Query(90, ge=1, le=365), limit: int = Query(30, ge=1, le=100)):
-    """Recently released games."""
+async def get_new_releases(
+    days_back: int = Query(90, ge=1, le=365),
+    limit: int = Query(30, ge=1, le=100),
+    genre: Optional[int] = None,
+):
     now = int(time.time())
     past = now - (days_back * 86400)
+    where_parts = [f"first_release_date > {past}", f"first_release_date < {now}", "rating > 60"]
+    if genre:
+        where_parts.append(f"genres = ({genre})")
     q = (
         f"fields {LIST_FIELDS};"
-        f" where first_release_date > {past} & first_release_date < {now} & rating > 60;"
+        f" {_build_where(where_parts)}"
         " sort first_release_date desc;"
         f" limit {limit};"
     )
     try:
-        games = await cached_query(f"new:{days_back}:{limit}", "games", q)
+        games = await cached_query(f"new:{days_back}:{limit}:{genre}", "games", q, ttl_seconds=60 * 30)
         return {"results": [normalize_game(g) for g in games], "total": len(games)}
     except Exception as e:
         logger.error(f"new-releases error: {e}")
@@ -292,6 +371,8 @@ async def get_games_by_platform(
     platform_name: str,
     limit: int = Query(40, ge=1, le=100),
     sort: str = Query("rating", pattern="^(rating|release|popular)$"),
+    genre: Optional[int] = None,
+    year: Optional[int] = Query(None, ge=1970, le=2100),
 ):
     preset = PLATFORM_MAP.get(platform_name.lower())
     if not preset:
@@ -305,14 +386,28 @@ async def get_games_by_platform(
         "popular": "sort total_rating_count desc;",
     }[sort]
 
+    where_parts = [
+        f"platforms = ({ids_str})",
+        "rating > 70",
+        "total_rating_count > 20",
+    ]
+    if genre:
+        where_parts.append(f"genres = ({genre})")
+    yw = _year_window(year)
+    if yw:
+        where_parts.append(yw)
+
     q = (
         f"fields {LIST_FIELDS};"
-        f" where platforms = ({ids_str}) & rating > 70 & total_rating_count > 20;"
+        f" {_build_where(where_parts)}"
         f" {sort_clause}"
         f" limit {limit};"
     )
     try:
-        games = await cached_query(f"platform:{platform_name}:{sort}:{limit}", "games", q)
+        games = await cached_query(
+            f"platform:{platform_name}:{sort}:{limit}:{genre}:{year}",
+            "games", q, ttl_seconds=60 * 60 * 2,
+        )
         return {"results": [normalize_game(g) for g in games], "total": len(games)}
     except Exception as e:
         logger.error(f"platform error: {e}")
@@ -328,6 +423,7 @@ async def search_games(q: str = Query(..., min_length=1), limit: int = Query(20,
         f" limit {limit};"
     )
     try:
+        # Search results are NOT cached (queries vary too much) but underlying token is cached
         games = await igdb_query("games", query)
         return {"results": [normalize_game(g) for g in games], "total": len(games)}
     except Exception as e:
@@ -335,7 +431,7 @@ async def search_games(q: str = Query(..., min_length=1), limit: int = Query(20,
         raise HTTPException(500, f"Search failed: {e}")
 
 
-# Detail fields (richer)
+# ---------- Details w/ buy links ----------
 DETAIL_FIELDS = (
     "id,name,summary,storyline,rating,total_rating,total_rating_count,"
     "aggregated_rating,aggregated_rating_count,first_release_date,genres.name,"
@@ -343,14 +439,27 @@ DETAIL_FIELDS = (
     "involved_companies.developer,involved_companies.publisher,cover.url,"
     "screenshots.url,artworks.url,videos.video_id,videos.name,similar_games.name,"
     "similar_games.cover.url,similar_games.rating,similar_games.id,"
-    "game_modes.name,themes.name,websites.url,websites.category,age_ratings.rating"
+    "game_modes.name,themes.name,websites.url,websites.type"
 )
+
+# IGDB website types (v4 uses `type`, not `category`)
+WEBSITE_CATEGORIES = {
+    1: "official",
+    13: "steam",
+    15: "itch",
+    16: "epicgames",
+    17: "gog",
+    22: "xbox",         # direct Xbox store
+    23: "psn",          # direct PlayStation store
+    24: "nintendo",     # direct Nintendo store
+}
+
+AMAZON_AFFILIATE_TAG = os.getenv("AMAZON_AFFILIATE_TAG", "")  # optional
 
 
 def _companies(game: dict):
     companies = game.get("involved_companies") or []
-    devs = []
-    pubs = []
+    devs, pubs = [], []
     for c in companies:
         if not isinstance(c, dict):
             continue
@@ -364,8 +473,70 @@ def _companies(game: dict):
     return devs, pubs
 
 
+def _build_buy_links(game: dict, normalized: dict) -> List[Dict[str, str]]:
+    """Return a list of {label, url, kind} where to play / buy a game."""
+    links: List[Dict[str, str]] = []
+    seen = set()
+    title = normalized.get("title") or ""
+    plats = [p.lower() for p in normalized.get("platforms") or []]
+
+    # Direct store URLs from IGDB websites (type field)
+    for w in (game.get("websites") or []):
+        if not isinstance(w, dict):
+            continue
+        cat = w.get("type")
+        url = w.get("url")
+        if not url or cat not in WEBSITE_CATEGORIES:
+            continue
+        kind = WEBSITE_CATEGORIES[cat]
+        if kind in seen:
+            continue
+        seen.add(kind)
+        labels = {
+            "official": "Official Site",
+            "steam": "Steam",
+            "epicgames": "Epic Games",
+            "gog": "GOG",
+            "itch": "itch.io",
+            "psn": "PlayStation Store",
+            "xbox": "Xbox Store",
+            "nintendo": "Nintendo eShop",
+        }
+        links.append({"label": labels[kind], "url": url, "kind": kind})
+
+    # Fallback: search URLs only when IGDB doesn't have a direct store URL
+    name_q = quote_plus(title)
+    if "psn" not in seen and any("playstation" in p for p in plats):
+        links.append({"label": "PlayStation Store", "url": f"https://store.playstation.com/en-us/search/{name_q}", "kind": "psn"})
+    if "xbox" not in seen and any("xbox" in p for p in plats):
+        links.append({"label": "Xbox Store", "url": f"https://www.xbox.com/en-US/games/store/search?q={name_q}", "kind": "xbox"})
+    if "nintendo" not in seen and any("nintendo" in p or "switch" in p for p in plats):
+        links.append({"label": "Nintendo eShop", "url": f"https://www.nintendo.com/us/search/?q={name_q}&p=1&cat=gme", "kind": "nintendo"})
+
+    # Amazon (always — for physical copies / merch)
+    amz = f"https://www.amazon.com/s?k={name_q}+video+game"
+    if AMAZON_AFFILIATE_TAG:
+        amz += f"&tag={AMAZON_AFFILIATE_TAG}"
+    links.append({"label": "Amazon", "url": amz, "kind": "amazon"})
+
+    return links
+
+
 @router.get("/details/{game_id}")
 async def get_game_details(game_id: int):
+    cache_key = f"details:{game_id}"
+    # Check cache first (24h TTL — details rarely change)
+    doc = await _cache_col.find_one({"_id": cache_key}, {"_id": 0, "data": 1, "expires_at": 1})
+    if doc and doc.get("data") and doc.get("expires_at"):
+        try:
+            exp = doc["expires_at"]
+            if isinstance(exp, str):
+                exp = datetime.fromisoformat(exp)
+            if exp > datetime.now(timezone.utc):
+                return doc["data"]
+        except Exception:
+            pass
+
     q = f"fields {DETAIL_FIELDS}; where id = {game_id}; limit 1;"
     try:
         arr = await igdb_query("games", q)
@@ -394,7 +565,16 @@ async def get_game_details(game_id: int):
                     if isinstance(s, dict) and s.get("cover")
                 ][:12],
                 "websites": [w.get("url") for w in (game.get("websites") or []) if isinstance(w, dict) and w.get("url")],
+                "buy_links": _build_buy_links(game, normalized),
             }
+        )
+        await _cache_col.update_one(
+            {"_id": cache_key},
+            {"$set": {
+                "data": normalized,
+                "expires_at": (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat(),
+            }},
+            upsert=True,
         )
         return normalized
     except HTTPException:
@@ -406,7 +586,6 @@ async def get_game_details(game_id: int):
 
 @router.get("/videos/{game_id}")
 async def get_game_videos(game_id: int):
-    """Return YouTube videos for a game in TMDB-compatible shape."""
     q = f"fields videos.video_id,videos.name; where id = {game_id}; limit 1;"
     try:
         arr = await igdb_query("games", q)
@@ -431,7 +610,6 @@ async def get_game_videos(game_id: int):
 
 @router.get("/platforms")
 async def list_platforms():
-    """Return the fixed platform list we support on the UI."""
     return [
         {"key": k, "label": v[0], "ids": v[1]}
         for k, v in PLATFORM_MAP.items()
