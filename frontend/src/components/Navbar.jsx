@@ -193,7 +193,7 @@ const Navbar = () => {
                       onClick={() => setShowUserMenu(false)}
                     >
                       <List className="w-4 h-4" />
-                      <span>My Watchlist</span>
+                      <span>My Library</span>
                     </Link>
                     <button
                       onClick={goToSettings}

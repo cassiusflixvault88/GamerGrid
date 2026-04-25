@@ -78,8 +78,28 @@ async def igdb_query(endpoint: str, query: str) -> list:
 
 
 # ---------- MongoDB-backed cache ----------
+async def _ensure_ttl_index():
+    """Ensure a TTL index on `expires_at` so MongoDB auto-evicts stale entries."""
+    try:
+        await _cache_col.create_index("expires_at", expireAfterSeconds=0)
+        await _genres_col.create_index("expires_at", expireAfterSeconds=0)
+    except Exception as e:
+        logger.warning(f"Could not create TTL index: {e}")
+
+
+_ttl_initialized = False
+
+
+async def _maybe_init_ttl():
+    global _ttl_initialized
+    if not _ttl_initialized:
+        _ttl_initialized = True
+        await _ensure_ttl_index()
+
+
 async def cached_query(key: str, endpoint: str, query: str, ttl_seconds: int = 60 * 60) -> list:
     """Return cached data if fresh, else hit IGDB and cache the result."""
+    await _maybe_init_ttl()
     now = datetime.now(timezone.utc)
     doc = await _cache_col.find_one({"_id": key}, {"_id": 0, "data": 1, "expires_at": 1})
     if doc and doc.get("expires_at"):
@@ -87,16 +107,18 @@ async def cached_query(key: str, endpoint: str, query: str, ttl_seconds: int = 6
             exp = doc["expires_at"]
             if isinstance(exp, str):
                 exp = datetime.fromisoformat(exp)
+            if exp.tzinfo is None:
+                exp = exp.replace(tzinfo=timezone.utc)
             if exp > now and doc.get("data") is not None:
                 return doc["data"]
         except Exception:
             pass
 
     data = await igdb_query(endpoint, query)
-    expires = (now + timedelta(seconds=ttl_seconds)).isoformat()
+    expires_dt = now + timedelta(seconds=ttl_seconds)
     await _cache_col.update_one(
         {"_id": key},
-        {"$set": {"data": data, "expires_at": expires, "updated_at": now.isoformat()}},
+        {"$set": {"data": data, "expires_at": expires_dt, "updated_at": now}},
         upsert=True,
     )
     return data
@@ -241,12 +263,15 @@ def _build_where(parts: List[str]) -> str:
 @router.get("/genres")
 async def list_genres():
     """Return IGDB genre list (cached)."""
+    await _maybe_init_ttl()
     cached = await _genres_col.find_one({"_id": "all"}, {"_id": 0, "data": 1, "expires_at": 1})
     if cached:
         try:
             exp = cached.get("expires_at")
             if isinstance(exp, str):
                 exp = datetime.fromisoformat(exp)
+            if exp and exp.tzinfo is None:
+                exp = exp.replace(tzinfo=timezone.utc)
             if exp and exp > datetime.now(timezone.utc):
                 return cached["data"]
         except Exception:
@@ -257,7 +282,7 @@ async def list_genres():
         {"_id": "all"},
         {"$set": {
             "data": data,
-            "expires_at": (datetime.now(timezone.utc) + timedelta(days=7)).isoformat(),
+            "expires_at": datetime.now(timezone.utc) + timedelta(days=7),
         }},
         upsert=True,
     )
@@ -288,6 +313,30 @@ async def get_trending_games(
     except Exception as e:
         logger.error(f"trending error: {e}")
         raise HTTPException(500, f"Failed to fetch trending: {e}")
+
+
+@router.get("/goty")
+async def get_game_of_the_year(year: Optional[int] = Query(None, ge=1990, le=2100), limit: int = Query(20, ge=1, le=50)):
+    """Game of the Year shortlist — highest rated games of the given year (defaults to last full year)."""
+    if not year:
+        # Default to last year — gives a fuller list since most GOTY-tier games
+        # are released across the full year (and through Q1 of the next).
+        now = datetime.now(timezone.utc)
+        year = now.year - 1
+    yw = _year_window(year)
+    where_parts = [yw, "rating >= 80", "total_rating_count > 30"]
+    q = (
+        f"fields {LIST_FIELDS};"
+        f" {_build_where(where_parts)}"
+        " sort rating desc;"
+        f" limit {limit};"
+    )
+    try:
+        games = await cached_query(f"goty:{year}:{limit}", "games", q, ttl_seconds=60 * 60 * 24)
+        return {"year": year, "results": [normalize_game(g) for g in games], "total": len(games)}
+    except Exception as e:
+        logger.error(f"goty error: {e}")
+        raise HTTPException(500, f"Failed to fetch GOTY: {e}")
 
 
 @router.get("/top-rated")
@@ -525,6 +574,7 @@ def _build_buy_links(game: dict, normalized: dict) -> List[Dict[str, str]]:
 @router.get("/details/{game_id}")
 async def get_game_details(game_id: int):
     cache_key = f"details:{game_id}"
+    await _maybe_init_ttl()
     # Check cache first (24h TTL — details rarely change)
     doc = await _cache_col.find_one({"_id": cache_key}, {"_id": 0, "data": 1, "expires_at": 1})
     if doc and doc.get("data") and doc.get("expires_at"):
@@ -532,6 +582,8 @@ async def get_game_details(game_id: int):
             exp = doc["expires_at"]
             if isinstance(exp, str):
                 exp = datetime.fromisoformat(exp)
+            if exp.tzinfo is None:
+                exp = exp.replace(tzinfo=timezone.utc)
             if exp > datetime.now(timezone.utc):
                 return doc["data"]
         except Exception:
@@ -572,7 +624,7 @@ async def get_game_details(game_id: int):
             {"_id": cache_key},
             {"$set": {
                 "data": normalized,
-                "expires_at": (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat(),
+                "expires_at": datetime.now(timezone.utc) + timedelta(hours=24),
             }},
             upsert=True,
         )

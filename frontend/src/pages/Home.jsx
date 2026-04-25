@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import Navbar from '../components/Navbar';
 import TopNavBar from '../components/TopNavBar';
 import HeroBanner from '../components/HeroBanner';
@@ -14,6 +15,7 @@ import {
   getUpcoming,
   getNewReleases,
   getByPlatform,
+  getGOTY,
 } from '../services/tmdb';
 
 const Home = () => {
@@ -25,6 +27,8 @@ const Home = () => {
   const [topRated, setTopRated] = useState([]);
   const [upcoming, setUpcoming] = useState([]);
   const [newReleases, setNewReleases] = useState([]);
+  const [goty, setGoty] = useState([]);
+  const [gotyYear, setGotyYear] = useState(null);
   const [playstation, setPlaystation] = useState([]);
   const [xbox, setXbox] = useState([]);
   const [pc, setPc] = useState([]);
@@ -83,6 +87,16 @@ const Home = () => {
       setXbox(xboxData);
       setPc(pcData);
       setSwitchGames(switchData);
+
+      // GOTY rail (separate fetch so we can capture year metadata)
+      try {
+        const r = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/games/goty`);
+        setGoty(r.data?.results || []);
+        setGotyYear(r.data?.year || null);
+      } catch (e) {
+        const fallback = await getGOTY().catch(() => []);
+        setGoty(fallback);
+      }
 
       const hero = trendingData.filter((g) => g.backdrop_path).slice(0, 6);
       setHeroItems(hero);
@@ -215,6 +229,14 @@ const Home = () => {
 
         {trending.length > 0 && (
           <ContentRow title="🔥 Trending Now" items={trending} onCardClick={handleCardClick} viewAllLink="/games/all" />
+        )}
+        {goty.length > 0 && (
+          <ContentRow
+            title={`👑 Game of the Year — ${gotyYear || ''}`}
+            items={goty}
+            onCardClick={handleCardClick}
+            viewAllLink="/games/all"
+          />
         )}
         {upcoming.length > 0 && (
           <ContentRow title="🗓️ Coming Soon & Pre-Orders" items={upcoming} onCardClick={handleCardClick} viewAllLink="/games/all" />

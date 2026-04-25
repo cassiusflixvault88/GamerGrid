@@ -47,6 +47,12 @@ export const getVideos = async (_mediaType, id) => {
 
 export const search = async (query) => unwrap(await axios.get(`${API}/games/search?q=${encodeURIComponent(query)}`));
 
+export const getGOTY = async (year) => {
+  const url = year ? `${API}/games/goty?year=${year}` : `${API}/games/goty`;
+  const res = await axios.get(url);
+  return res.data?.results || [];
+};
+
 export const getNowPlaying = async () => unwrap(await axios.get(`${API}/games/new-releases?limit=30`));
 export const getGenres = async () => [];
 

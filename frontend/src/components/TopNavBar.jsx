@@ -57,7 +57,7 @@ const TopNavBar = () => {
                   ? 'bg-purple-600 text-white' 
                   : 'text-white/70 hover:text-white hover:bg-white/10'
               }`}
-              title="Watchlist"
+              title="Library"
             >
               <Heart className="w-5 h-5" />
             </button>

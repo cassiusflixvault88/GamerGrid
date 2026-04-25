@@ -13,6 +13,25 @@ const ContentCard = ({ content, onClick, rating }) => {
   // Use provided rating or default to vote_average
   const displayRating = rating?.average || content.vote_average || 0;
   const ratingCount = rating?.count || 0;
+
+  // Compact platform abbreviations for always-visible card badges
+  const platformAbbr = (() => {
+    const plats = content.platforms || [];
+    if (!plats.length) return [];
+    const abbr = new Set();
+    for (const p of plats) {
+      const lower = p.toLowerCase();
+      if (lower.includes('playstation 5') || lower === 'ps5') abbr.add('PS5');
+      else if (lower.includes('playstation 4') || lower === 'ps4') abbr.add('PS4');
+      else if (lower.includes('playstation')) abbr.add('PS');
+      else if (lower.includes('xbox series')) abbr.add('XSX');
+      else if (lower.includes('xbox one')) abbr.add('XB1');
+      else if (lower.includes('xbox')) abbr.add('XBOX');
+      else if (lower.includes('switch') || lower.includes('nintendo')) abbr.add('SWITCH');
+      else if (lower.includes('pc') || lower.includes('windows') || lower.includes('mac')) abbr.add('PC');
+    }
+    return Array.from(abbr).slice(0, 3);
+  })();
   
   // Determine availability status
   const isFreeMovie = content.free_full_movie || content.source === 'youtube' || content.source === 'plex';
@@ -80,6 +99,20 @@ const ContentCard = ({ content, onClick, rating }) => {
           {hasPlexUrl && !hasYouTube && (
             <div className="absolute bottom-2 right-2">
               <ExternalLink className="w-4 h-4 text-white/70" />
+            </div>
+          )}
+
+          {/* Platform abbreviation badges */}
+          {platformAbbr.length > 0 && (
+            <div className="absolute bottom-2 left-2 flex flex-wrap gap-1 max-w-[90%]">
+              {platformAbbr.map((p) => (
+                <span
+                  key={p}
+                  className="px-1.5 py-0.5 rounded bg-black/80 backdrop-blur-sm text-white text-[10px] font-bold tracking-wider border border-white/20"
+                >
+                  {p}
+                </span>
+              ))}
             </div>
           )}
           

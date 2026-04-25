@@ -53,7 +53,7 @@ const ContentModal = ({ content, isOpen, onClose, onPlayTrailer, onSelectContent
     if (!user) {
       toast({
         title: 'Sign in required',
-        description: 'Please sign in to add items to your watchlist',
+        description: 'Please sign in to add games to your library',
         variant: 'destructive',
       });
       return;
@@ -66,21 +66,21 @@ const ContentModal = ({ content, isOpen, onClose, onPlayTrailer, onSelectContent
         await removeFromWatchlist(content.id);
         setLocalInWatchlist(false); // Update local state immediately
         toast({
-          title: 'Removed from watchlist',
-          description: `${title} has been removed from your watchlist`,
+          title: 'Removed from library',
+          description: `${title} has been removed from your library`,
         });
       } else {
         await addToWatchlist(content);
         setLocalInWatchlist(true); // Update local state immediately
         toast({
-          title: 'Added to watchlist',
-          description: `${title} has been added to your watchlist`,
+          title: 'Added to library',
+          description: `${title} has been added to your library`,
         });
       }
     } catch (error) {
       toast({
         title: 'Error',
-        description: error.response?.data?.detail || 'Failed to update watchlist',
+        description: error.response?.data?.detail || 'Failed to update library',
         variant: 'destructive',
       });
     }
@@ -242,7 +242,7 @@ const ContentModal = ({ content, isOpen, onClose, onPlayTrailer, onSelectContent
                       ? 'bg-white text-black border-white' 
                       : 'bg-white/20 hover:bg-white/30 text-white border-white/40'
                   }`}
-                  title={localInWatchlist ? 'Remove from watchlist' : 'Add to watchlist'}
+                  title={localInWatchlist ? 'Remove from library' : 'Add to library'}
                 >
                   {localInWatchlist ? (
                     <Check className="w-6 h-6" />

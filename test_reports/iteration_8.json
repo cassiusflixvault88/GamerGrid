@@ -1,0 +1,52 @@
+{
+  "summary": "Iteration 8 testing: 26/26 backend tests PASS (profile picture persistence via direct API, preset SVG assets, GOTY default + 2024, Mongo TTL index on games_cache, 10-endpoint regression incl. Witcher3 buy_links). Frontend GREEN: GOTY rail '👑 Game of the Year' renders on Home, all 6 platform abbr badges (PS5/PS4/XSX/XB1/SWITCH/PC) appear on cards, Navbar/Watchlist page renamed to 'My Library' with 'N games saved' counter, SupportPage cleaned of movie/TV/🎬 references and now shows '🎮 More Games' + 'IGDB-powered'. SettingsPage preset grid renders all 5 presets with correct data-testids. CRITICAL BUG REPRODUCED via UI: clicking a preset (PlayStation) returns PUT 200 w/ updated_fields including profile_picture_url, but on reload the input value reverts to /gamergrid-icon.svg and the preset chip is NOT highlighted. Backend works perfectly when called directly with the exact same full payload (returns persisted /playstation-icon.svg) — so the regression is in the frontend state flow (likely refreshUser() pulling from /api/auth/me and a follow-up effect re-syncing profileData with the stale auth user, or saveProfileWithNewPicture chasing the change with old data). The user-reported 'Profile Picture URL pops back' bug is NOT yet fixed end-to-end.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "PUT /api/user/profile", "issue": "Two duplicate route handlers exist (server.py:205 with UserProfileUpdate and server.py:1512 with UserProfile model). FastAPI uses the first; the duplicate is dead code but a footgun. Also a third copy in routes/auth_routes.py:155."},
+      {"endpoint": "GET /api/user/profile", "issue": "Two duplicate handlers (server.py:190, 1493). Consolidate."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "SettingsPage / setPresetAvatar", "issue": "Clicking any preset avatar makes the PUT call (returns 200 with profile_picture_url in updated_fields) but the value REVERTS to the previous /gamergrid-icon.svg on page reload. Reproduced live: clicked preset-avatar--playstation-icon-svg → PUT 200 → reload → input still /gamergrid-icon.svg. Backend persists correctly when invoked directly (verified). The break is in the React state flow.", "selector": "[data-testid^=preset-avatar-]", "priority": "CRITICAL"}
+    ],
+    "integration_issues": [
+      {"flow": "Settings preset avatar selection", "issue": "PUT succeeds at backend layer but UI reads stale value after refreshUser() / reload. Likely cause: refreshUser() updates AuthContext from /api/auth/me with the user's pre-PUT profile_picture_url, and a useEffect re-syncs profileData from the auth user → overrides the just-set value → next save (or reload) shows the stale value.", "affected_selectors": ["[data-testid=preset-avatars-grid]", "[data-testid^=preset-avatar-]"]}
+    ],
+    "design_issues": [
+      {"screen": "Onboarding (?) Dialog", "issues": ["Residual Radix warning: 'DialogContent requires a DialogTitle for accessibility'. Same warning as iteration 7 footnote."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter8_avatars_goty.py",
+    "/app/test_reports/pytest/iter8_results.xml"
+  ],
+  "action_items": [
+    "CRITICAL: Fix the SettingsPage state race that reverts profile_picture_url on reload. Likely fixes: (a) update profileData FROM the PUT response or after refreshUser using the freshly-saved value; (b) audit refreshUser() and any useEffect([user]) that may re-sync profileData and clobber the local change; (c) ensure the auth user fetch (/api/auth/me) re-reads profile_picture_url from DB AFTER the PUT — verify it's not cached.",
+    "Consolidate duplicate /api/user/profile handlers in server.py (GET at 190 & 1493, PUT at 205 & 1512) and routes/auth_routes.py to a single canonical implementation.",
+    "OPTIONAL polish: add sr-only DialogDescription to silence remaining Radix a11y warning."
+  ],
+  "critical_code_review_comments": [
+    "DUPLICATE ROUTES: server.py declares /api/user/profile GET twice and PUT twice with different Pydantic models — FastAPI silently uses the first registered. This is a maintenance time bomb; fix immediately.",
+    "SettingsPage.setPresetAvatar (line 170) does not update profileData from server response after PUT — relies on refreshUser to sync. If the auth user object is read from a cache or a different code path that returns stale data, the local optimistic update is lost.",
+    "Mongo TTL index on games_cache.expires_at (expireAfterSeconds=0) confirmed live in DB index_information(). ✅",
+    "User model defaults (models.py) profile_picture_url=None — verified end-to-end via fresh signup test. ✅",
+    "GOTY endpoint default year resolves to 2025 (last full year as of 2026), and ?year=2024 returns only 2024-released games. ✅"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter8_avatars_goty.py"
+  ],
+  "success_rate": {
+    "backend": "100% (26/26)",
+    "frontend": "~85% — all rename/rail/badges/support/preset-grid pieces pass; 1 CRITICAL: preset persistence reverts in UI"
+  },
+  "test_credentials": {
+    "ceo": {"email": "cassiusflixvault@gmail.com", "password": "JGotti.8890"}
+  },
+  "seed_data_creation": "Created 1 throwaway TEST_iter8_<rand>@example.com user via /api/auth/signup to verify default profile_picture_url is None. No cleanup performed for this single user.",
+  "retest_needed": true,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Backend is fully GREEN for iteration 8. The single remaining critical bug is the FRONTEND-only profile picture revert in SettingsPage. The backend PUT /api/user/profile correctly persists /playstation-icon.svg even when the full frontend payload is sent (verified). The break is between the click and reload — almost certainly refreshUser() + a useEffect that re-syncs profileData from the auth user with stale data. Once main agent applies the fix, re-run the playwright test in test_iter8_avatars_goty (or a quick UI script) that: login → /settings → click preset-avatar--xbox-icon-svg → wait 4s → reload → assert input value === '/xbox-icon.svg' AND xbox button has selection ring class. CEO has been restored to /gamergrid-icon.svg.",
+  "rca_of_the_issue": "Reproduction: Login as CEO, /settings, click [data-testid=preset-avatar--playstation-icon-svg]. Wait 5s. Reload page. Observe input[type=url] value reverted to /gamergrid-icon.svg and PS button has no selection styling. Network shows PUT /api/user/profile -> 200 with response body {'updated_fields': [..., 'profile_picture_url', ...]}. Direct cURL with the same payload returns and persists correctly. Therefore: backend is correct; frontend has a state-flow race where refreshUser() / a useEffect listening to AuthContext user fetches the pre-PUT user document (likely cached or re-fetched too soon) and overrides profileData. Mitigation: in setPresetAvatar, after axios.put succeeds, optimistically keep the local profileData and DO NOT trigger any sync that reads from a stale auth user; OR re-fetch via a dedicated GET /api/user/profile after the PUT (not /api/auth/me)."
+}

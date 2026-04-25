@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sun, Moon, Monitor, Save, User as UserIcon, Home, ArrowLeft, Film } from 'lucide-react';
+import { Sun, Moon, Monitor, Save, User as UserIcon, Home, ArrowLeft } from 'lucide-react';
 import axios from 'axios';
 import Navbar from '../components/Navbar';
 import BackNavigation from '../components/BackNavigation';
@@ -159,53 +159,35 @@ const SettingsPage = () => {
     }
   };
 
-  const useGamerGridLogo = async () => {
-    console.log('🎬 Setting GamerGrid logo as profile picture...');
-    const logoUrl = '/gamergrid-icon.svg';
-    
-    // Update local state FIRST
-    setProfileData({ ...profileData, profile_picture_url: logoUrl });
-    
-    // AUTO-SAVE to backend
+  const PRESET_AVATARS = [
+    { url: '/gamergrid-icon.svg', label: 'GamerGrid' },
+    { url: '/playstation-icon.svg', label: 'PlayStation' },
+    { url: '/xbox-icon.svg', label: 'Xbox' },
+    { url: '/switch-icon.svg', label: 'Nintendo Switch' },
+    { url: '/pc-steam-icon.svg', label: 'PC / Steam' },
+  ];
+
+  const setPresetAvatar = async (logoUrl) => {
+    const updatedData = { ...profileData, profile_picture_url: logoUrl };
+    setProfileData(updatedData);
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        toast({
-          title: 'Error',
-          description: 'Please log in to change your profile picture',
-          variant: 'destructive'
-        });
+        toast({ title: 'Error', description: 'Please log in to change your profile picture', variant: 'destructive' });
         return;
       }
-      
-      const updatedData = { ...profileData, profile_picture_url: logoUrl };
-      
       await axios.put(`${API}/user/profile`, updatedData, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      
-      console.log('✅ GamerGrid logo saved to database');
-      
-      // Refresh user context
       await refreshUser();
-      
-      toast({
-        title: 'GamerGrid Logo Set',
-        description: 'Profile picture updated successfully!'
-      });
-      
-      // Reload profile to ensure sync
-      setTimeout(() => fetchUserProfile(), 500);
-      
+      toast({ title: 'Profile picture set', description: 'Your new avatar has been saved!' });
     } catch (error) {
-      console.error('❌ Failed to set GamerGrid logo:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to update profile picture',
-        variant: 'destructive'
-      });
+      console.error('Failed to set preset avatar:', error);
+      toast({ title: 'Error', description: 'Failed to update profile picture', variant: 'destructive' });
     }
   };
+
+  const useGamerGridLogo = () => setPresetAvatar('/gamergrid-icon.svg');
 
   // Helper function to save profile and refresh navbar
   const saveProfileWithNewPicture = async (updatedData) => {
@@ -422,34 +404,72 @@ const SettingsPage = () => {
 
             <div>
               <Label htmlFor="profile_picture" className="text-white/80 mb-2 block">Profile Picture</Label>
-              <div className="flex gap-3 items-end flex-wrap">
+
+              {/* Preset avatars grid */}
+              <div className="mb-3">
+                <p className="text-xs text-white/50 mb-2">Quick pick a gaming avatar:</p>
+                <div className="grid grid-cols-5 gap-2" data-testid="preset-avatars-grid">
+                  {PRESET_AVATARS.map((p) => {
+                    const selected = profileData.profile_picture_url === p.url;
+                    return (
+                      <button
+                        type="button"
+                        key={p.url}
+                        onClick={() => setPresetAvatar(p.url)}
+                        data-testid={`preset-avatar-${p.url.replace(/[^a-z0-9]/gi, '-')}`}
+                        title={p.label}
+                        className={`relative aspect-square rounded-lg p-2 transition-all border-2 ${
+                          selected
+                            ? 'border-purple-500 bg-purple-500/20 scale-105'
+                            : 'border-white/15 bg-white/5 hover:border-white/40 hover:bg-white/10'
+                        }`}
+                      >
+                        <img src={p.url} alt={p.label} className="w-full h-full object-contain" />
+                        <span className="absolute -bottom-5 left-0 right-0 text-center text-[10px] text-white/60 truncate">
+                          {p.label}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="flex gap-3 items-end flex-wrap mt-8">
                 <div className="flex-1 min-w-[200px]">
+                  <Label htmlFor="profile_picture" className="text-white/60 text-xs mb-1 block">Or paste a custom image URL</Label>
                   <Input
                     id="profile_picture"
                     type="url"
-                    value={profileData.profile_picture_url}
+                    value={profileData.profile_picture_url || ''}
                     onChange={(e) => setProfileData({ ...profileData, profile_picture_url: e.target.value })}
                     placeholder="https://example.com/avatar.jpg"
                     className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
                   />
                 </div>
                 <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    onClick={useGamerGridLogo}
-                    className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white"
-                  >
-                    <Film className="w-4 h-4 mr-2" />
-                    Use GamerGrid Logo
-                  </Button>
+                  <label className="cursor-pointer">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      disabled={uploadingImage}
+                      className="hidden"
+                      data-testid="upload-avatar-input"
+                    />
+                    <span className="inline-flex items-center bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-md text-sm font-medium border border-white/20 transition-colors">
+                      <UserIcon className="w-4 h-4 mr-2" />
+                      {uploadingImage ? 'Uploading…' : 'Upload Image'}
+                    </span>
+                  </label>
                 </div>
               </div>
+
               {profileData.profile_picture_url && (
-                <div className="mt-3">
+                <div className="mt-4">
                   <p className="text-xs text-white/50 mb-2">Preview:</p>
-                  <img 
-                    src={profileData.profile_picture_url} 
-                    alt="Profile preview" 
+                  <img
+                    src={profileData.profile_picture_url}
+                    alt="Profile preview"
                     className="w-20 h-20 rounded-full object-cover border-2 border-purple-500 bg-white/10"
                     onError={(e) => {
                       e.target.style.display = 'none';

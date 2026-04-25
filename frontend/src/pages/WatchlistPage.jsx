@@ -43,7 +43,7 @@ const WatchlistPage = () => {
         <BackNavigation />
         <div className="px-6 lg:px-12 max-w-[1920px] mx-auto pb-20 flex flex-col items-center justify-center min-h-[70vh]">
           <h1 className="text-4xl font-bold text-white mb-4">Sign In Required</h1>
-          <p className="text-white/70 text-lg mb-8">Please sign in to view your watchlist</p>
+          <p className="text-white/70 text-lg mb-8">Please sign in to view your library</p>
           <Button
             onClick={() => navigate('/')}
             className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold px-8 py-6 rounded-md"
@@ -65,9 +65,9 @@ const WatchlistPage = () => {
       
       <div className="px-6 lg:px-12 max-w-[1920px] mx-auto pb-20">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-4">My Watchlist</h1>
+          <h1 className="text-4xl font-bold text-white mb-4">My Library</h1>
           <p className="text-white/70 text-lg">
-            {watchlist.length} {watchlist.length === 1 ? 'item' : 'items'} saved
+            {watchlist.length} {watchlist.length === 1 ? 'game' : 'games'} saved
           </p>
         </div>
 
@@ -89,12 +89,12 @@ const WatchlistPage = () => {
           </div>
         ) : (
           <div className="text-center py-20">
-            <p className="text-white/70 text-lg mb-8">Your watchlist is empty</p>
+            <p className="text-white/70 text-lg mb-8">Your library is empty</p>
             <Button
-              onClick={() => navigate('/')}
+              onClick={() => navigate('/games/all')}
               className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold px-8 py-6 rounded-md"
             >
-              Browse Content
+              Browse Games
             </Button>
           </div>
         )}

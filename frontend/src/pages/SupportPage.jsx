@@ -172,15 +172,15 @@ const SupportPage = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="w-5 h-5 text-green-300" />
-                  <span>Unlimited Watchlist</span>
+                  <span>Unlimited Library</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="w-5 h-5 text-green-300" />
-                  <span>Early Access to Content</span>
+                  <span>Early Access to New Games</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="w-5 h-5 text-green-300" />
-                  <span>Custom Lists</span>
+                  <span>Custom Game Lists</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="w-5 h-5 text-green-300" />
@@ -295,9 +295,9 @@ const SupportPage = () => {
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-gray-300">
             <div>
-              <p className="font-semibold mb-2">🎬 More Content</p>
+              <p className="font-semibold mb-2">🎮 More Games</p>
               <p className="text-sm">
-                We can expand our catalog and add more movies and TV shows
+                We can grow our IGDB-powered catalog and surface more trending titles
               </p>
             </div>
             <div>

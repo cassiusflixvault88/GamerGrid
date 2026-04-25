@@ -23,7 +23,7 @@ const BackNavigation = () => {
     } else if (path.includes('/public-domain')) {
       breadcrumbs.push({ name: 'Free Movies', path: '/public-domain', icon: Film });
     } else if (path.includes('/watchlist')) {
-      breadcrumbs.push({ name: 'My Watchlist', path: '/watchlist', icon: Film });
+      breadcrumbs.push({ name: 'My Library', path: '/watchlist', icon: Film });
     } else if (path.includes('/search')) {
       breadcrumbs.push({ name: 'Search', path: '/search', icon: Film });
     } else if (path.includes('/app-reviews')) {
