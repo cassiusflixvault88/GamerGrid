@@ -69,9 +69,19 @@ const Top10HeroCarousel = ({ items = [], onPlayClick, onInfoClick, intervalMs = 
           </span>
 
           <div className="max-w-2xl space-y-4 mt-12 pb-10 lg:pb-16">
-            <p className="text-purple-300 font-bold tracking-widest text-sm uppercase">
-              🏆 #{rank} in Top 10 Games Today
-            </p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <a
+                href="/top10"
+                className="text-purple-300 hover:text-purple-200 font-bold tracking-widest text-sm uppercase transition-colors"
+              >
+                🏆 #{rank} in Top 10 Games Today →
+              </a>
+              {rank <= 3 && (
+                <span className="px-2 py-0.5 rounded-full bg-red-600/30 border border-red-500/60 text-red-200 text-[10px] font-bold tracking-wider uppercase animate-pulse">
+                  🔥 Hot Right Now
+                </span>
+              )}
+            </div>
             <h1 className="text-4xl lg:text-6xl font-extrabold text-white drop-shadow-2xl line-clamp-2">
               {title}
             </h1>

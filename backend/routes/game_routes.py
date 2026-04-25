@@ -335,39 +335,108 @@ async def get_trending_games(
 
 @router.get("/most-popular")
 async def get_most_popular(limit: int = Query(30, ge=1, le=500)):
-    """Most followed/hyped games — different from 'trending' (rating-based).
+    """Most popular RIGHT NOW — uses IGDB popularity_primitives (Steam 24hr peak players).
 
-    IGDB's 'follows' is sparse, so we mix follows + hypes into a where-OR clause.
+    This is the live, real-world popularity signal — surfaces Counter-Strike 2,
+    PUBG, Elden Ring Nightreign, Apex Legends, Helldivers 2, Fortnite when active.
     """
-    q = (
-        f"fields {LIST_FIELDS},follows,hypes;"
-        " where (follows > 5 | hypes > 5) & total_rating_count > 10;"
-        " sort follows desc;"
-        f" limit {limit};"
+    cache_key = f"mostpopular_v2:{limit}"
+    await _maybe_init_ttl()
+    doc = await _cache_col.find_one({"_id": cache_key}, {"_id": 0, "data": 1, "expires_at": 1})
+    if doc and doc.get("data") and doc.get("expires_at"):
+        try:
+            exp = doc["expires_at"]
+            if isinstance(exp, str):
+                exp = datetime.fromisoformat(exp)
+            if exp.tzinfo is None:
+                exp = exp.replace(tzinfo=timezone.utc)
+            if exp > datetime.now(timezone.utc):
+                return doc["data"]
+        except Exception:
+            pass
+
+    # Step 1: get top popular game IDs from IGDB popularity_primitives
+    pop_query = (
+        f"fields game_id,value; where popularity_type = 5;"
+        f" sort value desc; limit {limit};"
     )
-    try:
-        games = await cached_query(f"mostpopular:{limit}", "games", q, ttl_seconds=60 * 30)
-        return {"results": [normalize_game(g) for g in games], "total": len(games)}
-    except Exception as e:
-        logger.error(f"most-popular error: {e}")
-        raise HTTPException(500, f"Failed to fetch most popular: {e}")
+    pop_rows = await igdb_query("popularity_primitives", pop_query)
+    if not pop_rows:
+        # Fallback to twitch hours-watched (popularity_type 34)
+        pop_query = (
+            f"fields game_id,value; where popularity_type = 34;"
+            f" sort value desc; limit {limit};"
+        )
+        pop_rows = await igdb_query("popularity_primitives", pop_query)
+
+    game_ids = [str(p["game_id"]) for p in pop_rows if p.get("game_id")]
+    if not game_ids:
+        return {"results": [], "total": 0}
+
+    ids_str = ",".join(game_ids)
+    games_query = (
+        f"fields {LIST_FIELDS};"
+        f" where id = ({ids_str});"
+        f" limit {len(game_ids)};"
+    )
+    games = await igdb_query("games", games_query)
+
+    # Preserve popularity ordering
+    by_id = {g["id"]: g for g in games}
+    ordered = [by_id[int(gid)] for gid in game_ids if int(gid) in by_id]
+
+    payload = {"results": [normalize_game(g) for g in ordered], "total": len(ordered)}
+    await _cache_col.update_one(
+        {"_id": cache_key},
+        {"$set": {
+            "data": payload,
+            "expires_at": datetime.now(timezone.utc) + timedelta(minutes=15),
+        }},
+        upsert=True,
+    )
+    return payload
 
 
 @router.get("/top10")
 async def get_top10():
-    """Top 10 games right now — for the hero carousel."""
-    q = (
-        f"fields {LIST_FIELDS};"
-        " where rating >= 80 & total_rating_count > 100;"
-        " sort total_rating_count desc;"
-        " limit 10;"
+    """Top 10 games right now — uses live IGDB popularity (Steam 24hr peak)."""
+    cache_key = "top10_v2"
+    await _maybe_init_ttl()
+    doc = await _cache_col.find_one({"_id": cache_key}, {"_id": 0, "data": 1, "expires_at": 1})
+    if doc and doc.get("data") and doc.get("expires_at"):
+        try:
+            exp = doc["expires_at"]
+            if isinstance(exp, str):
+                exp = datetime.fromisoformat(exp)
+            if exp.tzinfo is None:
+                exp = exp.replace(tzinfo=timezone.utc)
+            if exp > datetime.now(timezone.utc):
+                return doc["data"]
+        except Exception:
+            pass
+
+    pop_rows = await igdb_query(
+        "popularity_primitives",
+        "fields game_id,value; where popularity_type = 5; sort value desc; limit 10;",
     )
-    try:
-        games = await cached_query("top10", "games", q, ttl_seconds=60 * 60 * 2)
-        return {"results": [normalize_game(g) for g in games], "total": len(games)}
-    except Exception as e:
-        logger.error(f"top10 error: {e}")
-        raise HTTPException(500, f"Failed to fetch top10: {e}")
+    game_ids = [str(p["game_id"]) for p in pop_rows if p.get("game_id")]
+    if not game_ids:
+        return {"results": [], "total": 0}
+
+    ids_str = ",".join(game_ids)
+    games = await igdb_query(
+        "games",
+        f"fields {LIST_FIELDS}; where id = ({ids_str}); limit 10;",
+    )
+    by_id = {g["id"]: g for g in games}
+    ordered = [by_id[int(gid)] for gid in game_ids if int(gid) in by_id]
+    payload = {"results": [normalize_game(g) for g in ordered], "total": len(ordered)}
+    await _cache_col.update_one(
+        {"_id": cache_key},
+        {"$set": {"data": payload, "expires_at": datetime.now(timezone.utc) + timedelta(minutes=15)}},
+        upsert=True,
+    )
+    return payload
 
 
 @router.get("/goty")
