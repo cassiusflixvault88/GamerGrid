@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { Film, Tv, FileText, Send, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { Gamepad2, Calendar, Sparkles, Send, Clock, CheckCircle, XCircle } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import BackNavigation from '../components/BackNavigation';
 import Footer from '../components/Footer';
@@ -16,22 +16,23 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const RequestContentPage = () => {
   const [title, setTitle] = useState('');
-  const [contentType, setContentType] = useState('movie');
+  const [contentType, setContentType] = useState('game');
   const [description, setDescription] = useState('');
   const [reason, setReason] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [myRequests, setMyRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
+    if (authLoading) return; // wait for AuthContext to hydrate from localStorage
     if (!user) {
       toast({
         title: 'Sign in required',
-        description: 'Please sign in to request content',
+        description: 'Please sign in to request a game',
         variant: 'destructive',
       });
       navigate('/');
@@ -39,7 +40,7 @@ const RequestContentPage = () => {
     }
     loadMyRequests();
     // eslint-disable-next-line
-  }, [user]);
+  }, [user, authLoading]);
 
   const loadMyRequests = async () => {
     try {
@@ -61,7 +62,7 @@ const RequestContentPage = () => {
     if (!title.trim()) {
       toast({
         title: 'Title required',
-        description: 'Please enter the title of the content',
+        description: 'Please enter the title of the game',
         variant: 'destructive',
       });
       return;
@@ -134,10 +135,10 @@ const RequestContentPage = () => {
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            Request <span className="text-purple-500">Content</span>
+            Request a <span className="text-purple-500">Game</span>
           </h1>
           <p className="text-gray-400 text-lg">
-            Can't find what you're looking for? Let us know what you'd like to watch!
+            Can't find what you're looking for? Tell us what game you'd love to see on GamerGrid!
           </p>
         </div>
 
@@ -151,50 +152,53 @@ const RequestContentPage = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Content Type Selection */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-3">Content Type</label>
+              <label className="block text-sm font-medium text-gray-300 mb-3">Game Type</label>
               <div className="grid grid-cols-3 gap-3">
                 <button
                   type="button"
-                  onClick={() => setContentType('movie')}
+                  onClick={() => setContentType('game')}
+                  data-testid="request-type-game"
                   className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all ${
-                    contentType === 'movie'
+                    contentType === 'game'
                       ? 'border-purple-500 bg-purple-500/20'
                       : 'border-white/20 bg-white/5 hover:bg-white/10'
                   }`}
                 >
-                  <Film className={`w-6 h-6 ${contentType === 'movie' ? 'text-purple-400' : 'text-white/70'}`} />
-                  <span className={`text-sm ${contentType === 'movie' ? 'text-purple-300 font-medium' : 'text-white/70'}`}>
-                    Movie
+                  <Gamepad2 className={`w-6 h-6 ${contentType === 'game' ? 'text-purple-400' : 'text-white/70'}`} />
+                  <span className={`text-sm ${contentType === 'game' ? 'text-purple-300 font-medium' : 'text-white/70'}`}>
+                    Game
                   </span>
                 </button>
-                
+
                 <button
                   type="button"
-                  onClick={() => setContentType('series')}
+                  onClick={() => setContentType('upcoming')}
+                  data-testid="request-type-upcoming"
                   className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all ${
-                    contentType === 'series'
+                    contentType === 'upcoming'
                       ? 'border-purple-500 bg-purple-500/20'
                       : 'border-white/20 bg-white/5 hover:bg-white/10'
                   }`}
                 >
-                  <Tv className={`w-6 h-6 ${contentType === 'series' ? 'text-purple-400' : 'text-white/70'}`} />
-                  <span className={`text-sm ${contentType === 'series' ? 'text-purple-300 font-medium' : 'text-white/70'}`}>
-                    TV Series
+                  <Calendar className={`w-6 h-6 ${contentType === 'upcoming' ? 'text-purple-400' : 'text-white/70'}`} />
+                  <span className={`text-sm ${contentType === 'upcoming' ? 'text-purple-300 font-medium' : 'text-white/70'}`}>
+                    Upcoming
                   </span>
                 </button>
-                
+
                 <button
                   type="button"
-                  onClick={() => setContentType('documentary')}
+                  onClick={() => setContentType('dlc')}
+                  data-testid="request-type-dlc"
                   className={`flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all ${
-                    contentType === 'documentary'
+                    contentType === 'dlc'
                       ? 'border-purple-500 bg-purple-500/20'
                       : 'border-white/20 bg-white/5 hover:bg-white/10'
                   }`}
                 >
-                  <FileText className={`w-6 h-6 ${contentType === 'documentary' ? 'text-purple-400' : 'text-white/70'}`} />
-                  <span className={`text-sm ${contentType === 'documentary' ? 'text-purple-300 font-medium' : 'text-white/70'}`}>
-                    Documentary
+                  <Sparkles className={`w-6 h-6 ${contentType === 'dlc' ? 'text-purple-400' : 'text-white/70'}`} />
+                  <span className={`text-sm ${contentType === 'dlc' ? 'text-purple-300 font-medium' : 'text-white/70'}`}>
+                    DLC / Expansion
                   </span>
                 </button>
               </div>
@@ -203,14 +207,14 @@ const RequestContentPage = () => {
             {/* Title */}
             <div>
               <label htmlFor="title" className="block text-sm font-medium text-gray-300 mb-2">
-                Title *
+                Game Title *
               </label>
               <Input
                 id="title"
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g., Making a Murderer, The Last Dance"
+                placeholder="e.g., Hollow Knight: Silksong, GTA VI, Stardew Valley"
                 className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
                 required
               />
@@ -225,7 +229,7 @@ const RequestContentPage = () => {
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Brief description of the content..."
+                placeholder="Genre, platforms, release year, anything that helps us identify the game…"
                 className="bg-white/10 border-white/20 text-white placeholder:text-white/40 min-h-[80px]"
                 rows={3}
               />
@@ -234,13 +238,13 @@ const RequestContentPage = () => {
             {/* Reason */}
             <div>
               <label htmlFor="reason" className="block text-sm font-medium text-gray-300 mb-2">
-                Why do you want this? (Optional)
+                Why do you want this on GamerGrid? (Optional)
               </label>
               <Textarea
                 id="reason"
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                placeholder="Tell us why you'd like to see this on GamerGrid..."
+                placeholder="Tell us why this game is a must-have for the GamerGrid catalog…"
                 className="bg-white/10 border-white/20 text-white placeholder:text-white/40 min-h-[80px]"
                 rows={3}
               />

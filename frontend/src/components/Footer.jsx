@@ -55,7 +55,7 @@ const Footer = () => {
               to="/request-content"
               className="hover:text-white transition-colors text-green-400 font-semibold"
             >
-              🎬 Request Content
+              🎮 Request a Game
             </Link>
             <Link 
               to="/feedback"

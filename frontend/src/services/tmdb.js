@@ -47,6 +47,9 @@ export const getVideos = async (_mediaType, id) => {
 
 export const search = async (query) => unwrap(await axios.get(`${API}/games/search?q=${encodeURIComponent(query)}`));
 
+export const getMostPopular = async () => unwrap(await axios.get(`${API}/games/most-popular?limit=30`));
+export const getTop10 = async () => unwrap(await axios.get(`${API}/games/top10`));
+
 export const getGOTY = async (year) => {
   const url = year ? `${API}/games/goty?year=${year}` : `${API}/games/goty`;
   const res = await axios.get(url);

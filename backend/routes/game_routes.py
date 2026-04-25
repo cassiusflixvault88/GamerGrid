@@ -333,6 +333,43 @@ async def get_trending_games(
         raise HTTPException(500, f"Failed to fetch trending: {e}")
 
 
+@router.get("/most-popular")
+async def get_most_popular(limit: int = Query(30, ge=1, le=100)):
+    """Most followed/hyped games — different from 'trending' (rating-based).
+
+    IGDB's 'follows' is sparse, so we mix follows + hypes into a where-OR clause.
+    """
+    q = (
+        f"fields {LIST_FIELDS},follows,hypes;"
+        " where (follows > 5 | hypes > 5) & total_rating_count > 10;"
+        " sort follows desc;"
+        f" limit {limit};"
+    )
+    try:
+        games = await cached_query(f"mostpopular:{limit}", "games", q, ttl_seconds=60 * 30)
+        return {"results": [normalize_game(g) for g in games], "total": len(games)}
+    except Exception as e:
+        logger.error(f"most-popular error: {e}")
+        raise HTTPException(500, f"Failed to fetch most popular: {e}")
+
+
+@router.get("/top10")
+async def get_top10():
+    """Top 10 games right now — for the hero carousel."""
+    q = (
+        f"fields {LIST_FIELDS};"
+        " where rating >= 80 & total_rating_count > 100;"
+        " sort total_rating_count desc;"
+        " limit 10;"
+    )
+    try:
+        games = await cached_query("top10", "games", q, ttl_seconds=60 * 60 * 2)
+        return {"results": [normalize_game(g) for g in games], "total": len(games)}
+    except Exception as e:
+        logger.error(f"top10 error: {e}")
+        raise HTTPException(500, f"Failed to fetch top10: {e}")
+
+
 @router.get("/goty")
 async def get_game_of_the_year(year: Optional[int] = Query(None, ge=1990, le=2100), limit: int = Query(20, ge=1, le=50)):
     """Game of the Year shortlist — highest rated games of the given year (defaults to last full year)."""

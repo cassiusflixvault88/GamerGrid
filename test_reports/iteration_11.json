@@ -1,0 +1,33 @@
+{
+  "summary": "Iteration 11 validation — new /api/games/top10 + /api/games/most-popular endpoints, Top10HeroCarousel, Coming Soon highlighted section, Most Popular rail, RequestContentPage rebrand, Footer 'Request a Game' text, and new Xbox classic green-X SVG. 21/21 backend pytest PASS. All listed frontend assertions verified live on the preview URL while signed in as CEO.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_iter11_top10_mostpopular.py",
+    "/app/test_reports/pytest/iter11_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "game_routes.py: /top10 uses rating>=80 & total_rating_count>100 sorted by total_rating_count desc limit 10 (2h TTL). Returns recognizable top-tier titles (Witcher 3, GTA V, Skyrim, etc.) with developer='CD Projekt RED'/'Rockstar North'/etc. normalized correctly.",
+    "game_routes.py: /most-popular uses (follows>5 | hypes>5) & total_rating_count>10 sort follows desc (30m TTL). Verified: result set differs from /top10[:5] — distinct ordering/IDs confirmed in test_most_popular_differs_from_top10.",
+    "Home.jsx Coming Soon block uses bg-gradient-to-br from-orange-600/20 via-pink-600/15 to-purple-700/20 with border-orange-500/30 — matches spec ('gradient orange-to-purple, distinct border'). data-testid='coming-soon-section' present.",
+    "Top10HeroCarousel.jsx renders data-testid='top10-hero' wrapper, rank number overlay (1..10) via data-testid='top10-rank', prev/next arrows, and a dots container at data-testid='top10-dots'. Auto-rotates every 6s (verified rank 1->2 after 7s wait). Manual next click advances rank. Badge '#{n} IN TOP 10 GAMES TODAY' + 'by <developer>' attribution render correctly (e.g., 'Grand Theft Auto V by Rockstar North', 'The Witcher 3: Wild Hunt by CD Projekt RED').",
+    "Individual dot buttons do NOT expose data-testid='top10-dot-{i}' — only the dots wrapper has a testid. Dots are still clickable, but granular per-dot selectors are unavailable. MINOR — not blocking.",
+    "RequestContentPage.jsx H1 renders 'Request a Game' (with 'Game' in gradient). data-testid request-type-game/upcoming/dlc all present with Gamepad2/Calendar/Sparkles icons. Title placeholder = 'e.g., Hollow Knight: Silksong, GTA VI, Stardew Valley'. Zero occurrences of 'TV Show', 'Documentary', 'movies', 'documentaries' on rendered page.",
+    "Footer.jsx: 'Request' link text is '🎮 Request a Game'. Zero footer occurrences of '🎬' or 'Request Content'.",
+    "public/xbox-icon.svg: confirmed 200 OK; contents match spec exactly — circle cx=50 cy=50 r=50 fill=#107c10 (classic Xbox green) with two white stroke paths 'M28 28 L72 72' and 'M72 28 L28 72' (classic X). No helix/spiral geometry."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter11_top10_mostpopular.py (new, 21 tests)"
+  ],
+  "success_rate": {
+    "backend": "100% (21/21 pytest PASS in 7.47s)",
+    "frontend": "100% — all spec assertions verified"
+  },
+  "test_credentials": {"ceo": {"email": "cassiusflixvault@gmail.com", "password": "JGotti.8890"}},
+  "seed_data_creation": "None. Re-used CEO account.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "iter11 is green. /api/games/top10 has 2h TTL; /api/games/most-popular has 30m TTL. Both share the existing games_cache TTL index. Top10HeroCarousel auto-rotates every 6s (confirmed via 7s wait showing rank 1->2). Only caveat: individual dot buttons inside data-testid='top10-dots' don't expose per-dot testids (top10-dot-{i}). If granular dot testing is needed later, main agent should add data-testid={`top10-dot-${i}`} to each button. /request-content eagerly redirects to / when unauthenticated (toast 'Sign in required' flashes) — this is expected per iter11 spec (AuthContext loading flag). Welcome tour modal can be bypassed via localStorage.setItem('gamergrid_tour_seen','1') before navigation.",
+  "rca_of_the_issue": "N/A — no bugs found."
+}

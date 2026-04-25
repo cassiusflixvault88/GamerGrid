@@ -3,6 +3,7 @@ import axios from 'axios';
 import Navbar from '../components/Navbar';
 import TopNavBar from '../components/TopNavBar';
 import HeroBanner from '../components/HeroBanner';
+import Top10HeroCarousel from '../components/Top10HeroCarousel';
 import ContentRow from '../components/ContentRow';
 import ContentModal from '../components/ContentModal';
 import VideoPlayer from '../components/VideoPlayer';
@@ -17,6 +18,8 @@ import {
   getNewReleases,
   getByPlatform,
   getGOTY,
+  getMostPopular,
+  getTop10,
 } from '../services/tmdb';
 
 const Home = () => {
@@ -25,6 +28,8 @@ const Home = () => {
   const [heroItems, setHeroItems] = useState([]);
 
   const [trending, setTrending] = useState([]);
+  const [top10, setTop10] = useState([]);
+  const [mostPopular, setMostPopular] = useState([]);
   const [topRated, setTopRated] = useState([]);
   const [upcoming, setUpcoming] = useState([]);
   const [newReleases, setNewReleases] = useState([]);
@@ -62,6 +67,8 @@ const Home = () => {
     try {
       const [
         trendingData,
+        top10Data,
+        mostPopularData,
         topRatedData,
         upcomingData,
         newReleasesData,
@@ -71,6 +78,8 @@ const Home = () => {
         switchData,
       ] = await Promise.all([
         getTrending().catch(() => []),
+        getTop10().catch(() => []),
+        getMostPopular().catch(() => []),
         getTopRated().catch(() => []),
         getUpcoming().catch(() => []),
         getNewReleases().catch(() => []),
@@ -81,6 +90,8 @@ const Home = () => {
       ]);
 
       setTrending(trendingData);
+      setTop10(top10Data);
+      setMostPopular(mostPopularData);
       setTopRated(topRatedData);
       setUpcoming(upcomingData);
       setNewReleases(newReleasesData);
@@ -139,11 +150,19 @@ const Home = () => {
       <TopNavBar />
       <Onboarding />
 
-      <HeroBanner
-        content={heroContent}
-        onPlayClick={handlePlayClick}
-        onInfoClick={handleCardClick}
-      />
+      {top10.length > 0 ? (
+        <Top10HeroCarousel
+          items={top10}
+          onPlayClick={handlePlayClick}
+          onInfoClick={handleCardClick}
+        />
+      ) : (
+        <HeroBanner
+          content={heroContent}
+          onPlayClick={handlePlayClick}
+          onInfoClick={handleCardClick}
+        />
+      )}
 
       <div className="relative -mt-32 z-20 space-y-8 pb-20">
         {/* RATE GAMERGRID CTA */}
@@ -231,6 +250,28 @@ const Home = () => {
         {trending.length > 0 && (
           <ContentRow title="🔥 Trending Now" items={trending} onCardClick={handleCardClick} viewAllLink="/games/all" />
         )}
+
+        {/* Dedicated COMING SOON / Pre-Orders banner-style highlight */}
+        {upcoming.length > 0 && (
+          <div className="px-6 lg:px-12 max-w-[1920px] mx-auto" data-testid="coming-soon-section">
+            <div className="bg-gradient-to-br from-orange-600/20 via-pink-600/15 to-purple-700/20 border border-orange-500/30 rounded-2xl p-1">
+              <div className="flex items-center justify-between px-5 pt-3 pb-1">
+                <div>
+                  <h2 className="text-2xl font-bold text-white">🗓️ Coming Soon &amp; Pre-Orders</h2>
+                  <p className="text-white/60 text-sm mt-0.5">Most-anticipated upcoming releases — pre-order now</p>
+                </div>
+                <a href="/games/all" className="text-orange-300 hover:text-orange-200 text-sm font-semibold">
+                  View All →
+                </a>
+              </div>
+              <ContentRow title="" items={upcoming} onCardClick={handleCardClick} viewAllLink="/games/all" />
+            </div>
+          </div>
+        )}
+
+        {mostPopular.length > 0 && (
+          <ContentRow title="🌟 Most Popular Right Now" items={mostPopular} onCardClick={handleCardClick} viewAllLink="/games/all" />
+        )}
         {goty.length > 0 && (
           <ContentRow
             title={`👑 Game of the Year — ${gotyYear || ''}`}
@@ -238,9 +279,6 @@ const Home = () => {
             onCardClick={handleCardClick}
             viewAllLink="/games/all"
           />
-        )}
-        {upcoming.length > 0 && (
-          <ContentRow title="🗓️ Coming Soon & Pre-Orders" items={upcoming} onCardClick={handleCardClick} viewAllLink="/games/all" />
         )}
         {topRated.length > 0 && (
           <ContentRow title="🏆 Top Rated Games" items={topRated} onCardClick={handleCardClick} viewAllLink="/games/all" />
