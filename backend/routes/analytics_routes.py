@@ -244,9 +244,9 @@ async def analytics_dashboard(
             "device": device,
         })
 
-    # Signup conversion
+    # Signup conversion (created_at is stored as Date in MongoDB, not string)
     total_users = await db.users.count_documents({})
-    new_users = await db.users.count_documents({"created_at": {"$gte": start.isoformat()}})
+    new_users = await db.users.count_documents({"created_at": {"$gte": start}})
     conversion_rate = round(
         (new_users / unique_visitors * 100), 2
     ) if unique_visitors > 0 else 0.0
