@@ -39,6 +39,17 @@ def _api_key() -> str:
     return key
 
 
+def _site_url() -> str:
+    """Public URL for the app — used in email links/CTAs.
+    Set FRONTEND_URL in backend/.env once you buy a domain.
+    """
+    url = (os.environ.get("FRONTEND_URL") or "").strip()
+    if url:
+        return url.rstrip("/")
+    # Fallback to the current Emergent preview URL until a real domain is set.
+    return "https://hbo-max-app.preview.emergentagent.com"
+
+
 async def _ensure_admin(token_data: dict):
     admin = await db.admins.find_one({"user_id": token_data["user_id"]})
     if not admin or not admin.get("is_admin"):
@@ -51,11 +62,18 @@ def _build_digest_html(top10: list, site_url: str = "https://gamergrid.com") -> 
     for i, g in enumerate(top10):
         rank = i + 1
         title = g.get("title") or g.get("name") or "Unknown"
-        cover = g.get("cover_url") or g.get("poster_url") or ""
-        rating = g.get("rating") or g.get("aggregated_rating") or ""
-        if isinstance(rating, (int, float)):
-            rating = f"{rating:.0f}"
-        platforms = ", ".join((g.get("platforms") or [])[:4])
+        # IGDB cover lives in `poster_path` (full https URL).
+        cover = g.get("poster_path") or g.get("cover_url") or g.get("cover") or ""
+        # Ratings: vote_average (0-10) preferred; fall back to metacritic_aggregate (0-100).
+        vote_avg = g.get("vote_average")
+        meta = g.get("metacritic_aggregate")
+        if isinstance(vote_avg, (int, float)) and vote_avg > 0:
+            rating_str = f"{vote_avg:.1f}/10"
+        elif isinstance(meta, (int, float)) and meta > 0:
+            rating_str = f"{meta:.0f}/100"
+        else:
+            rating_str = ""
+        platforms = ", ".join((g.get("platforms") or [])[:3])
         delta = g.get("delta")
         if delta is None:
             delta_html = '<span style="color:#888;font-size:11px;">NEW</span>'
@@ -68,14 +86,14 @@ def _build_digest_html(top10: list, site_url: str = "https://gamergrid.com") -> 
 
         cover_html = (
             f'<img src="{cover}" alt="{title}" width="80" height="106" '
-            'style="border-radius:6px;display:block;object-fit:cover;" />'
+            'style="border-radius:6px;display:block;object-fit:cover;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;" />'
             if cover else
             '<div style="width:80px;height:106px;background:#222;border-radius:6px;"></div>'
         )
 
         rating_html = (
-            f'<span style="color:#fbbf24;font-weight:bold;">★ {rating}</span>'
-            if rating else ""
+            f'<span style="color:#fbbf24;font-weight:bold;">★ {rating_str}</span>'
+            if rating_str else ""
         )
 
         rows.append(f"""
@@ -223,7 +241,7 @@ async def send_test_digest(
     if not top10:
         raise HTTPException(status_code=503, detail="Top 10 cache empty")
 
-    html = _build_digest_html(top10)
+    html = _build_digest_html(top10, _site_url())
     params = {
         "from": SENDER_EMAIL,
         "to": [recipient],

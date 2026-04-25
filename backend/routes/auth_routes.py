@@ -50,6 +50,7 @@ async def _send_welcome_email(email: str, username: str) -> None:
         import resend
         resend.api_key = api_key
         sender = os.environ.get("SENDER_EMAIL", "onboarding@resend.dev")
+        site_url = (os.environ.get("FRONTEND_URL") or "https://hbo-max-app.preview.emergentagent.com").rstrip("/")
         html = f"""
 <!DOCTYPE html><html><body style="margin:0;padding:0;background:#0a0a0a;">
 <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#0a0a0a;padding:24px 0;">
@@ -74,7 +75,7 @@ async def _send_welcome_email(email: str, username: str) -> None:
         </ul>
       </td></tr>
       <tr><td style="padding:0 24px 32px 24px;text-align:center;">
-        <a href="https://gamergrid.com" style="display:inline-block;background:#fbbf24;color:#000;text-decoration:none;padding:14px 32px;border-radius:8px;font-family:Arial,sans-serif;font-weight:bold;font-size:14px;">Start Exploring →</a>
+        <a href="{site_url}" style="display:inline-block;background:#fbbf24;color:#000;text-decoration:none;padding:14px 32px;border-radius:8px;font-family:Arial,sans-serif;font-weight:bold;font-size:14px;">Start Exploring →</a>
       </td></tr>
       <tr><td style="padding:16px 24px;background:#000;border-top:1px solid #1f1f1f;font-family:Arial,sans-serif;color:#666;font-size:11px;text-align:center;">
         Made by Cassius Fox · You can unsubscribe from emails in Settings.
