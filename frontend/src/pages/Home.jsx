@@ -9,6 +9,7 @@ import VideoPlayer from '../components/VideoPlayer';
 import Onboarding from '../components/Onboarding';
 import ShareButton from '../components/ShareButton';
 import Footer from '../components/Footer';
+import AdSlot from '../components/AdSlot';
 import {
   getTrending,
   getTopRated,
@@ -247,6 +248,11 @@ const Home = () => {
         {newReleases.length > 0 && (
           <ContentRow title="🆕 New Releases" items={newReleases} onCardClick={handleCardClick} viewAllLink="/games/all" />
         )}
+
+        <div className="px-6 lg:px-12 max-w-[1920px] mx-auto">
+          <AdSlot name="home_mid" />
+        </div>
+
         {playstation.length > 0 && (
           <ContentRow title="🎮 PlayStation Exclusives & Hits" items={playstation} onCardClick={handleCardClick} viewAllLink="/games/playstation" />
         )}

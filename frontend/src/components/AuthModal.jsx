@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, Eye, EyeOff } from 'lucide-react';
-import { Dialog, DialogContent } from './ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -58,6 +58,10 @@ const AuthModal = ({ isOpen, onClose }) => {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md p-0 bg-black/95 border border-white/10 max-h-[90vh] overflow-y-auto">
+        <DialogTitle className="sr-only">{isLogin ? 'Sign In' : 'Sign Up'}</DialogTitle>
+        <DialogDescription className="sr-only">
+          {isLogin ? 'Sign in to your GamerGrid account' : 'Create a GamerGrid account to save your library and rate games'}
+        </DialogDescription>
         <div className="p-8 max-h-full overflow-y-auto">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-3xl font-bold text-white">

@@ -188,6 +188,15 @@ const Navbar = () => {
                       <span>Home</span>
                     </Link>
                     <Link
+                      to={`/u/${user.username}`}
+                      className="flex items-center space-x-2 px-4 py-2 text-white/90 hover:bg-white/10 transition-colors"
+                      onClick={() => setShowUserMenu(false)}
+                      data-testid="nav-my-profile"
+                    >
+                      <User className="w-4 h-4" />
+                      <span>My Profile</span>
+                    </Link>
+                    <Link
                       to="/watchlist"
                       className="flex items-center space-x-2 px-4 py-2 text-white/90 hover:bg-white/10 transition-colors"
                       onClick={() => setShowUserMenu(false)}

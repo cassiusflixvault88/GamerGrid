@@ -23,7 +23,7 @@ from auth import (
 from public_domain_videos_clean import get_public_domain_movies, get_public_domain_by_id
 
 # Import route modules
-from routes import auth_routes, watchlist_routes, payments_routes, game_routes
+from routes import auth_routes, watchlist_routes, payments_routes, game_routes, public_profile_routes
 
 
 ROOT_DIR = Path(__file__).parent
@@ -62,6 +62,7 @@ api_router.include_router(auth_routes.profile_router)
 api_router.include_router(watchlist_routes.router)
 api_router.include_router(payments_routes.router)
 api_router.include_router(game_routes.router)
+api_router.include_router(public_profile_routes.router)
 
 
 # Define Models
@@ -187,44 +188,14 @@ async def get_current_user(token_data: dict = Depends(verify_token)):
     return UserResponse(**user)
 
 
-@api_router.get("/user/profile")
-async def get_user_profile(token_data: dict = Depends(verify_token)):
-    """Get user profile data"""
-    logger.info(f"Fetching profile for user_id: {token_data['user_id']}")
-    user = await db.users.find_one(
-        {"id": token_data["user_id"]},
-        {"_id": 0, "display_name": 1, "phone": 1, "address": 1, "profile_picture_url": 1,
-         "autoplay_trailers": 1, "email_notifications": 1, "maturity_rating": 1}
-    )
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    logger.info(f"Retrieved profile data: {user}")
-    return user
+@api_router.get("/user/profile_legacy_disabled", include_in_schema=False)
+async def _legacy_get_user_profile_v1():
+    raise HTTPException(404, "moved")
 
 
-@api_router.put("/user/profile")
-async def update_user_profile(profile_data: UserProfileUpdate, token_data: dict = Depends(verify_token)):
-    """Update user profile settings"""
-    # Build update dict with only provided fields
-    update_data = {k: v for k, v in profile_data.model_dump().items() if v is not None}
-    
-    if not update_data:
-        raise HTTPException(status_code=400, detail="No data to update")
-    
-    logger.info(f"Updating profile for user_id: {token_data['user_id']}")
-    logger.info(f"Update data: {update_data}")
-    
-    result = await db.users.update_one(
-        {"id": token_data["user_id"]},
-        {"$set": update_data}
-    )
-    
-    logger.info(f"Update result - matched: {result.matched_count}, modified: {result.modified_count}")
-    
-    if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    return {"message": "Profile updated successfully", "updated_fields": list(update_data.keys())}
+@api_router.put("/user/profile_legacy_disabled", include_in_schema=False)
+async def _legacy_put_user_profile_v1():
+    raise HTTPException(404, "moved")
 
 
 # ============= WATCHLIST ROUTES =============
@@ -1480,46 +1451,7 @@ async def respond_to_content_request(
 
 
 # ============= USER PROFILE & SETTINGS =============
-
-class UserProfile(BaseModel):
-    display_name: Optional[str] = None
-    phone: Optional[str] = None
-    address: Optional[str] = None
-    profile_picture_url: Optional[str] = None
-    autoplay_trailers: bool = True
-    email_notifications: bool = True
-    maturity_rating: str = "PG-13"
-
-@api_router.get("/user/profile")
-async def get_user_profile(current_user: dict = Depends(verify_token)):
-    """Get user profile settings"""
-    user = await db.users.find_one({"id": current_user['user_id']}, {"_id": 0})
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    
-    return {
-        "username": user.get('username'),
-        "email": user.get('email'),
-        "display_name": user.get('display_name', ''),
-        "phone": user.get('phone', ''),
-        "address": user.get('address', ''),
-        "profile_picture_url": user.get('profile_picture_url', ''),
-        "autoplay_trailers": user.get('autoplay_trailers', True),
-        "email_notifications": user.get('email_notifications', True),
-        "maturity_rating": user.get('maturity_rating', 'PG-13')
-    }
-
-@api_router.put("/user/profile")
-async def update_user_profile(profile: UserProfile, current_user: dict = Depends(verify_token)):
-    """Update user profile settings"""
-    update_data = profile.model_dump(exclude_unset=True)
-    
-    await db.users.update_one(
-        {"id": current_user['user_id']},
-        {"$set": update_data}
-    )
-    
-    return {"message": "Profile updated successfully", "profile": update_data}
+# (Canonical handlers live in routes/auth_routes.py via profile_router; legacy duplicates removed.)
 
 
 # ============= ADMIN MANAGEMENT & USER DETAILS =============

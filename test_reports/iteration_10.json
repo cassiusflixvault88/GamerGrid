@@ -1,0 +1,41 @@
+{
+  "summary": "Iteration 10 — full backend + frontend validation of public profiles, CheapShark price tracker, dev/publisher on cards, AdSense scaffolding, AuthModal a11y fix and /api/user/profile consolidation. 23/23 backend pytest PASS. All 7 frontend flows verified live (public profile page /u/JayCool with empty states + Copy Link + Share + AdSlot, Home AdSlot rail, Sign In flow with no Radix DialogTitle warnings, nav 'My Profile' dropdown link, ContentCard hover 'by <developer>', ContentModal 'Live PC deals' grid for The Witcher 3 with 6 store chips and cheapshark.com/redirect target=_blank links, regression of preset avatar persistence implicit via consolidated PUT/GET round-trip).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter10_public_profile_deals.py",
+    "/app/test_reports/pytest/iter10_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "public_profile_routes.py correctly strips email/phone/address/password/is_admin via _public_user(); regex ^username$/i provides case-insensitivity. Verified empirically.",
+    "Duplicate /api/user/profile handlers from iter7-9 are GONE — only routes/auth_routes.profile_router serves it now. server.py:1454 contains a clean comment marker. PUT→GET round-trip (xbox→gamergrid) verified.",
+    "CheapShark integration sends User-Agent='GamerGrid/1.0 (https://gamergrid.app)' and stores results in games_cache with expires_at as a real BSON Date (datetime object verified via pymongo). 2h TTL respected. Empty-result query returns {results:[], total:0} not 4xx.",
+    "normalize_game (game_routes.py:208-242) correctly extracts primary developer/publisher and arrays from involved_companies; trending top-5 shows non-null developer values (Rockstar / CD Projekt etc.).",
+    "AdSlot.jsx is env-gated — when REACT_APP_ADSENSE_CLIENT/SLOT_* are unset it renders a labelled placeholder with data-testid='adslot-{name}-placeholder', perfect for testing without showing real ads in dev/preview. Verified placeholders for 'home_mid' and 'profile_mid'.",
+    "AuthModal a11y fix verified: ZERO Radix 'DialogContent requires DialogTitle' warnings during full Sign-In flow (sr-only DialogTitle + DialogDescription successfully suppress the warning).",
+    "Navbar 'My Profile' dropdown link href='/u/<encoded username>' works for usernames containing spaces (verified with 'GamerGrid Creator and Founder')."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iter10_public_profile_deals.py (new)"
+  ],
+  "success_rate": {
+    "backend": "100% (23/23 pytest PASS)",
+    "frontend": "100% — public profile, AdSlots, nav My Profile, hover dev tag, Live PC deals all green; 0 console errors, 0 Radix warnings"
+  },
+  "test_credentials": {
+    "ceo": {"email": "cassiusflixvault@gmail.com", "password": "JGotti.8890"}
+  },
+  "seed_data_creation": "No new test users created. Re-used JayCool (pre-seeded clean no-library/no-rating user) for empty-state assertions. CEO avatar restored to /gamergrid-icon.svg at end of PUT/GET round-trip test.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "All iter10 features green end-to-end. /api/users/{username} is case-insensitive, never leaks email/phone/address. /api/games/deals?title=<q> is cached 2h with expires_at as Date in games_cache (alongside the existing trending/details cache, sharing the TTL index from iter8). normalize_game now emits developer/publisher/developers[]/publishers[]. The 3 duplicate /api/user/profile handlers from iter7-9 are removed; only routes/auth_routes.profile_router serves the canonical path. AuthModal Radix DialogTitle warning is gone. CRITICAL frontend testing tip: the app uses ?game=<id> URL param for ContentModal — but in the current build that param does NOT auto-open the modal on a fresh navigation; you must click a card or open via search-results to render ContentModal. /u/<username> with a space (CEO) URL-encodes correctly via Link to=. ContentModal deals fetch is async (≈4-6s on cold cache) — wait at least 7s after modal open before asserting deals-section.",
+  "rca_of_the_issue": "N/A — no bugs found in this iteration."
+}

@@ -126,8 +126,13 @@ const ContentCard = ({ content, onClick, rating }) => {
         </div>
         
         {isHovered && (
-          <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black to-transparent">
+          <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black via-black/90 to-transparent">
             <p className="text-white text-sm font-semibold line-clamp-2">{title}</p>
+            {content.developer && (
+              <p className="text-white/60 text-[11px] mt-0.5 line-clamp-1">
+                by {content.developer}
+              </p>
+            )}
           </div>
         )}
       </div>

@@ -205,6 +205,19 @@ def normalize_game(game: dict) -> dict:
     elif game.get("total_rating") is not None:
         rating_10 = round(game["total_rating"] / 10.0, 1)
 
+    # Pull primary developer + publisher for card display
+    devs, pubs = [], []
+    for c in (game.get("involved_companies") or []):
+        if not isinstance(c, dict):
+            continue
+        comp = (c.get("company") or {}).get("name")
+        if not comp:
+            continue
+        if c.get("developer") and comp not in devs:
+            devs.append(comp)
+        if c.get("publisher") and comp not in pubs:
+            pubs.append(comp)
+
     return {
         "id": game.get("id"),
         "title": game.get("name"),
@@ -223,16 +236,21 @@ def normalize_game(game: dict) -> dict:
         "youtube_video_id": _youtube_id(game),
         "metacritic_aggregate": game.get("aggregated_rating"),
         "aggregated_rating_count": game.get("aggregated_rating_count") or 0,
+        "developers": devs[:3],
+        "publishers": pubs[:2],
+        "developer": devs[0] if devs else None,
+        "publisher": pubs[0] if pubs else None,
         "media_type": "game",
         "is_game": True,
     }
 
 
-# Standard list fields
+# Standard list fields (now including primary developer/publisher for card display)
 LIST_FIELDS = (
     "id,name,summary,rating,total_rating,total_rating_count,aggregated_rating,"
     "aggregated_rating_count,first_release_date,genres.name,platforms.name,"
-    "cover.url,screenshots.url,videos.video_id,videos.name"
+    "cover.url,screenshots.url,videos.video_id,videos.name,"
+    "involved_companies.company.name,involved_companies.developer,involved_companies.publisher"
 )
 
 
@@ -667,3 +685,89 @@ async def list_platforms():
         for k, v in PLATFORM_MAP.items()
         if k != "nintendo"
     ]
+
+
+# ---------- CheapShark deals (real-time price tracker) ----------
+@router.get("/deals")
+async def get_deals(title: str = Query(..., min_length=2), limit: int = Query(8, ge=1, le=20)):
+    """Look up live PC deals for a game title via CheapShark (free, no API key)."""
+    cache_key = f"deals:{title.lower().strip()}:{limit}"
+    await _maybe_init_ttl()
+    doc = await _cache_col.find_one({"_id": cache_key}, {"_id": 0, "data": 1, "expires_at": 1})
+    if doc and doc.get("data") and doc.get("expires_at"):
+        try:
+            exp = doc["expires_at"]
+            if isinstance(exp, str):
+                exp = datetime.fromisoformat(exp)
+            if exp.tzinfo is None:
+                exp = exp.replace(tzinfo=timezone.utc)
+            if exp > datetime.now(timezone.utc):
+                return doc["data"]
+        except Exception:
+            pass
+
+    # CheapShark store names (lookup once per process)
+    global _cheapshark_stores
+    try:
+        _cheapshark_stores
+    except NameError:
+        _cheapshark_stores = {}
+
+    async with httpx.AsyncClient(
+        timeout=15,
+        headers={"User-Agent": "GamerGrid/1.0 (https://gamergrid.app)"},
+    ) as client:
+        if not _cheapshark_stores:
+            try:
+                r = await client.get("https://www.cheapshark.com/api/1.0/stores")
+                if r.status_code == 200:
+                    _cheapshark_stores = {str(s["storeID"]): s["storeName"] for s in r.json()}
+            except Exception as e:
+                logger.warning(f"cheapshark stores lookup failed: {e}")
+
+        try:
+            resp = await client.get(
+                "https://www.cheapshark.com/api/1.0/deals",
+                params={
+                    "title": title,
+                    "exact": 0,
+                    "pageSize": limit,
+                    "sortBy": "DealRating",
+                },
+            )
+            resp.raise_for_status()
+            deals_raw = resp.json()
+        except Exception as e:
+            logger.error(f"cheapshark deals error: {e}")
+            return {"results": [], "total": 0}
+
+    results = []
+    for d in deals_raw:
+        store_id = str(d.get("storeID", ""))
+        store_name = _cheapshark_stores.get(store_id, f"Store {store_id}")
+        sale = float(d.get("salePrice") or 0)
+        normal = float(d.get("normalPrice") or 0)
+        savings = float(d.get("savings") or 0)
+        results.append({
+            "title": d.get("title"),
+            "store_id": store_id,
+            "store_name": store_name,
+            "sale_price": sale,
+            "normal_price": normal,
+            "savings_pct": round(savings, 1),
+            "is_on_sale": savings > 0,
+            "deal_rating": float(d.get("dealRating") or 0),
+            "deal_url": f"https://www.cheapshark.com/redirect?dealID={d.get('dealID')}",
+            "thumb": d.get("thumb"),
+        })
+
+    payload = {"results": results, "total": len(results), "title": title}
+    await _cache_col.update_one(
+        {"_id": cache_key},
+        {"$set": {
+            "data": payload,
+            "expires_at": datetime.now(timezone.utc) + timedelta(hours=2),
+        }},
+        upsert=True,
+    )
+    return payload
