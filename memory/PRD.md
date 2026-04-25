@@ -18,7 +18,17 @@ support payments.
 - Hosting: Emergent (preview + deploy)
 
 ## Implemented (✅ as of 2026-02-25)
-### Pivot to GamerGrid (this fork)
+### Iteration 7 (this turn)
+- **MongoDB-backed cache** for IGDB list responses (`games_cache` collection).
+  TTLs: trending=1h, top-rated=6h, upcoming=30m, new-releases=30m, platform=2h, details=24h.
+  Sub-100ms after first hit (vs ~700ms cold call).
+- **Genre filter** + **Year filter** added to `/api/games/trending`, `/top-rated`, `/upcoming`, `/new-releases`, `/platform/{name}`. New `/api/games/genres` lists all 24 IGDB genres.
+- **Buy / store links** in `GET /api/games/details/{id}` via `details.buy_links[]`. Uses IGDB `websites.type` (1/13/15/16/17/22/23/24) for direct deep links to Steam, GOG, Epic, itch.io, Official Site, Xbox Store, PSN, Nintendo eShop. Falls back to per-platform search URLs when IGDB doesn't have a direct deep link, and always appends an Amazon link (with optional `AMAZON_AFFILIATE_TAG` env var).
+- **A11y polish**: added `<DialogTitle className="sr-only">` and `<DialogDescription className="sr-only">` to `ContentModal.jsx` and `Onboarding.jsx` to silence Radix warnings.
+- **Frontend BrowseAllPage** now shows: 24 genre chips, year dropdown (Any + last 30 years), Sort buttons, search, and a "Clear filters" link when any filter is non-default.
+- **Frontend ContentModal** now shows a colored "Where to play / buy" link bar with per-store branding (Steam blue, GOG purple, Epic gray, PSN blue, Xbox green, Nintendo red, Amazon orange).
+
+### Pivot to GamerGrid (iteration 6)
 - Replaced TMDB integration with IGDB v4 (Twitch) API.
 - Backend `/api/games/*` endpoints with response normalization to TMDB-shaped payloads:
   - `GET /api/games/trending`
@@ -69,11 +79,11 @@ support payments.
 ## Roadmap
 
 ### P1 (high value, next up)
-- Persist & cache IGDB games into MongoDB (collection `games`) for instant load + offline-friendly.
 - "Game of the Year" curated rail.
-- Filter chips on `BrowseAllPage`: by genre + by year.
-- Deeper "Similar Games" rail in `ContentModal` (already wired, polish needed).
 - Wishlist / "Watchlist" relabeled to "Library" for games.
+- Pre-order CTA → external store (Steam/PSN/Xbox) wired into hero + cards.
+- Mongo TTL index on `games_cache.expires_at` (currently stored as ISO string — convert to native `datetime` and add TTL index for auto-eviction).
+- Surface `developers`, `publishers` and platform store deep-links on cards (currently only in modal).
 
 ### P2
 - AdSense integration (awaiting user approval).

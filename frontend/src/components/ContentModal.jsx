@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { X, Play, Plus, ThumbsUp, Check } from 'lucide-react';
-import { Dialog, DialogContent, DialogTitle } from './ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog';
 import { Button } from './ui/button';
 import { Separator } from './ui/separator';
 import { getImageUrl, getDetails, getVideos } from '../services/tmdb';
@@ -150,6 +150,7 @@ const ContentModal = ({ content, isOpen, onClose, onPlayTrailer, onSelectContent
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto p-0 bg-[#141414] border-0 scrollbar-thin scrollbar-thumb-white/20 scrollbar-track-transparent">
         <DialogTitle className="sr-only">{title || 'Content details'}</DialogTitle>
+        <DialogDescription className="sr-only">Game details, screenshots, gameplay trailers and where to buy.</DialogDescription>
         <div className="relative">
           {/* Backdrop Image - Smaller on mobile */}
           <div className="relative w-full h-[40vh] md:h-[50vh] lg:aspect-video">
