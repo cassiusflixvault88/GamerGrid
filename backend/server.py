@@ -23,7 +23,7 @@ from auth import (
 from public_domain_videos_clean import get_public_domain_movies, get_public_domain_by_id
 
 # Import route modules
-from routes import auth_routes, watchlist_routes, payments_routes, game_routes, public_profile_routes, news_routes, analytics_routes, email_routes, trailer_routes, saved_trailers_routes, admin_messages_routes, auth_extras_routes, news_social_routes, app_review_social_routes
+from routes import auth_routes, watchlist_routes, payments_routes, game_routes, public_profile_routes, news_routes, analytics_routes, email_routes, trailer_routes, saved_trailers_routes, admin_messages_routes, auth_extras_routes, news_social_routes, app_review_social_routes, account_routes
 
 
 ROOT_DIR = Path(__file__).parent
@@ -72,6 +72,7 @@ api_router.include_router(admin_messages_routes.router)
 api_router.include_router(auth_extras_routes.router)
 api_router.include_router(news_social_routes.router)
 api_router.include_router(app_review_social_routes.router)
+api_router.include_router(account_routes.router)
 
 
 # Define Models
