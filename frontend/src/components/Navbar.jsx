@@ -204,6 +204,15 @@ const Navbar = () => {
                       <span>My Profile</span>
                     </Link>
                     <Link
+                      to="/news"
+                      className="flex items-center space-x-2 px-4 py-2 text-green-400 hover:text-green-300 hover:bg-white/10 transition-colors font-semibold"
+                      onClick={() => setShowUserMenu(false)}
+                      data-testid="nav-menu-news"
+                    >
+                      <span>📰</span>
+                      <span>News Articles</span>
+                    </Link>
+                    <Link
                       to="/watchlist"
                       className="flex items-center space-x-2 px-4 py-2 text-white/90 hover:bg-white/10 transition-colors"
                       onClick={() => setShowUserMenu(false)}
