@@ -18,7 +18,12 @@ support payments.
 - Hosting: Emergent (preview + deploy)
 
 ## Implemented (✅ as of 2026-02-25)
-### Iteration 10 (this turn)
+### Iteration 11 (this turn)
+- 🔄 **Auto-rotate to fullscreen** in `VideoPlayer.jsx`: when the user opens a trailer and rotates their phone to landscape, the YouTube iframe automatically goes fullscreen. Returns to portrait → exits fullscreen. Uses both `screen.orientation.change` and the legacy `orientationchange` events. Cross-browser fullscreen helpers (webkit/moz prefixes) for iOS Safari support. Added a manual fullscreen toggle button (Maximize2/Minimize2 icons) in the top-right of the player as a fallback for desktop and devices that block auto-rotate. Added a "📱 Rotate your phone for fullscreen" hint.
+- 🔓 **PWA orientation unlock** — `manifest.json` `orientation` changed from `"portrait-primary"` (which prevented rotation entirely on installed PWAs) to `"any"`. Updated manifest icon path from `/flixvault-icon.svg` → `/gamergrid-icon.svg`.
+- 🪟 **Viewport** — added `viewport-fit=cover` so notched devices use the full screen during landscape playback.
+
+### Iteration 10
 - **Public profile page `/u/:username`** — shareable per-user landing page with avatar, display name, "Gamer since" date, library count, reviews count, average rating, full library grid, and reviews list. **Sensitive fields (email/phone/address) are NEVER exposed**.
 - **CheapShark price tracker** — new `GET /api/games/deals?title=` endpoint (free, no API key). Returns top live PC deals (Steam, GOG, Epic, Humble, GreenManGaming, etc.) with sale/normal price + savings %. Cached 2h. Surfaced in `ContentModal` as a "💰 Live PC deals" grid with deep links via `cheapshark.com/redirect`.
 - **AdSense scaffolding** — env-gated `<AdSlot />` component. Placeholder shown in dev/preview; real `<ins class="adsbygoogle">` rendered when `REACT_APP_ADSENSE_CLIENT` and `REACT_APP_ADSENSE_SLOT_<NAME>` env vars are set. Slots placed on Home (between New Releases and platform rails) and Public Profile (between Library and Reviews).

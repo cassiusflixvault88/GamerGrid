@@ -4,7 +4,7 @@
   "description": "Discover games, watch trailers, track releases. PS5, Xbox, PC & Switch.",
   "icons": [
     {
-      "src": "/flixvault-icon.svg",
+      "src": "/gamergrid-icon.svg",
       "type": "image/svg+xml",
       "sizes": "any",
       "purpose": "any maskable"
@@ -14,6 +14,6 @@
   "display": "standalone",
   "theme_color": "#8B5CF6",
   "background_color": "#0F172A",
-  "orientation": "portrait-primary",
+  "orientation": "any",
   "categories": ["entertainment", "gaming", "games"]
 }
