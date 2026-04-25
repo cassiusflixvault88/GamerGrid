@@ -1,51 +1,59 @@
 /* eslint-disable no-restricted-globals */
 
-const CACHE_NAME = 'streamflix-v1';
+const CACHE_NAME = 'gamergrid-v3';
 const urlsToCache = [
   '/',
   '/static/css/main.css',
   '/static/js/main.js',
 ];
 
-// Install event - cache essential files
+// Install event - cache essential static files only
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('Opened cache');
       return cache.addAll(urlsToCache);
     })
   );
   self.skipWaiting();
 });
 
-// Fetch event - serve from cache, fallback to network
+// Fetch event - NEVER intercept API requests; cache static assets only
 self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+
+  // 🔴 Bypass SW entirely for API + auth routes — these MUST be live every request.
+  // This fixes stale profile_picture_url, watchlist, ratings, etc.
+  if (url.pathname.startsWith('/api/') || event.request.method !== 'GET') {
+    return; // let the browser handle it
+  }
+
+  // Network-first for HTML navigations (so deploy updates take effect)
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match('/'))
+    );
+    return;
+  }
+
+  // Cache-first for static assets only
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      // Cache hit - return response
-      if (response) {
-        return response;
-      }
+    caches.match(event.request).then((cachedResponse) => {
+      if (cachedResponse) return cachedResponse;
       return fetch(event.request).then((response) => {
-        // Check if valid response
         if (!response || response.status !== 200 || response.type !== 'basic') {
           return response;
         }
-
-        // Clone the response
         const responseToCache = response.clone();
-
         caches.open(CACHE_NAME).then((cache) => {
           cache.put(event.request, responseToCache);
         });
-
         return response;
       });
     })
   );
 });
 
-// Activate event - clean up old caches
+// Activate event - clean up old caches and take control immediately
 self.addEventListener('activate', (event) => {
   const cacheWhitelist = [CACHE_NAME];
   event.waitUntil(
@@ -57,7 +65,13 @@ self.addEventListener('activate', (event) => {
           }
         })
       );
-    })
+    }).then(() => self.clients.claim())
   );
-  self.clients.claim();
+});
+
+// Allow page to ask SW to skip waiting (used by InstallPWA)
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });

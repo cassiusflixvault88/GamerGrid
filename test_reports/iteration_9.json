@@ -1,0 +1,44 @@
+{
+  "summary": "Iteration 9 RETEST after service-worker-cache fix from iteration 8. CRITICAL BUG FIXED & VERIFIED end-to-end: all 5 preset avatars (xbox, switch, gamergrid, playstation, pc-steam) persist across full page reload — input#profile_picture value matches expected URL AND the clicked preset has the border-purple-500 selection ring. SW bypass on /api/* verified live: post-click /api/auth/me returned the just-set /pc-steam-icon.svg (would have been served stale by old SW). Backend regression 26/26 PASS. All iter8 frontend successes still green (GOTY '👑 Game of the Year — 2025' rail on Home, 6 platform badges PS5/PS4/XSX/XB1/SWITCH/PC, /watchlist h1 'My Library', SupportPage clean of movie/TV references, ContentModal opens via ?game=1942). Mongo TTL index on games_cache.expires_at confirmed expireAfterSeconds=0. New-user signup default profile_picture_url = None (not /flixvault-icon.svg). The user-reported preset-revert bug is now fully resolved.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "PUT /api/user/profile", "issue": "Three duplicate handlers still exist (server.py:205, server.py:1512, routes/auth_routes.py:155). FastAPI silently uses the first registered. Carry-over from iter8; not blocking but should be consolidated."},
+      {"endpoint": "GET /api/user/profile", "issue": "Two duplicate handlers in server.py (lines 190 & 1493). Carry-over from iter8."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Onboarding tour Dialog & AuthModal", "issues": ["Residual Radix a11y warning: 'DialogContent requires a DialogTitle'. Same as iter7/iter8 footnote — non-blocking, console-only."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iter8_avatars_goty.py",
+    "/app/test_reports/pytest/iter9_results.xml"
+  ],
+  "action_items": [
+    "OPTIONAL: Consolidate duplicate /api/user/profile GET & PUT handlers (3 PUT, 2 GET) — pure code-hygiene, behaviour is correct.",
+    "OPTIONAL polish: add VisuallyHidden DialogTitle/DialogDescription to onboarding Tour and AuthModal Dialogs to silence the Radix accessibility console warning."
+  ],
+  "critical_code_review_comments": [
+    "Service-worker fix (gamergrid-v3) correctly bypasses /api/* and any non-GET method, network-first for HTML navigations, cache-first only for static assets, deletes old caches on activate, claims clients. ✅",
+    "DUPLICATE ROUTE HANDLERS still present in server.py & routes/auth_routes.py — same finding as iter8. FastAPI uses the first registered, so it works, but it is a maintenance footgun.",
+    "User model defaults profile_picture_url=None — verified end-to-end via fresh signup. ✅",
+    "Mongo TTL index on games_cache.expires_at(expireAfterSeconds=0) — verified live via index_information(). ✅"
+  ],
+  "updated_files": [],
+  "success_rate": {
+    "backend": "100% (26/26 pytest PASS)",
+    "frontend": "100% — 5/5 preset avatars persist on reload; GOTY/badges/Library/Support all green"
+  },
+  "test_credentials": {
+    "ceo": {"email": "cassiusflixvault@gmail.com", "password": "JGotti.8890"}
+  },
+  "seed_data_creation": "1 throwaway TEST_iter8_<rand>@example.com via /api/auth/signup (re-used from iter8 fixture) to verify default profile_picture_url=None. CEO avatar restored to /gamergrid-icon.svg at end of UI run.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Iteration 9 fully validates the SW-cache fix from main agent. All 5 preset avatars (/xbox-icon.svg, /switch-icon.svg, /gamergrid-icon.svg, /playstation-icon.svg, /pc-steam-icon.svg) persist across reload AND the selected one shows border-purple-500 ring. Live /api/auth/me returns fresh data confirming SW bypass. Backend 26/26 regression PASS. CRITICAL playwright detail: BEFORE testing the SW fix, you MUST unregister existing service workers and clear all caches via `await page.evaluate(...)` else the OLD streamflix-v1/gamergrid-v* SW remains active in the test browser. After unregister, reload, then proceed. Login flow: navbar 'Sign In' button opens AuthModal — there is NO /login route. Onboarding tour modal appears on first load — dismiss with 'Skip Tour' text button. The 3 duplicate route handlers and the Radix DialogTitle a11y warning are pre-existing minor issues carried from iter7/iter8.",
+  "rca_of_the_issue": "Iteration 8 RCA was correct: the PWA service worker (gamergrid-v1) cached ALL same-origin GET responses including /api/auth/me, returning stale profile_picture_url after the PUT round-tripped successfully. The rewritten service-worker.js (CACHE_NAME='gamergrid-v3') now early-returns from the fetch handler for any url.pathname.startsWith('/api/') OR any non-GET method, so API requests always go to the network. The activate handler deletes old caches and self.clients.claim()s, ensuring the new SW takes over on reload. End-to-end verification: clicked each of the 5 presets, waited 3.5s for PUT, reloaded, and confirmed both input#profile_picture value AND border-purple-500 selection ring matched the clicked preset (5/5 PASS)."
+}
