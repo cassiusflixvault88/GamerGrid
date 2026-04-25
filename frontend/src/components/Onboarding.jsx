@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Film, Tv, Star, Heart, Download, Share2, Play, Gamepad2 } from 'lucide-react';
+import { X, Film, Tv, Star, Heart, Download, Share2, Play, Gamepad2, Crown, Bookmark } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog';
 import { Button } from './ui/button';
 
@@ -84,6 +84,17 @@ const Onboarding = () => {
         'Rate games like IGN/Metacritic',
         'Leave detailed reviews',
         'See community ratings'
+      ]
+    },
+    {
+      title: 'Go Pro for $4.99/mo 👑',
+      description: 'Unlock the full GamerGrid experience and support an indie creator. Cancel anytime.',
+      icon: <Crown className="w-16 h-16 text-yellow-400" />,
+      features: [
+        '100% ad-free browsing',
+        'Save trailers to your personal library',
+        'Early access to new features',
+        'Priority support from the founder'
       ]
     },
     {
