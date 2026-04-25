@@ -27,12 +27,17 @@ const PageTracker = () => {
         sessionStorage.setItem('gg_sid', sid);
       }
 
+      const token = (() => {
+        try { return localStorage.getItem('token') || null; } catch { return null; }
+      })();
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
       axios.post(`${API}/analytics/track`, {
         visitor_id: vid,
         session_id: sid,
         path: location.pathname,
         referrer: document.referrer || null,
-      }).catch(() => { /* silent */ });
+      }, { headers }).catch(() => { /* silent */ });
 
       // GA4 hook (only fires if gtag is loaded; user pastes snippet in index.html)
       if (typeof window !== 'undefined' && typeof window.gtag === 'function') {

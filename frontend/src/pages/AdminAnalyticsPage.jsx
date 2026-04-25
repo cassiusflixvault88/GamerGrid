@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { BarChart3, Users, Eye, MousePointerClick, TrendingUp, Globe, Calendar, ArrowLeft, Mail, Send, Eye as EyeIcon } from 'lucide-react';
+import { BarChart3, Users, Eye, MousePointerClick, TrendingUp, Globe, Calendar, ArrowLeft, Mail, Send, Eye as EyeIcon, Clock, Smartphone, Trash2 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { useAuth } from '../context/AuthContext';
@@ -174,6 +174,26 @@ const AdminAnalyticsPage = () => {
   const daily = data?.daily || [];
   const topPages = data?.top_pages || [];
   const topReferrers = data?.top_referrers || [];
+  const recentVisits = data?.recent_visits || [];
+
+  const formatTime = (iso) => {
+    if (!iso) return '';
+    try {
+      const d = new Date(iso);
+      const now = new Date();
+      const diffMs = now - d;
+      const diffMin = Math.floor(diffMs / 60000);
+      if (diffMin < 1) return 'just now';
+      if (diffMin < 60) return `${diffMin}m ago`;
+      const diffHr = Math.floor(diffMin / 60);
+      if (diffHr < 24) return `${diffHr}h ago`;
+      const diffDay = Math.floor(diffHr / 24);
+      if (diffDay < 7) return `${diffDay}d ago`;
+      return d.toLocaleDateString();
+    } catch {
+      return iso;
+    }
+  };
 
   // Compute max for bar chart
   const maxDaily = Math.max(1, ...daily.map(d => d.views));
@@ -222,18 +242,21 @@ const AdminAnalyticsPage = () => {
         </div>
 
         {/* All-Time Hero Stats */}
-        <Card className="bg-gradient-to-r from-yellow-500/10 via-yellow-400/5 to-transparent border-yellow-500/30 p-6 mb-8" data-testid="analytics-alltime-card">
-          <div className="flex items-center gap-2 mb-3">
-            <TrendingUp className="w-5 h-5 text-yellow-400" />
-            <h2 className="text-lg font-semibold text-yellow-400">All-Time Totals</h2>
+        <Card className="bg-gradient-to-r from-yellow-500/10 via-yellow-400/5 to-transparent border-yellow-500/30 p-6 mb-4" data-testid="analytics-alltime-card">
+          <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-yellow-400" />
+              <h2 className="text-lg font-semibold text-yellow-400">Real Visitor Totals</h2>
+            </div>
+            <span className="text-xs text-white/50 italic">Your own visits are excluded ✓</span>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             <div>
-              <p className="text-white/60 text-xs uppercase tracking-wider">Total Page Views</p>
+              <p className="text-white/60 text-xs uppercase tracking-wider">All-Time Page Views</p>
               <p className="text-3xl font-bold text-white" data-testid="alltime-views">{(totals.all_time_views || 0).toLocaleString()}</p>
             </div>
             <div>
-              <p className="text-white/60 text-xs uppercase tracking-wider">Unique Visitors</p>
+              <p className="text-white/60 text-xs uppercase tracking-wider">All-Time Visitors</p>
               <p className="text-3xl font-bold text-white" data-testid="alltime-visitors">{(totals.all_time_visitors || 0).toLocaleString()}</p>
             </div>
             <div>
@@ -243,6 +266,27 @@ const AdminAnalyticsPage = () => {
             <div>
               <p className="text-white/60 text-xs uppercase tracking-wider">Conversion (period)</p>
               <p className="text-3xl font-bold text-green-400" data-testid="period-conversion">{totals.conversion_rate || 0}%</p>
+            </div>
+          </div>
+        </Card>
+
+        {/* Last 24h Live Pulse */}
+        <Card className="bg-gradient-to-r from-green-500/10 to-transparent border-green-500/30 p-5 mb-8" data-testid="live-pulse-card">
+          <div className="flex items-center gap-3 flex-wrap">
+            <div className="relative">
+              <Clock className="w-5 h-5 text-green-400" />
+              <span className="absolute -top-1 -right-1 w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+            </div>
+            <h2 className="text-lg font-semibold text-green-400">Last 24 Hours</h2>
+            <div className="flex gap-6 ml-auto flex-wrap">
+              <div>
+                <span className="text-2xl font-bold text-white" data-testid="views-24h">{(totals.views_24h || 0).toLocaleString()}</span>
+                <span className="text-white/60 text-sm ml-2">page views</span>
+              </div>
+              <div>
+                <span className="text-2xl font-bold text-white" data-testid="visitors-24h">{(totals.visitors_24h || 0).toLocaleString()}</span>
+                <span className="text-white/60 text-sm ml-2">visitors</span>
+              </div>
             </div>
           </div>
         </Card>
@@ -368,6 +412,60 @@ const AdminAnalyticsPage = () => {
             )}
           </Card>
         </div>
+
+        {/* Recent Visitors Live Feed */}
+        <Card className="bg-white/5 border-white/10 p-6 mt-6" data-testid="recent-visits-card">
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+            <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+              <Users className="w-5 h-5 text-purple-400" />
+              Recent Visitors
+              <span className="text-xs text-white/50 font-normal">(last 50, your own excluded)</span>
+            </h2>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => load(days)}
+              className="bg-white/10 border-white/20 text-white/80 hover:bg-white/20"
+              data-testid="refresh-recent-btn"
+            >
+              Refresh
+            </Button>
+          </div>
+          {recentVisits.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-white/40 text-sm mb-1">No visitors yet besides you.</p>
+              <p className="text-white/30 text-xs">Share your link — every real visit will show up here in real time.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="text-white/40 text-xs uppercase tracking-wider border-b border-white/10">
+                  <tr>
+                    <th className="text-left py-2 pr-3">When</th>
+                    <th className="text-left py-2 pr-3">Page</th>
+                    <th className="text-left py-2 pr-3">Came From</th>
+                    <th className="text-left py-2 pr-3">Device</th>
+                    <th className="text-left py-2">Visitor</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentVisits.map((v, i) => (
+                    <tr key={i} className="border-b border-white/5 hover:bg-white/5">
+                      <td className="py-2 pr-3 text-white/80 whitespace-nowrap">{formatTime(v.ts)}</td>
+                      <td className="py-2 pr-3 text-white font-mono text-xs">{v.path}</td>
+                      <td className="py-2 pr-3 text-green-300 text-xs">{v.referrer}</td>
+                      <td className="py-2 pr-3 text-white/60 text-xs flex items-center gap-1">
+                        <Smartphone className="w-3 h-3" />
+                        {v.device}
+                      </td>
+                      <td className="py-2 text-white/40 font-mono text-xs">{v.visitor_id_short}…</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Card>
 
         {/* Weekly Email Digest Controls */}
         <Card className="bg-white/5 border-white/10 p-6 mt-8" data-testid="email-digest-card">

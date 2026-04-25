@@ -50,6 +50,8 @@ _(I'll add to this list every time you mention something casually so we don't lo
 - [Feb 25] Want analytics for visitors who don't sign up — ✅ DONE
 - [Feb 25] Want monetization explained: AdSense + Amazon Affiliates + $4.99 Pro tier (Pro = ad-free + downloads)
 - [Feb 25] Bug found: admin/CEO not seeing Download Trailer button — ✅ FIXED Feb 25 (was missing `is_admin`/`is_pro` in user response)
+- [Feb 25] Wants to see EVERY real visitor (not own refreshes) and a list of who visited — ✅ DONE: admin visits now auto-excluded + Recent Visitors live feed added
+- [Feb 25] Eventually buying a domain to make this a website too (not just app) — keep in mind for future SEO/sitemap work
 
 ---
 
