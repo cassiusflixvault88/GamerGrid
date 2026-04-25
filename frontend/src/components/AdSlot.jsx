@@ -9,12 +9,15 @@
  * placeholder so you can see where ads will appear without pulling in AdSense.
  */
 import React, { useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
 
 const ADSENSE_CLIENT = process.env.REACT_APP_ADSENSE_CLIENT; // ca-pub-XXXX
 
 const AdSlot = ({ slot, name = 'banner', format = 'auto', className = '', responsive = true }) => {
+  const { user } = useAuth();
+  const isPro = Boolean(user && (user.is_pro || user.is_admin));
   const slotId = slot || process.env[`REACT_APP_ADSENSE_SLOT_${name.toUpperCase()}`];
-  const enabled = Boolean(ADSENSE_CLIENT && slotId);
+  const enabled = Boolean(ADSENSE_CLIENT && slotId) && !isPro;
 
   useEffect(() => {
     if (!enabled) return;
@@ -35,6 +38,9 @@ const AdSlot = ({ slot, name = 'banner', format = 'auto', className = '', respon
       // noop
     }
   }, [enabled]);
+
+  // Pro/Admin users: never render ads (or even the dev placeholder)
+  if (isPro) return null;
 
   if (!enabled) {
     return (
