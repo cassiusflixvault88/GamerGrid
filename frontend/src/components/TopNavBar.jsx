@@ -63,13 +63,13 @@ const TopNavBar = () => {
             </button>
             
             <button
-              onClick={() => navigate('/public-domain')}
+              onClick={() => navigate('/games/all')}
               className={`p-2 rounded-lg transition-colors ${
-                location.pathname === '/public-domain' 
+                location.pathname.startsWith('/games')
                   ? 'bg-purple-600 text-white' 
                   : 'text-white/70 hover:text-white hover:bg-white/10'
               }`}
-              title="Free Movies"
+              title="Browse Games"
             >
               <Film className="w-5 h-5" />
             </button>

@@ -6,14 +6,14 @@ import ContentCard from '../components/ContentCard';
 import ContentModal from '../components/ContentModal';
 import VideoPlayer from '../components/VideoPlayer';
 import Footer from '../components/Footer';
-
-const API_URL = process.env.REACT_APP_BACKEND_URL;
+import { search as searchGames } from '../services/tmdb';
 
 const SearchPage = () => {
   const [searchParams] = useSearchParams();
-  const query = searchParams.get('q');
-  const isDirect = searchParams.get('direct') === 'true'; // Direct click from autocomplete
+  const query = searchParams.get('q') || '';
+  const isDirect = searchParams.get('direct') === 'true';
   const directId = searchParams.get('id');
+
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedContent, setSelectedContent] = useState(null);
@@ -22,69 +22,34 @@ const SearchPage = () => {
   const [currentVideo, setCurrentVideo] = useState(null);
 
   useEffect(() => {
-    if (query) {
-      searchContent();
-    } else {
-      // Show all movies if no query
-      loadAllMovies();
-    }
+    runSearch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
 
-  // Auto-open modal when clicking from autocomplete
   useEffect(() => {
     if (isDirect && directId && results.length > 0) {
-      const matchedContent = results.find(item => item.id === parseInt(directId));
-      if (matchedContent) {
-        handleCardClick(matchedContent);
+      const match = results.find((g) => String(g.id) === String(directId));
+      if (match) {
+        setSelectedContent(match);
+        setModalOpen(true);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [results, isDirect, directId]);
 
-  const loadAllMovies = async () => {
-    setLoading(true);
-    try {
-      // Get all movies from your catalog
-      const response = await fetch(`${API_URL}/api/catalog/movies?limit=100`);
-      const data = await response.json();
-      setResults(data.results || []);
-    } catch (error) {
-      console.error('Error loading movies:', error);
-    } finally {
+  const runSearch = async () => {
+    if (!query.trim()) {
+      setResults([]);
       setLoading(false);
+      return;
     }
-  };
-
-  const searchContent = async () => {
     setLoading(true);
     try {
-      console.log(`🔍 Searching for: "${query}"`);
-      // Search through YOUR catalog movies
-      const response = await fetch(`${API_URL}/api/catalog/movies?limit=1000`);
-      const data = await response.json();
-      const allMovies = data.results || [];
-      console.log(`📚 Total catalog items: ${allMovies.length}`);
-      
-      // If direct click from autocomplete, show only exact match
-      if (isDirect && directId) {
-        const exactMatch = allMovies.filter(movie => movie.id === parseInt(directId));
-        console.log(`✅ Direct match for ID ${directId}`);
-        setResults(exactMatch);
-      } else {
-        // Filter movies that match search query
-        const filtered = allMovies.filter(movie => {
-          const title = (movie.title || movie.name || '').toLowerCase();
-          const overview = (movie.overview || '').toLowerCase();
-          const searchTerm = query.toLowerCase();
-          return title.includes(searchTerm) || overview.includes(searchTerm);
-        });
-        
-        console.log(`✅ Found ${filtered.length} matches for "${query}"`);
-        setResults(filtered);
-      }
-    } catch (error) {
-      console.error('Error searching:', error);
+      const data = await searchGames(query);
+      setResults(data);
+    } catch (err) {
+      console.error('Search error:', err);
+      setResults([]);
     } finally {
       setLoading(false);
     }
@@ -102,13 +67,13 @@ const SearchPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-black" data-testid="search-page">
       <Navbar />
       <BackNavigation />
-      
-      <div className="px-6 lg:px-12 max-w-[1920px] mx-auto">
+
+      <div className="px-6 lg:px-12 max-w-[1920px] mx-auto pt-24">
         <h1 className="text-3xl font-bold text-white mb-8">
-          {query ? `Search results for "${query}"` : 'Search'}
+          {query ? `Search results for "${query}"` : 'Search Games'}
         </h1>
 
         {loading ? (
@@ -116,19 +81,15 @@ const SearchPage = () => {
             <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : results.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 pb-20">
+          <div className="flex flex-wrap gap-4 pb-20">
             {results.map((item) => (
-              <ContentCard 
-                key={item.id} 
-                content={{...item, media_type: item.media_type || 'movie'}} 
-                onClick={handleCardClick} 
-              />
+              <ContentCard key={item.id} content={item} onClick={handleCardClick} />
             ))}
           </div>
         ) : (
           <div className="text-center py-20">
             <p className="text-white/70 text-lg">
-              {query ? `No results found for "${query}"` : 'Start typing to search movies...'}
+              {query ? `No games found for "${query}"` : 'Start typing to search games...'}
             </p>
           </div>
         )}

@@ -81,28 +81,34 @@ const Navbar = () => {
                 Home
               </Link>
               <Link
-                to="/movies"
+                to="/games/playstation"
                 className="text-white/90 hover:text-white transition-colors text-sm font-medium"
               >
-                Movies
+                PlayStation
               </Link>
               <Link
-                to="/series"
+                to="/games/xbox"
                 className="text-white/90 hover:text-white transition-colors text-sm font-medium"
               >
-                Series
+                Xbox
               </Link>
               <Link
-                to="/originals"
+                to="/games/pc"
                 className="text-white/90 hover:text-white transition-colors text-sm font-medium"
               >
-                Originals
+                PC
               </Link>
               <Link
-                to="/public-domain"
+                to="/games/switch"
+                className="text-white/90 hover:text-white transition-colors text-sm font-medium"
+              >
+                Switch
+              </Link>
+              <Link
+                to="/games/all"
                 className="text-white/90 hover:text-white transition-colors text-sm font-medium bg-gradient-to-r from-purple-600/20 to-blue-600/20 px-3 py-1 rounded-md"
               >
-                Free Movies
+                Browse All
               </Link>
             </div>
           </div>

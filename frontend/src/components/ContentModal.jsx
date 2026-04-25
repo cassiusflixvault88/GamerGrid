@@ -298,12 +298,45 @@ const ContentModal = ({ content, isOpen, onClose, onPlayTrailer, onSelectContent
               </p>
             </div>
 
-            {details?.genres && details.genres.length > 0 && (
+            {(details?.genres && details.genres.length > 0) && (
               <div className="flex items-start space-x-2">
                 <span className="text-white/50 text-sm">Genres:</span>
                 <span className="text-white/90 text-sm">
-                  {details.genres.map((g) => g.name).join(', ')}
+                  {details.genres.map((g) => (typeof g === 'string' ? g : g.name)).join(', ')}
                 </span>
+              </div>
+            )}
+
+            {(content.platforms && content.platforms.length > 0) && (
+              <div className="flex items-start space-x-2 flex-wrap gap-2">
+                <span className="text-white/50 text-sm">Platforms:</span>
+                {content.platforms.map((p) => (
+                  <Badge key={p} variant="outline" className="text-white/80 border-white/30 text-xs">{p}</Badge>
+                ))}
+              </div>
+            )}
+
+            {(details?.developers && details.developers.length > 0) && (
+              <div className="flex items-start space-x-2">
+                <span className="text-white/50 text-sm">Developer:</span>
+                <span className="text-white/90 text-sm">{details.developers.join(', ')}</span>
+              </div>
+            )}
+            {(details?.publishers && details.publishers.length > 0) && (
+              <div className="flex items-start space-x-2">
+                <span className="text-white/50 text-sm">Publisher:</span>
+                <span className="text-white/90 text-sm">{details.publishers.join(', ')}</span>
+              </div>
+            )}
+
+            {(content.metacritic_aggregate || details?.metacritic_aggregate) && (
+              <div className="flex items-center gap-3 flex-wrap">
+                <div className="px-3 py-1 rounded bg-yellow-600/20 border border-yellow-500/40 text-yellow-300 text-sm font-bold">
+                  Metacritic / Critic Score: {Math.round(details?.metacritic_aggregate || content.metacritic_aggregate)}
+                </div>
+                <div className="px-3 py-1 rounded bg-green-600/20 border border-green-500/40 text-green-300 text-sm font-bold">
+                  IGDB User Score: {content.vote_average}/10
+                </div>
               </div>
             )}
 
@@ -319,6 +352,50 @@ const ContentModal = ({ content, isOpen, onClose, onPlayTrailer, onSelectContent
               </div>
             )}
 
+            {(content.screenshots && content.screenshots.length > 0) && (
+              <div className="pt-4">
+                <h3 className="text-xl font-semibold text-white mb-4">Screenshots</h3>
+                <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+                  {content.screenshots.slice(0, 10).map((src, i) => (
+                    <img
+                      key={i}
+                      src={src}
+                      alt={`Screenshot ${i + 1}`}
+                      className="h-40 w-auto rounded-md object-cover flex-shrink-0 border border-white/10"
+                      loading="lazy"
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {videos && videos.length > 1 && (
+              <div className="pt-4">
+                <h3 className="text-xl font-semibold text-white mb-4">Gameplay Trailers</h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {videos.slice(0, 6).map((v) => (
+                    <button
+                      key={v.key || v.id}
+                      onClick={() => onPlayTrailer(v)}
+                      className="group relative aspect-video rounded-md overflow-hidden bg-black/40 hover:ring-2 hover:ring-purple-500 transition-all"
+                    >
+                      <img
+                        src={`https://img.youtube.com/vi/${v.key}/hqdefault.jpg`}
+                        alt={v.name}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 flex items-center justify-center">
+                        <Play className="w-8 h-8 text-white fill-current" />
+                      </div>
+                      <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/90 to-transparent">
+                        <p className="text-white text-xs line-clamp-2">{v.name}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Social Sharing */}
             <div className="pt-4">
               <p className="text-white/70 text-sm mb-3">Share with friends:</p>
@@ -330,11 +407,16 @@ const ContentModal = ({ content, isOpen, onClose, onPlayTrailer, onSelectContent
             {/* Ratings & Reviews Section (Rotten Tomatoes Style) */}
             <RatingsReviews contentId={content.id} contentTitle={title} />
 
-            {details?.similar?.results && details.similar.results.length > 0 && (
+            {(() => {
+              const similarList = Array.isArray(details?.similar)
+                ? details.similar
+                : (details?.similar?.results || []);
+              if (!similarList.length) return null;
+              return (
               <div className="pt-4">
                 <h3 className="text-xl font-semibold text-white mb-4">More Like This</h3>
                 <div className="grid grid-cols-3 gap-4">
-                  {details.similar.results.slice(0, 6).map((item) => (
+                  {similarList.slice(0, 6).map((item) => (
                     <div
                       key={item.id}
                       onClick={() => {
@@ -361,7 +443,8 @@ const ContentModal = ({ content, isOpen, onClose, onPlayTrailer, onSelectContent
                   ))}
                 </div>
               </div>
-            )}
+              );
+            })()}
           </div>
         </div>
       </DialogContent>

@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import Navbar from '../components/Navbar';
 import TopNavBar from '../components/TopNavBar';
 import HeroBanner from '../components/HeroBanner';
@@ -12,122 +10,85 @@ import ShareButton from '../components/ShareButton';
 import Footer from '../components/Footer';
 import {
   getTrending,
-  getPopular,
   getTopRated,
-  getByGenre,
-  getNowPlaying,
+  getUpcoming,
+  getNewReleases,
+  getByPlatform,
 } from '../services/tmdb';
 
 const Home = () => {
   const [heroContent, setHeroContent] = useState(null);
   const [heroIndex, setHeroIndex] = useState(0);
   const [heroItems, setHeroItems] = useState([]);
+
   const [trending, setTrending] = useState([]);
-  const [whatsHot, setWhatsHot] = useState([]);
-  const [nowPlaying, setNowPlaying] = useState([]);
-  const [popularMovies, setPopularMovies] = useState([]);
-  const [popularSeries, setPopularSeries] = useState([]);
   const [topRated, setTopRated] = useState([]);
-  const [actionMovies, setActionMovies] = useState([]);
-  const [top10Movies, setTop10Movies] = useState([]);
-  const [top10Series, setTop10Series] = useState([]);
-  const [documentaries, setDocumentaries] = useState([]);
-  const [crimeThrillers, setCrimeThrillers] = useState([]);
-  const [horrorMovies, setHorrorMovies] = useState([]);
-  const [sciFiMovies, setSciFiMovies] = useState([]);
-  const [comedyMovies, setComedyMovies] = useState([]);
-  const [freeMovies, setFreeMovies] = useState([]);
+  const [upcoming, setUpcoming] = useState([]);
+  const [newReleases, setNewReleases] = useState([]);
+  const [playstation, setPlaystation] = useState([]);
+  const [xbox, setXbox] = useState([]);
+  const [pc, setPc] = useState([]);
+  const [switchGames, setSwitchGames] = useState([]);
+
   const [loading, setLoading] = useState(true);
-  const [initialLoad, setInitialLoad] = useState(true);
-  
   const [selectedContent, setSelectedContent] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [videoPlayerOpen, setVideoPlayerOpen] = useState(false);
   const [currentVideo, setCurrentVideo] = useState(null);
 
-  const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
-
   useEffect(() => {
     loadContent();
   }, []);
 
-  // Rotate hero banner every 5 seconds
   useEffect(() => {
     if (heroItems.length > 1) {
       const interval = setInterval(() => {
         setHeroIndex((prev) => (prev + 1) % heroItems.length);
-      }, 5000);
+      }, 6000);
       return () => clearInterval(interval);
     }
   }, [heroItems]);
 
-  // Update hero when index changes
   useEffect(() => {
-    if (heroItems.length > 0) {
-      setHeroContent(heroItems[heroIndex]);
-    }
+    if (heroItems.length > 0) setHeroContent(heroItems[heroIndex]);
   }, [heroIndex, heroItems]);
 
   const loadContent = async () => {
     try {
       const [
         trendingData,
-        whatsHotData,
-        nowPlayingData,
-        popularMoviesData,
-        popularSeriesData,
         topRatedData,
-        actionData,
-        top10MoviesData,
-        top10SeriesData,
-        documentariesData,
-        crimeData,
-        horrorData,
-        sciFiData,
-        comedyData,
-        freeMoviesData,
+        upcomingData,
+        newReleasesData,
+        psData,
+        xboxData,
+        pcData,
+        switchData,
       ] = await Promise.all([
-        getTrending('all', 'week'),
-        axios.get(`${API}/trending/whats-hot`).then(res => res.data.results).catch(() => []),
-        getNowPlaying(),
-        getPopular('movie'),
-        getPopular('tv'),
-        getTopRated('movie'),
-        getByGenre(28, 'movie'), // Action genre
-        getTopRated('movie').then(data => data.slice(0, 10)), // Top 10 Movies
-        getTopRated('tv').then(data => data.slice(0, 10)), // Top 10 Series
-        getByGenre(99, 'movie'), // Documentary genre (99)
-        getByGenre(80, 'movie'), // Crime genre (80)
-        getByGenre(27, 'movie'), // Horror genre (27)
-        getByGenre(878, 'movie'), // Sci-Fi genre (878)
-        getByGenre(35, 'movie'), // Comedy genre (35)
-        axios.get(`${API}/public-domain/movies`).then(res => res.data.movies).catch(() => []),
+        getTrending().catch(() => []),
+        getTopRated().catch(() => []),
+        getUpcoming().catch(() => []),
+        getNewReleases().catch(() => []),
+        getByPlatform('playstation').catch(() => []),
+        getByPlatform('xbox').catch(() => []),
+        getByPlatform('pc').catch(() => []),
+        getByPlatform('switch').catch(() => []),
       ]);
 
       setTrending(trendingData);
-      setWhatsHot(whatsHotData);
-      setNowPlaying(nowPlayingData);
-      setPopularMovies(popularMoviesData);
-      setPopularSeries(popularSeriesData);
       setTopRated(topRatedData);
-      setActionMovies(actionData);
-      setTop10Movies(top10MoviesData);
-      setTop10Series(top10SeriesData);
-      setDocumentaries(documentariesData);
-      setCrimeThrillers(crimeData);
-      setHorrorMovies(horrorData);
-      setSciFiMovies(sciFiData);
-      setComedyMovies(comedyData);
-      setFreeMovies(freeMoviesData.slice(0, 6)); // Show first 6 free movies
-      console.log('🎬 Free movies loaded:', freeMoviesData.length, 'total, showing first 6');
-      console.log('Free movies data:', freeMoviesData.slice(0, 3).map(m => m.title));
-      
-      // Set top 6 trending items for rotating hero
-      const topTrending = trendingData.slice(0, 6);
-      setHeroItems(topTrending);
-      setHeroContent(topTrending[0]);
-    } catch (error) {
-      console.error('Error loading content:', error);
+      setUpcoming(upcomingData);
+      setNewReleases(newReleasesData);
+      setPlaystation(psData);
+      setXbox(xboxData);
+      setPc(pcData);
+      setSwitchGames(switchData);
+
+      const hero = trendingData.filter((g) => g.backdrop_path).slice(0, 6);
+      setHeroItems(hero);
+      setHeroContent(hero[0] || null);
+    } catch (err) {
+      console.error('Error loading games:', err);
     } finally {
       setLoading(false);
     }
@@ -158,11 +119,11 @@ const Home = () => {
   }
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-black" data-testid="home-page">
       <Navbar />
       <TopNavBar />
       <Onboarding />
-      
+
       <HeroBanner
         content={heroContent}
         onPlayClick={handlePlayClick}
@@ -170,14 +131,14 @@ const Home = () => {
       />
 
       <div className="relative -mt-32 z-20 space-y-8 pb-20">
-        {/* RATE FLIXVAULT - PROMINENT CTA */}
+        {/* RATE GAMERGRID CTA */}
         <div className="px-6 lg:px-12 max-w-[1920px] mx-auto mb-8">
           <div className="bg-gradient-to-br from-purple-600/30 via-blue-600/30 to-purple-600/30 rounded-2xl p-10 border-2 border-purple-500/50 shadow-2xl backdrop-blur-sm">
             <div className="flex items-center justify-between flex-wrap gap-6">
               <div className="flex items-center gap-4">
-                <img 
-                  src="/gamergrid-icon.svg" 
-                  alt="GamerGrid" 
+                <img
+                  src="/gamergrid-icon.svg"
+                  alt="GamerGrid"
                   className="w-20 h-20 animate-pulse"
                 />
                 <div>
@@ -195,6 +156,7 @@ const Home = () => {
               <a
                 href="/app-reviews"
                 className="px-10 py-5 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-bold text-xl rounded-xl transition-all transform hover:scale-110 shadow-2xl animate-bounce"
+                data-testid="rate-gamergrid-cta"
               >
                 ⭐ Rate Us Now
               </a>
@@ -202,15 +164,15 @@ const Home = () => {
           </div>
         </div>
 
-        {/* BROWSE ALL GAMES - PLATFORM BUTTONS */}
+        {/* BROWSE BY PLATFORM */}
         <div className="px-6 lg:px-12 max-w-[1920px] mx-auto mb-12">
           <div className="bg-gradient-to-r from-purple-900/40 via-blue-900/40 to-cyan-900/40 rounded-xl p-8 border border-purple-500/30">
             <h2 className="text-3xl font-bold text-white mb-6 text-center">
               🎮 Browse Games by Platform
             </h2>
-            
+
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <a href="/games/playstation" className="group bg-gradient-to-br from-blue-600/20 to-blue-800/20 hover:from-blue-600/40 hover:to-blue-800/40 border border-blue-500/30 rounded-xl p-6 transition-all transform hover:scale-105">
+              <a href="/games/playstation" className="group bg-gradient-to-br from-blue-600/20 to-blue-800/20 hover:from-blue-600/40 hover:to-blue-800/40 border border-blue-500/30 rounded-xl p-6 transition-all transform hover:scale-105" data-testid="platform-playstation">
                 <div className="text-center">
                   <div className="text-4xl mb-3">🎮</div>
                   <h3 className="text-xl font-bold text-white mb-2">PlayStation</h3>
@@ -218,7 +180,7 @@ const Home = () => {
                 </div>
               </a>
 
-              <a href="/games/xbox" className="group bg-gradient-to-br from-green-600/20 to-green-800/20 hover:from-green-600/40 hover:to-green-800/40 border border-green-500/30 rounded-xl p-6 transition-all transform hover:scale-105">
+              <a href="/games/xbox" className="group bg-gradient-to-br from-green-600/20 to-green-800/20 hover:from-green-600/40 hover:to-green-800/40 border border-green-500/30 rounded-xl p-6 transition-all transform hover:scale-105" data-testid="platform-xbox">
                 <div className="text-center">
                   <div className="text-4xl mb-3">🎯</div>
                   <h3 className="text-xl font-bold text-white mb-2">Xbox</h3>
@@ -226,7 +188,7 @@ const Home = () => {
                 </div>
               </a>
 
-              <a href="/games/pc" className="group bg-gradient-to-br from-purple-600/20 to-purple-800/20 hover:from-purple-600/40 hover:to-purple-800/40 border border-purple-500/30 rounded-xl p-6 transition-all transform hover:scale-105">
+              <a href="/games/pc" className="group bg-gradient-to-br from-purple-600/20 to-purple-800/20 hover:from-purple-600/40 hover:to-purple-800/40 border border-purple-500/30 rounded-xl p-6 transition-all transform hover:scale-105" data-testid="platform-pc">
                 <div className="text-center">
                   <div className="text-4xl mb-3">💻</div>
                   <h3 className="text-xl font-bold text-white mb-2">PC / Steam</h3>
@@ -234,7 +196,7 @@ const Home = () => {
                 </div>
               </a>
 
-              <a href="/games/switch" className="group bg-gradient-to-br from-red-600/20 to-red-800/20 hover:from-red-600/40 hover:to-red-800/40 border border-red-500/30 rounded-xl p-6 transition-all transform hover:scale-105">
+              <a href="/games/switch" className="group bg-gradient-to-br from-red-600/20 to-red-800/20 hover:from-red-600/40 hover:to-red-800/40 border border-red-500/30 rounded-xl p-6 transition-all transform hover:scale-105" data-testid="platform-switch">
                 <div className="text-center">
                   <div className="text-4xl mb-3">🕹️</div>
                   <h3 className="text-xl font-bold text-white mb-2">Nintendo</h3>
@@ -244,137 +206,39 @@ const Home = () => {
             </div>
 
             <div className="mt-6 text-center">
-              <a href="/games/all" className="inline-block px-10 py-4 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-700 hover:to-cyan-700 text-white font-bold rounded-lg transition-all transform hover:scale-105 shadow-lg">
+              <a href="/games/all" className="inline-block px-10 py-4 bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-700 hover:to-cyan-700 text-white font-bold rounded-lg transition-all transform hover:scale-105 shadow-lg" data-testid="browse-all-games">
                 🎮 Browse All Games →
               </a>
             </div>
           </div>
         </div>
 
-        {/* What's Hot - Community Trending */}
-        {whatsHot.length > 0 && (
-          <ContentRow
-            title="🔥 What's Hot"
-            items={whatsHot}
-            onCardClick={handleCardClick}
-          />
+        {trending.length > 0 && (
+          <ContentRow title="🔥 Trending Now" items={trending} onCardClick={handleCardClick} viewAllLink="/games/all" />
         )}
-
-        {/* TOP 10 MOVIES */}
-        {top10Movies.length > 0 && (
-          <ContentRow
-            title="🏆 Top 10 Movies"
-            items={top10Movies}
-            onCardClick={handleCardClick}
-            viewAllLink="/movies"
-          />
+        {upcoming.length > 0 && (
+          <ContentRow title="🗓️ Coming Soon & Pre-Orders" items={upcoming} onCardClick={handleCardClick} viewAllLink="/games/all" />
         )}
-        
-        {/* TOP 10 SERIES */}
-        {top10Series.length > 0 && (
-          <ContentRow
-            title="📺 Top 10 Series"
-            items={top10Series}
-            onCardClick={handleCardClick}
-            viewAllLink="/series"
-          />
+        {topRated.length > 0 && (
+          <ContentRow title="🏆 Top Rated Games" items={topRated} onCardClick={handleCardClick} viewAllLink="/games/all" />
         )}
-
-        {/* Free Movies Section */}
-        {freeMovies.length > 0 && (
-          <ContentRow
-            title="🎬 Watch Free - Full Length Movies"
-            items={freeMovies}
-            onCardClick={handleCardClick}
-            viewAllLink="/public-domain"
-          />
+        {newReleases.length > 0 && (
+          <ContentRow title="🆕 New Releases" items={newReleases} onCardClick={handleCardClick} viewAllLink="/games/all" />
         )}
-
-        <ContentRow
-          title="🎬 Now Playing in Theaters"
-          items={nowPlaying}
-          onCardClick={handleCardClick}
-          viewAllLink="/movies"
-        />
-        <ContentRow
-          title="🔥 Trending Now"
-          items={trending}
-          onCardClick={handleCardClick}
-          viewAllLink="/movies"
-        />
-        <ContentRow
-          title="Popular Movies"
-          items={popularMovies}
-          onCardClick={handleCardClick}
-          viewAllLink="/movies"
-        />
-        <ContentRow
-          title="Popular Series"
-          items={popularSeries}
-          onCardClick={handleCardClick}
-          viewAllLink="/series"
-        />
-        <ContentRow
-          title="Top Rated"
-          items={topRated}
-          onCardClick={handleCardClick}
-          viewAllLink="/movies"
-        />
-        <ContentRow
-          title="Action Movies"
-          items={actionMovies}
-          onCardClick={handleCardClick}
-          viewAllLink="/movies"
-        />
-        
-        {/* NEW GENRE SECTIONS */}
-        {documentaries.length > 0 && (
-          <ContentRow
-            title="📽️ Documentaries - True Stories"
-            items={documentaries}
-            onCardClick={handleCardClick}
-            viewAllLink="/movies"
-          />
+        {playstation.length > 0 && (
+          <ContentRow title="🎮 PlayStation Exclusives & Hits" items={playstation} onCardClick={handleCardClick} viewAllLink="/games/playstation" />
         )}
-        
-        {crimeThrillers.length > 0 && (
-          <ContentRow
-            title="🔪 Crime & Thrillers"
-            items={crimeThrillers}
-            onCardClick={handleCardClick}
-            viewAllLink="/movies"
-          />
+        {xbox.length > 0 && (
+          <ContentRow title="🎯 Xbox Favorites" items={xbox} onCardClick={handleCardClick} viewAllLink="/games/xbox" />
         )}
-        
-        {horrorMovies.length > 0 && (
-          <ContentRow
-            title="👻 Horror Movies"
-            items={horrorMovies}
-            onCardClick={handleCardClick}
-            viewAllLink="/movies"
-          />
+        {pc.length > 0 && (
+          <ContentRow title="💻 PC / Steam Top Games" items={pc} onCardClick={handleCardClick} viewAllLink="/games/pc" />
         )}
-        
-        {sciFiMovies.length > 0 && (
-          <ContentRow
-            title="🚀 Sci-Fi & Fantasy"
-            items={sciFiMovies}
-            onCardClick={handleCardClick}
-            viewAllLink="/movies"
-          />
-        )}
-        
-        {comedyMovies.length > 0 && (
-          <ContentRow
-            title="😂 Comedy Movies"
-            items={comedyMovies}
-            onCardClick={handleCardClick}
-            viewAllLink="/movies"
-          />
+        {switchGames.length > 0 && (
+          <ContentRow title="🕹️ Nintendo Switch Favorites" items={switchGames} onCardClick={handleCardClick} viewAllLink="/games/switch" />
         )}
       </div>
 
-      {/* Share GamerGrid Section */}
       <div className="px-6 lg:px-12 max-w-[1920px] mx-auto pb-12">
         <div className="bg-gradient-to-r from-purple-900/20 to-blue-900/20 border border-purple-500/30 rounded-2xl p-8 text-center">
           <h2 className="text-3xl font-bold text-white mb-3">Love GamerGrid? Share it! 🚀</h2>
