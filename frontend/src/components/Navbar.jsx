@@ -4,6 +4,7 @@ import { Search, User, LogOut, List, Shield, Settings, Home, Mail, Heart } from 
 import { useAuth } from '../context/AuthContext';
 import AuthModal from './AuthModal';
 import SearchAutocomplete from './SearchAutocomplete';
+import WhatsNewButton from './WhatsNewButton';
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -125,6 +126,9 @@ const Navbar = () => {
             <div className="hidden md:block">
               <SearchAutocomplete />
             </div>
+
+            {/* What's New — pulsing badge until user opens it */}
+            <WhatsNewButton />
 
             {/* Mobile Search Button */}
             <button
@@ -267,6 +271,7 @@ const Navbar = () => {
               <button
                 onClick={() => setAuthModalOpen(true)}
                 className="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-md text-sm font-semibold transition-all"
+                data-testid="navbar-sign-in"
               >
                 Sign In
               </button>

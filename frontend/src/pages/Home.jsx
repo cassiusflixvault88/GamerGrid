@@ -9,6 +9,7 @@ import ContentModal from '../components/ContentModal';
 import VideoPlayer from '../components/VideoPlayer';
 import Onboarding from '../components/Onboarding';
 import ShareButton from '../components/ShareButton';
+import GuestMarketingHero from '../components/GuestMarketingHero';
 import { useAuth } from '../context/AuthContext';
 import Footer from '../components/Footer';
 import AdSlot from '../components/AdSlot';
@@ -297,26 +298,18 @@ const Home = () => {
         </div>
         )}
 
-        {/* GUEST WELCOME — TAKE THE TOUR */}
+        {/* GUEST MARKETING HERO — full pitch for non-signed-in visitors */}
         {!user && (
-          <div className="px-6 lg:px-12 max-w-[1920px] mx-auto -mt-2 mb-2" data-testid="guest-tour-banner">
-            <div className="rounded-2xl border border-cyan-400/40 bg-gradient-to-r from-cyan-900/40 via-blue-900/40 to-purple-900/40 p-5 lg:p-6 flex flex-col md:flex-row items-center justify-between gap-3 backdrop-blur-sm">
-              <div className="flex items-center gap-3 text-center md:text-left">
-                <div className="text-3xl">👋</div>
-                <div>
-                  <h3 className="text-lg md:text-xl font-bold text-white">New here? See what GamerGrid can do.</h3>
-                  <p className="text-white/70 text-sm">Take a quick 60-second tour before you sign up — no account required.</p>
-                </div>
-              </div>
-              <button
-                onClick={() => setTourForceOpen(true)}
-                className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white font-bold rounded-xl shadow-lg transition-all hover:scale-105 whitespace-nowrap"
-                data-testid="guest-take-tour"
-              >
-                🎬 Take the Tour
-              </button>
-            </div>
-          </div>
+          <GuestMarketingHero
+            onTakeTour={() => setTourForceOpen(true)}
+            onSignUp={() => {
+              // AuthModal opens via the navbar Sign In flow — easiest path is to dispatch a click on Sign In
+              const btn = document.querySelector('[data-testid="navbar-sign-in"]') ||
+                          document.querySelector('button[class*="bg-purple-600"]');
+              if (btn) btn.click();
+              else window.location.hash = '#signup';
+            }}
+          />
         )}
 
         {/* RATE GAMERGRID CTA */}

@@ -18,23 +18,28 @@ support payments.
 - Hosting: Emergent (preview + deploy)
 
 ## Implemented (✅ as of 2026-02-26)
-### Iteration 15 (this turn — Top10 rotation, catalog expansion, library reorg, secret cleanup)
-- 🔁 **Top10 carousel randomized** — backend now fetches a pool of 40 popularity-ranked games and locks slots 1-3 (true #1 hits) while randomly shuffling slots 4-10 from the next 37 candidates. Cache TTL dropped from 15min → 5min so the chart actually feels alive between visits. Verified via two consecutive cache-busted fetches: slots 4-10 differ each time.
-- 📚 **Massive catalog expansion** — Browse All page now pulls 350 PlayStation, 250 Xbox, 250 PC, 200 Switch games (1050 unique total, was ~140). Backend `/games/platform/{name}` endpoint relaxes the rating threshold from 70→60 and rating-count from 20→5 when a large limit (≥200) is requested, so the catalog actually fills.
-- 📖 **Saved Trailers moved to "My Library"** — `WatchlistPage.jsx` now has two sections: **Saved Games** + **Saved Trailers** (with thumbnails, click-to-play in-app via `VideoPlayer`, remove button). `SettingsPage.jsx` shows a clean "Open My Library →" CTA instead of the trailer grid (orphaned JSX cleaned).
-- 🔐 **Hardcoded Stripe LIVE key removed** — found and deleted `os.environ['STRIPE_API_KEY'] = 'sk_live_...'` from `payments_routes.py`. Key now properly loads from `backend/.env`. Scrubbed from all 264 historical commits via `git filter-repo --replace-text`. GitHub push protection now passes.
-- 🛒 **Amazon affiliate tag wired** — `AMAZON_AFFILIATE_TAG=gamergrid20-20` set in backend `.env`; every "Buy on Amazon" URL automatically includes the tag (verified live).
+### Iteration 16 (this turn — retention + perf + marketing)
+- ✨ **"What's New" pulsing badge** on Navbar — `WhatsNewButton.jsx` shows a pink animated ping next to a Sparkles icon. Tracks `gg_whats_new_version` in localStorage; pulse stops once user opens the modal. Modal shows the 4 most recent shipped features (1000+ games, Top10 rotation, Saved Trailers in Library, Pro membership). Bump `CURRENT_VERSION` in the file to re-pulse for everyone.
+- 🚀 **Marketing hero for guests** — `GuestMarketingHero.jsx` replaces the small cyan "Take the Tour" banner with a full above-the-fold sales pitch: glowing gradient bg, big headline, 5 feature chips, 4 feature highlight cards (Build Library / Live Deals / Pro Perks / Real Reviews), and dual CTAs (Sign Up Free + Take Tour). Only shown to non-signed-in visitors.
+- ⚡ **N+1 query fixes** in `server.py`:
+  - `get_app_reviews()` — admin replies now batch-fetched via `$in` (1 query instead of N)
+  - `get_ratings()` — review_replies batched the same way
+  - `get_all_reviews()` — user lookups batched (was 1 query per review)
+  - All 3 endpoints verified returning identical data shape, just dramatically fewer DB round trips.
+
+### Iteration 15
+- 🔁 Top10 carousel randomized (slots 1-3 fixed, 4-10 shuffle) + 5min TTL
+- 📚 Catalog expansion: 350 PS / 250 Xbox / 250 PC / 200 Switch = 1050 unique games
+- 📖 Saved Trailers moved to "My Library" with in-app playback
+- 🔐 Hardcoded Stripe LIVE key removed + scrubbed from all 264 historical commits
+- 🛒 Amazon affiliate tag `gamergrid20-20` wired into every Buy on Amazon link
 
 ### Iteration 14
-- 🎭 **7 genre/theme rails on Home** (RPG, Shooters, Open World, Sci-Fi, Horror, Racing, Indie) via new `GET /api/games/category` endpoint
-- 🔁 **Dedupe pipeline** — single `Set` of seen IDs across all rails; 336 unique titles vs ~150 with repetition
+- 🎭 7 genre/theme rails on Home (RPG, Shooters, Open World, Sci-Fi, Horror, Racing, Indie) via new `/api/games/category` endpoint
+- 🔁 Dedupe pipeline — 336 unique titles vs ~150 with repetition
 
 ### Iteration 13
-- 💖 **Pink "Go Pro" banner** on Home (hidden for Pro/admin)
-- 🎬 **Guest "Take the Tour" CTA** force-opens onboarding
-- 🦴 **Footer**: Privacy Policy, Terms of Service, Replay Tour links
-- ✏️ **Reply Edit/Delete visibility** improved on Rate GamerGrid
-- 📜 **Privacy / Terms pages** wired into App.js
+- 💖 Pink Pro banner on Home, 🎬 Guest Tour CTA, 🦴 Footer Privacy/Terms/Replay Tour, ✏️ Reply Edit/Delete visibility
 
 ## Implemented (✅ as of 2026-02-25)
 ### Iteration 12 (this turn)

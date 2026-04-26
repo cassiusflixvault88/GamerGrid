@@ -525,19 +525,21 @@ async def get_app_reviews():
         {},
         {"_id": 0}
     ).sort("created_at", -1).to_list(100)
-    
-    # Get admin replies for each review
+
+    # ⚡ Batch-fetch all admin replies in ONE query (was N+1)
+    review_ids = [r["id"] for r in reviews if r.get("id")]
+    replies_by_review = {}
+    if review_ids:
+        all_replies = await db.app_review_replies.find(
+            {"review_id": {"$in": review_ids}},
+            {"_id": 0}
+        ).sort("created_at", 1).to_list(None)
+        for rep in all_replies:
+            replies_by_review.setdefault(rep["review_id"], []).append(rep)
+
     for review in reviews:
-        review_id = review.get("id")
-        if review_id:
-            replies = await db.app_review_replies.find(
-                {"review_id": review_id},
-                {"_id": 0}
-            ).sort("created_at", 1).to_list(100)
-            review["admin_replies"] = replies
-        else:
-            review["admin_replies"] = []
-    
+        review["admin_replies"] = replies_by_review.get(review.get("id"), [])
+
     # Calculate average rating
     if reviews:
         avg_rating = sum(r.get("rating", 0) for r in reviews) / len(reviews)
@@ -633,15 +635,20 @@ async def get_ratings(content_id: int):
     
     # Calculate average
     avg_rating = sum(r["rating"] for r in ratings) / len(ratings) if ratings else 0
-    
+
+    # ⚡ Batch-fetch ALL admin replies for these ratings in ONE query (was N+1)
+    rating_ids = [r["id"] for r in ratings]
+    replies_by_rating = {}
+    if rating_ids:
+        all_replies = await db.review_replies.find(
+            {"review_id": {"$in": rating_ids}},
+            {"_id": 0}
+        ).sort("created_at", 1).to_list(None)
+        for rep in all_replies:
+            replies_by_rating.setdefault(rep["review_id"], []).append(rep)
+
     enriched_ratings = []
     for r in ratings:
-        # Get admin replies for this rating
-        replies = await db.review_replies.find(
-            {"review_id": r["id"]},
-            {"_id": 0}
-        ).sort("created_at", 1).to_list(100)
-        
         rating_obj = RatingResponse(
             id=r["id"],
             user_id=r["user_id"],
@@ -651,9 +658,8 @@ async def get_ratings(content_id: int):
             review=r.get("review"),
             created_at=r["created_at"]
         )
-        # Add admin_replies as dict attribute
         rating_dict = rating_obj.model_dump()
-        rating_dict["admin_replies"] = replies
+        rating_dict["admin_replies"] = replies_by_rating.get(r["id"], [])
         enriched_ratings.append(rating_dict)
     
     return {
@@ -695,28 +701,32 @@ async def get_all_reviews(limit: int = 100, skip: int = 0):
             {"review": {"$exists": True, "$ne": None, "$ne": ""}},  # Only get ratings with actual reviews
             {"_id": 0}
         ).sort("created_at", -1).limit(limit).skip(skip).to_list(length=limit)
-        
-        # Fetch user data for each rating to get username
+
+        # ⚡ Batch-fetch ALL users in ONE query (was N+1)
+        user_ids = list({r["user_id"] for r in all_ratings if r.get("user_id")})
+        user_map = {}
+        if user_ids:
+            users = await db.users.find(
+                {"id": {"$in": user_ids}},
+                {"_id": 0, "id": 1, "username": 1}
+            ).to_list(None)
+            user_map = {u["id"]: u.get("username", "Anonymous") for u in users}
+
         enriched_reviews = []
         for rating in all_ratings:
-            user = await db.users.find_one(
-                {"id": rating["user_id"]},
-                {"_id": 0, "username": 1}
-            )
-            
             enriched_reviews.append({
                 "id": rating["id"],
                 "content_id": rating["content_id"],
                 "content_title": rating.get("content_title", "Unknown"),
-                "username": user.get("username", "Anonymous") if user else "Anonymous",
+                "username": user_map.get(rating.get("user_id"), "Anonymous"),
                 "rating": rating["rating"],
                 "review": rating["review"],
                 "created_at": rating["created_at"],
                 "media_type": rating.get("media_type", "movie")
             })
-        
+
         return enriched_reviews
-        
+
     except Exception as e:
         logging.error(f"Error fetching all reviews: {e}")
         return []
