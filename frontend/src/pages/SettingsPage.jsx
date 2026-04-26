@@ -28,6 +28,14 @@ const SettingsPage = () => {
   const [replyingToId, setReplyingToId] = useState(null);
   const [replyText, setReplyText] = useState('');
   const [sendingReply, setSendingReply] = useState(false);
+  // Change email/password state
+  const [newEmail, setNewEmail] = useState('');
+  const [emailPassword, setEmailPassword] = useState('');
+  const [savingEmail, setSavingEmail] = useState(false);
+  const [currentPw, setCurrentPw] = useState('');
+  const [newPw, setNewPw] = useState('');
+  const [newPw2, setNewPw2] = useState('');
+  const [savingPw, setSavingPw] = useState(false);
   const [profileData, setProfileData] = useState({
     username: '',
     display_name: '',
