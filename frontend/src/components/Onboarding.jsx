@@ -3,24 +3,28 @@ import { X, Film, Tv, Star, Heart, Download, Share2, Play, Gamepad2, Crown, Book
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog';
 import { Button } from './ui/button';
 
-const Onboarding = () => {
+const Onboarding = ({ forceOpen = false, onForceClose = null }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
 
   useEffect(() => {
+    if (forceOpen) {
+      setCurrentStep(0);
+      setIsOpen(true);
+      return;
+    }
     // Check if user has seen onboarding before
     const hasSeenOnboarding = localStorage.getItem('gamergrid_onboarding_complete');
     if (!hasSeenOnboarding) {
-      // Show onboarding after a short delay
-      setTimeout(() => {
-        setIsOpen(true);
-      }, 1000);
+      setTimeout(() => setIsOpen(true), 1000);
     }
-  }, []);
+  }, [forceOpen]);
 
   const handleClose = () => {
     setIsOpen(false);
+    setCurrentStep(0);
     localStorage.setItem('gamergrid_onboarding_complete', 'true');
+    if (onForceClose) onForceClose();
   };
 
   const handleNext = () => {
