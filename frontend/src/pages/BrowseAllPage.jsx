@@ -6,6 +6,7 @@ import BackNavigation from '../components/BackNavigation';
 import Footer from '../components/Footer';
 import ContentModal from '../components/ContentModal';
 import ContentCard from '../components/ContentCard';
+import VideoPlayer from '../components/VideoPlayer';
 import { search as searchGames } from '../services/tmdb';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -46,6 +47,14 @@ const BrowseAllPage = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedContent, setSelectedContent] = useState(null);
+  const [currentVideo, setCurrentVideo] = useState(null);
+  const [videoPlayerOpen, setVideoPlayerOpen] = useState(false);
+
+  const handlePlayTrailer = (video) => {
+    setCurrentVideo(video);
+    setVideoPlayerOpen(true);
+    setSelectedContent(null);
+  };
 
   useEffect(() => {
     setActivePlatform(initialPlatform);
@@ -301,10 +310,21 @@ const BrowseAllPage = () => {
           content={selectedContent}
           isOpen={!!selectedContent}
           onClose={() => setSelectedContent(null)}
-          onPlayTrailer={() => {}}
+          onPlayTrailer={handlePlayTrailer}
           onSelectContent={(c) => setSelectedContent(c)}
         />
       )}
+
+      <VideoPlayer
+        video={currentVideo}
+        isOpen={videoPlayerOpen}
+        onClose={() => {
+          setVideoPlayerOpen(false);
+          setCurrentVideo(null);
+        }}
+        gameId={selectedContent?.id}
+        gameTitle={selectedContent?.title || selectedContent?.name}
+      />
     </div>
   );
 };

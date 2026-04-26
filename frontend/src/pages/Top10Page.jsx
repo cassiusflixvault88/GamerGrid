@@ -4,12 +4,22 @@ import Navbar from '../components/Navbar';
 import BackNavigation from '../components/BackNavigation';
 import Footer from '../components/Footer';
 import ContentModal from '../components/ContentModal';
+import VideoPlayer from '../components/VideoPlayer';
 import { getImageUrl, getTop10 } from '../services/tmdb';
 
 const Top10Page = () => {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
+  const [currentVideo, setCurrentVideo] = useState(null);
+  const [videoPlayerOpen, setVideoPlayerOpen] = useState(false);
+
+  const handlePlayTrailer = (video) => {
+    setCurrentVideo(video);
+    setVideoPlayerOpen(true);
+    setSelected(null);
+  };
+
   useNavigate(); // hook for future use
 
   useEffect(() => {
@@ -135,10 +145,21 @@ const Top10Page = () => {
           content={selected}
           isOpen={!!selected}
           onClose={() => setSelected(null)}
-          onPlayTrailer={() => {}}
+          onPlayTrailer={handlePlayTrailer}
           onSelectContent={(c) => setSelected(c)}
         />
       )}
+
+      <VideoPlayer
+        video={currentVideo}
+        isOpen={videoPlayerOpen}
+        onClose={() => {
+          setVideoPlayerOpen(false);
+          setCurrentVideo(null);
+        }}
+        gameId={selected?.id}
+        gameTitle={selected?.title || selected?.name}
+      />
     </div>
   );
 };
