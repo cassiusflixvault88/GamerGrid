@@ -22,7 +22,7 @@ db = client[os.environ['DB_NAME']]
 
 def _site_url() -> str:
     url = (os.environ.get("FRONTEND_URL") or "").strip()
-    return (url or "https://hbo-max-app.emergent.host").rstrip("/")
+    return (url or "https://gamer-grid.com").rstrip("/")
 
 
 async def _send_email(to: str, subject: str, html: str) -> bool:

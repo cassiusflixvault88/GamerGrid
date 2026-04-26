@@ -86,7 +86,7 @@ async def admin_send_message(
             import resend
             resend.api_key = api_key
             sender_email = os.environ.get("SENDER_EMAIL", "onboarding@resend.dev")
-            site_url = (os.environ.get("FRONTEND_URL") or "https://hbo-max-app.emergent.host").rstrip("/")
+            site_url = (os.environ.get("FRONTEND_URL") or "https://gamer-grid.com").rstrip("/")
             severity_color = {"info": "#3b82f6", "warning": "#f59e0b", "violation": "#ef4444"}.get(payload.severity, "#3b82f6")
             html = f"""
 <!DOCTYPE html><html><body style="margin:0;padding:0;background:#0a0a0a;">

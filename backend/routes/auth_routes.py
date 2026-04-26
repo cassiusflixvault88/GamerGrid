@@ -50,7 +50,7 @@ async def _send_welcome_email(email: str, username: str) -> None:
         import resend
         resend.api_key = api_key
         sender = os.environ.get("SENDER_EMAIL", "onboarding@resend.dev")
-        site_url = (os.environ.get("FRONTEND_URL") or "https://hbo-max-app.preview.emergentagent.com").rstrip("/")
+        site_url = (os.environ.get("FRONTEND_URL") or "https://gamer-grid.com").rstrip("/")
         html = f"""
 <!DOCTYPE html><html><body style="margin:0;padding:0;background:#0a0a0a;">
 <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#0a0a0a;padding:24px 0;">
