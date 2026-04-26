@@ -17,6 +17,14 @@ support payments.
 - Payments: Stripe LIVE
 - Hosting: Emergent (preview + deploy)
 
+## Implemented (✅ as of 2026-02-26)
+### Iteration 13 (this turn)
+- 💖 **Pink "Go Pro" banner** on Home (`Home.jsx`) — vivid pink/fuchsia/rose gradient banner, hidden for Pro/admin users, links to `/settings?tab=subscription`.
+- 🎬 **Guest "Take the Tour" CTA** — cyan banner on Home for non-signed-in visitors, force-opens the Onboarding modal so newcomers see the value prop *before* signing up. Solves user feedback: "people will bypass sign-up if they don't see anything that appeals to them."
+- 🦴 **Footer enhancements** — added Privacy Policy link, Terms of Service link, and "🎬 Replay Tour" button (clears localStorage flag and reloads home to retrigger onboarding).
+- ✏️ **Reply Edit/Delete visibility** — on `/app-reviews` (Rate GamerGrid), reply edit/delete buttons are now prominent (yellow/red colored, with icons + bold text) so regular users can clearly see they can edit/delete their own replies.
+- 📜 **Privacy Policy & Terms of Service pages** are wired into App.js routes (`/privacy`, `/terms`) — required for Google AdSense approval.
+
 ## Implemented (✅ as of 2026-02-25)
 ### Iteration 12 (this turn)
 - 🏆 **Top 10 hero carousel** — `Top10HeroCarousel.jsx` replaces the single hero on Home. Giant rank number (1–10) glows behind each game with a "#N IN TOP 10 GAMES TODAY" badge, "by <developer>" attribution, prev/next arrows, dot indicators. Auto-rotates every 6s. Backed by new `GET /api/games/top10` endpoint (rating ≥ 80 AND vote_count > 100, sort by total_rating_count, 2h TTL).

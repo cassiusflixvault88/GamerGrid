@@ -461,15 +461,20 @@ const AppReviewsPage = () => {
                                     {repIsOwner && (
                                       <button
                                         onClick={() => setEditingReply({ reply_id: rep.id, text: rep.text })}
-                                        className="text-white/40 hover:text-yellow-400"
+                                        className="flex items-center gap-1 text-yellow-400/80 hover:text-yellow-300 font-semibold"
+                                        data-testid={`edit-reply-${rep.id}`}
                                       >
+                                        <Edit2 className="w-3 h-3" />
                                         Edit
                                       </button>
                                     )}
                                     <button
                                       onClick={() => deleteReply(review.id, rep.id)}
-                                      className="text-white/40 hover:text-red-400"
+                                      className="flex items-center gap-1 text-red-400/80 hover:text-red-300 font-semibold"
+                                      title={isAdmin && !repIsOwner ? 'Admin: delete this reply' : 'Delete your reply'}
+                                      data-testid={`delete-reply-${rep.id}`}
                                     >
+                                      <Trash2 className="w-3 h-3" />
                                       Delete
                                     </button>
                                   </div>

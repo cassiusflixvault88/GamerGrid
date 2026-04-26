@@ -9,6 +9,7 @@ import ContentModal from '../components/ContentModal';
 import VideoPlayer from '../components/VideoPlayer';
 import Onboarding from '../components/Onboarding';
 import ShareButton from '../components/ShareButton';
+import { useAuth } from '../context/AuthContext';
 import Footer from '../components/Footer';
 import AdSlot from '../components/AdSlot';
 import {
@@ -24,6 +25,8 @@ import {
 } from '../services/tmdb';
 
 const Home = () => {
+  const { user } = useAuth();
+  const isPro = Boolean(user && (user.is_pro || user.is_admin));
   const [heroContent, setHeroContent] = useState(null);
   const [heroIndex, setHeroIndex] = useState(0);
   const [heroItems, setHeroItems] = useState([]);
@@ -46,6 +49,7 @@ const Home = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [videoPlayerOpen, setVideoPlayerOpen] = useState(false);
   const [currentVideo, setCurrentVideo] = useState(null);
+  const [tourForceOpen, setTourForceOpen] = useState(false);
 
   useEffect(() => {
     loadContent();
@@ -173,7 +177,7 @@ const Home = () => {
     <div className="min-h-screen bg-black" data-testid="home-page">
       <Navbar />
       <TopNavBar />
-      <Onboarding />
+      <Onboarding forceOpen={tourForceOpen} onForceClose={() => setTourForceOpen(false)} />
 
       {top10.length > 0 ? (
         <Top10HeroCarousel
@@ -190,6 +194,56 @@ const Home = () => {
       )}
 
       <div className="relative -mt-32 z-20 space-y-8 pb-20">
+        {/* GO PRO PINK BANNER (hidden for Pro/admin) */}
+        {!isPro && (
+        <div className="px-6 lg:px-12 max-w-[1920px] mx-auto mb-4" data-testid="home-pro-banner">
+          <a
+            href="/settings?tab=subscription"
+            className="block group relative overflow-hidden rounded-2xl border-2 border-pink-400/60 bg-gradient-to-r from-pink-600 via-fuchsia-500 to-rose-500 p-6 lg:p-8 shadow-[0_0_40px_rgba(244,114,182,0.35)] hover:shadow-[0_0_60px_rgba(244,114,182,0.55)] transition-all hover:scale-[1.01]"
+          >
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_50%,rgba(255,255,255,0.25),transparent_60%)] pointer-events-none" />
+            <div className="relative flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="text-5xl drop-shadow-lg animate-pulse">👑</div>
+                <div className="text-left">
+                  <h2 className="text-2xl md:text-3xl font-extrabold text-white drop-shadow">
+                    Go Pro — Just $4.99/mo
+                  </h2>
+                  <p className="text-white/95 text-sm md:text-base mt-1">
+                    100% ad-free • Save trailers to your library • Early access • Support an indie creator 💖
+                  </p>
+                </div>
+              </div>
+              <div className="px-6 py-3 bg-white text-pink-600 font-extrabold rounded-xl shadow-lg group-hover:bg-pink-50 transition-colors whitespace-nowrap">
+                Upgrade Now →
+              </div>
+            </div>
+          </a>
+        </div>
+        )}
+
+        {/* GUEST WELCOME — TAKE THE TOUR */}
+        {!user && (
+          <div className="px-6 lg:px-12 max-w-[1920px] mx-auto -mt-2 mb-2" data-testid="guest-tour-banner">
+            <div className="rounded-2xl border border-cyan-400/40 bg-gradient-to-r from-cyan-900/40 via-blue-900/40 to-purple-900/40 p-5 lg:p-6 flex flex-col md:flex-row items-center justify-between gap-3 backdrop-blur-sm">
+              <div className="flex items-center gap-3 text-center md:text-left">
+                <div className="text-3xl">👋</div>
+                <div>
+                  <h3 className="text-lg md:text-xl font-bold text-white">New here? See what GamerGrid can do.</h3>
+                  <p className="text-white/70 text-sm">Take a quick 60-second tour before you sign up — no account required.</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setTourForceOpen(true)}
+                className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white font-bold rounded-xl shadow-lg transition-all hover:scale-105 whitespace-nowrap"
+                data-testid="guest-take-tour"
+              >
+                🎬 Take the Tour
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* RATE GAMERGRID CTA */}
         <div className="px-6 lg:px-12 max-w-[1920px] mx-auto mb-8">
           <div className="bg-gradient-to-br from-purple-600/30 via-blue-600/30 to-purple-600/30 rounded-2xl p-10 border-2 border-purple-500/50 shadow-2xl backdrop-blur-sm">

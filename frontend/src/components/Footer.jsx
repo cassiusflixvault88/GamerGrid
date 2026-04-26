@@ -8,6 +8,18 @@ const Footer = () => {
   const [showInstructions, setShowInstructions] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
 
+  const handleReplayTour = () => {
+    try {
+      localStorage.removeItem('gamergrid_onboarding_complete');
+    } catch (e) { /* ignore */ }
+    // Navigate to home where the Onboarding modal lives, then reload to trigger the tour
+    if (window.location.pathname === '/') {
+      window.location.reload();
+    } else {
+      window.location.href = '/';
+    }
+  };
+
   return (
     <>
       <footer className="bg-black border-t border-white/10 py-8 mt-20">
@@ -88,6 +100,27 @@ const Footer = () => {
             >
               📱 Install App
             </button>
+            <button
+              onClick={handleReplayTour}
+              className="hover:text-white transition-colors text-cyan-400 font-semibold"
+              data-testid="footer-replay-tour"
+            >
+              🎬 Replay Tour
+            </button>
+            <Link
+              to="/privacy"
+              className="hover:text-white transition-colors"
+              data-testid="footer-privacy"
+            >
+              Privacy Policy
+            </Link>
+            <Link
+              to="/terms"
+              className="hover:text-white transition-colors"
+              data-testid="footer-terms"
+            >
+              Terms of Service
+            </Link>
             <a 
               href="https://www.igdb.com/" 
               target="_blank" 
