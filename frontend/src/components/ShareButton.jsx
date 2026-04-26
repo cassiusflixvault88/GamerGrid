@@ -9,7 +9,8 @@ const ShareButton = ({ variant = 'default', size = 'default', showText = true })
   const [showModal, setShowModal] = useState(false);
   const [showPWAInstructions, setShowPWAInstructions] = useState(false);
   const { toast } = useToast();
-  const shareUrl = 'https://hbo-max-app.emergent.host';
+  // Use the production URL when available, fall back to current origin (works on preview too)
+  const shareUrl = process.env.REACT_APP_PUBLIC_URL || (typeof window !== 'undefined' ? window.location.origin : 'https://gamer-grid.com');
 
   const shareMessage = `🎬 Check out GamerGrid - Movie Discovery & Trailer App!
 
