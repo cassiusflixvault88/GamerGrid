@@ -83,13 +83,9 @@ android-sdk/frontend/node_modules/.cache/default-development/0.pack
 frontend/node_modules/.cache/default-development/0.pack
 -e 
 # Environment files
-*.env
-*.env.*
+# (Note: .env files INTENTIONALLY committed for Kubernetes deployment)
 -e 
-# Environment and credential files
-.env
-.env.*
-*.env
+# Environment and credential files (excluding .env which is needed for deploy)
 credentials.json
 *.pem
 *.key
