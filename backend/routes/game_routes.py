@@ -638,6 +638,55 @@ async def get_games_by_platform(
         raise HTTPException(500, f"Failed to fetch {platform_name}: {e}")
 
 
+@router.get("/category")
+async def get_by_category(
+    genre: Optional[int] = None,
+    theme: Optional[int] = None,
+    limit: int = Query(40, ge=1, le=500),
+    sort: str = Query("popular", pattern="^(rating|release|popular)$"),
+    min_rating: int = Query(70, ge=0, le=100),
+):
+    """Generic genre/theme rail endpoint.
+
+    IGDB genre IDs (common): 4 Fighting, 5 Shooter, 8 Platform, 9 Puzzle,
+    10 Racing, 11 RTS, 12 RPG, 13 Simulator, 14 Sport, 15 Strategy,
+    16 Turn-based, 24 Tactical, 25 Hack & Slash, 31 Adventure, 32 Indie,
+    33 Arcade, 34 Visual Novel, 35 Card & Board, 36 MOBA.
+
+    IGDB theme IDs (common): 1 Action, 17 Fantasy, 18 Sci-Fi, 19 Horror,
+    20 Thriller, 21 Survival, 22 Historical, 23 Stealth, 27 Comedy,
+    33 Sandbox, 38 Open World, 39 Warfare, 41 4X, 43 Mystery.
+    """
+    if not genre and not theme:
+        raise HTTPException(400, "Provide at least one of: genre, theme")
+
+    where_parts = [f"rating >= {min_rating}", "total_rating_count > 30"]
+    if genre:
+        where_parts.append(f"genres = ({genre})")
+    if theme:
+        where_parts.append(f"themes = ({theme})")
+
+    sort_clause = {
+        "rating": "sort rating desc;",
+        "release": "sort first_release_date desc;",
+        "popular": "sort total_rating_count desc;",
+    }[sort]
+
+    q = (
+        f"fields {LIST_FIELDS};"
+        f" {_build_where(where_parts)}"
+        f" {sort_clause}"
+        f" limit {limit};"
+    )
+    try:
+        cache_key = f"category:{genre}:{theme}:{sort}:{limit}:{min_rating}"
+        games = await cached_query(cache_key, "games", q, ttl_seconds=60 * 60 * 6)
+        return {"results": [normalize_game(g) for g in games], "total": len(games)}
+    except Exception as e:
+        logger.error(f"category error: {e}")
+        raise HTTPException(500, f"Failed to fetch category: {e}")
+
+
 @router.get("/search")
 async def search_games(q: str = Query(..., min_length=1), limit: int = Query(20, ge=1, le=50)):
     safe = q.replace('"', "'")

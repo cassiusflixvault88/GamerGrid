@@ -18,12 +18,18 @@ support payments.
 - Hosting: Emergent (preview + deploy)
 
 ## Implemented (✅ as of 2026-02-26)
-### Iteration 13 (this turn)
+### Iteration 14 (this turn — dedupe + 500 more games + categorization)
+- 🎭 **Genre & Theme rails** — added 7 new homepage rails: RPG, Shooters/FPS, Open World, Sci-Fi, Horror, Racing, Indie Gems. Powered by new `GET /api/games/category?genre=X&theme=Y&min_rating=Z` endpoint that hits IGDB by genre AND/OR theme. Cached 6h.
+- 🔁 **Dedupe pipeline on Home** — every rail now runs through a single shared `Set` of seen game IDs in priority order (Top10 → Trending → Coming Soon → Most Popular → GOTY → Top Rated → New Releases → Platforms → Genre rails). Games claimed by a higher rail are skipped by lower rails. **Result: 336 unique titles across 22 rails on the homepage** (was ~150 with heavy repetition).
+- 📚 **+500 new unique games visible** on the homepage thanks to the genre/theme rails surfacing titles that weren't trending or new.
+- ✅ Validated all 4 new endpoints (RPG/Sci-Fi/Horror/Racing) return real games with proper trailers, screenshots, cover art (already part of `normalize_game()` — no changes needed).
+
+### Iteration 13
 - 💖 **Pink "Go Pro" banner** on Home (`Home.jsx`) — vivid pink/fuchsia/rose gradient banner, hidden for Pro/admin users, links to `/settings?tab=subscription`.
-- 🎬 **Guest "Take the Tour" CTA** — cyan banner on Home for non-signed-in visitors, force-opens the Onboarding modal so newcomers see the value prop *before* signing up. Solves user feedback: "people will bypass sign-up if they don't see anything that appeals to them."
-- 🦴 **Footer enhancements** — added Privacy Policy link, Terms of Service link, and "🎬 Replay Tour" button (clears localStorage flag and reloads home to retrigger onboarding).
-- ✏️ **Reply Edit/Delete visibility** — on `/app-reviews` (Rate GamerGrid), reply edit/delete buttons are now prominent (yellow/red colored, with icons + bold text) so regular users can clearly see they can edit/delete their own replies.
-- 📜 **Privacy Policy & Terms of Service pages** are wired into App.js routes (`/privacy`, `/terms`) — required for Google AdSense approval.
+- 🎬 **Guest "Take the Tour" CTA** — cyan banner on Home for non-signed-in visitors, force-opens the Onboarding modal so newcomers see the value prop *before* signing up.
+- 🦴 **Footer enhancements** — added Privacy Policy link, Terms of Service link, and "🎬 Replay Tour" button.
+- ✏️ **Reply Edit/Delete visibility** — on `/app-reviews`, reply edit/delete buttons are now prominent.
+- 📜 **Privacy Policy & Terms of Service pages** wired into App.js routes.
 
 ## Implemented (✅ as of 2026-02-25)
 ### Iteration 12 (this turn)

@@ -22,6 +22,9 @@ import {
   getMostPopular,
   getTop10,
   getVideos,
+  getByCategory,
+  IGDB_GENRES,
+  IGDB_THEMES,
 } from '../services/tmdb';
 
 const Home = () => {
@@ -43,6 +46,15 @@ const Home = () => {
   const [xbox, setXbox] = useState([]);
   const [pc, setPc] = useState([]);
   const [switchGames, setSwitchGames] = useState([]);
+
+  // Genre / Theme rails (categorized so users don't see the same games repeated)
+  const [rpgGames, setRpgGames] = useState([]);
+  const [shooterGames, setShooterGames] = useState([]);
+  const [scifiGames, setScifiGames] = useState([]);
+  const [horrorGames, setHorrorGames] = useState([]);
+  const [racingGames, setRacingGames] = useState([]);
+  const [openWorldGames, setOpenWorldGames] = useState([]);
+  const [indieGames, setIndieGames] = useState([]);
 
   const [loading, setLoading] = useState(true);
   const [selectedContent, setSelectedContent] = useState(null);
@@ -81,6 +93,13 @@ const Home = () => {
         xboxData,
         pcData,
         switchData,
+        rpgData,
+        shooterData,
+        scifiData,
+        horrorData,
+        racingData,
+        openWorldData,
+        indieData,
       ] = await Promise.all([
         getTrending().catch(() => []),
         getTop10().catch(() => []),
@@ -92,30 +111,86 @@ const Home = () => {
         getByPlatform('xbox').catch(() => []),
         getByPlatform('pc').catch(() => []),
         getByPlatform('switch').catch(() => []),
+        getByCategory({ genre: IGDB_GENRES.RPG, limit: 40 }).catch(() => []),
+        getByCategory({ genre: IGDB_GENRES.SHOOTER, limit: 40 }).catch(() => []),
+        getByCategory({ theme: IGDB_THEMES.SCI_FI, limit: 40 }).catch(() => []),
+        getByCategory({ theme: IGDB_THEMES.HORROR, limit: 40, minRating: 65 }).catch(() => []),
+        getByCategory({ genre: IGDB_GENRES.RACING, limit: 40, minRating: 65 }).catch(() => []),
+        getByCategory({ theme: IGDB_THEMES.OPEN_WORLD, limit: 40 }).catch(() => []),
+        getByCategory({ genre: IGDB_GENRES.INDIE, limit: 40, minRating: 75 }).catch(() => []),
       ]);
 
-      setTrending(trendingData);
+      // ---------- Dedupe pipeline ----------
+      // Higher-priority rails keep their games. Lower-priority rails drop any
+      // game already shown in a higher rail. This ends the "same games everywhere"
+      // problem on the homepage.
+      const seen = new Set();
+      const claim = (list, max = 30) => {
+        const out = [];
+        for (const g of list || []) {
+          const id = g?.id;
+          if (id == null) continue;
+          if (seen.has(id)) continue;
+          seen.add(id);
+          out.push(g);
+          if (out.length >= max) break;
+        }
+        return out;
+      };
+
+      // Top10 doesn't go through `claim` — it's the hero carousel and must stay
+      // as IGDB returned it. But we DO mark its games as seen so other rails skip them.
+      (top10Data || []).forEach((g) => g?.id != null && seen.add(g.id));
+
+      // Priority order matters: rails earlier on the page win.
+      const dedupedTrending = claim(trendingData);
+      const dedupedUpcoming = claim(upcomingData);
+      const dedupedMostPopular = claim(mostPopularData);
+      // GOTY fetched below — handled separately
+      const dedupedTopRated = claim(topRatedData);
+      const dedupedNewReleases = claim(newReleasesData);
+      const dedupedPs = claim(psData, 25);
+      const dedupedXbox = claim(xboxData, 25);
+      const dedupedPc = claim(pcData, 25);
+      const dedupedSwitch = claim(switchData, 25);
+      const dedupedRpg = claim(rpgData, 25);
+      const dedupedShooter = claim(shooterData, 25);
+      const dedupedScifi = claim(scifiData, 25);
+      const dedupedHorror = claim(horrorData, 25);
+      const dedupedRacing = claim(racingData, 25);
+      const dedupedOpenWorld = claim(openWorldData, 25);
+      const dedupedIndie = claim(indieData, 25);
+
+      setTrending(dedupedTrending);
       setTop10(top10Data);
-      setMostPopular(mostPopularData);
-      setTopRated(topRatedData);
-      setUpcoming(upcomingData);
-      setNewReleases(newReleasesData);
-      setPlaystation(psData);
-      setXbox(xboxData);
-      setPc(pcData);
-      setSwitchGames(switchData);
+      setMostPopular(dedupedMostPopular);
+      setTopRated(dedupedTopRated);
+      setUpcoming(dedupedUpcoming);
+      setNewReleases(dedupedNewReleases);
+      setPlaystation(dedupedPs);
+      setXbox(dedupedXbox);
+      setPc(dedupedPc);
+      setSwitchGames(dedupedSwitch);
+      setRpgGames(dedupedRpg);
+      setShooterGames(dedupedShooter);
+      setScifiGames(dedupedScifi);
+      setHorrorGames(dedupedHorror);
+      setRacingGames(dedupedRacing);
+      setOpenWorldGames(dedupedOpenWorld);
+      setIndieGames(dedupedIndie);
 
       // GOTY rail (separate fetch so we can capture year metadata)
       try {
         const r = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/games/goty`);
-        setGoty(r.data?.results || []);
+        const gotyRaw = r.data?.results || [];
+        setGoty(claim(gotyRaw, 20));
         setGotyYear(r.data?.year || null);
       } catch (e) {
         const fallback = await getGOTY().catch(() => []);
-        setGoty(fallback);
+        setGoty(claim(fallback, 20));
       }
 
-      const hero = trendingData.filter((g) => g.backdrop_path).slice(0, 6);
+      const hero = (trendingData || []).filter((g) => g.backdrop_path).slice(0, 6);
       setHeroItems(hero);
       setHeroContent(hero[0] || null);
     } catch (err) {
@@ -381,6 +456,29 @@ const Home = () => {
         )}
         {switchGames.length > 0 && (
           <ContentRow title="🕹️ Nintendo Switch Favorites" items={switchGames} onCardClick={handleCardClick} viewAllLink="/games/switch" />
+        )}
+
+        {/* GENRE & THEME RAILS — categorized so users see fresh games per category */}
+        {rpgGames.length > 0 && (
+          <ContentRow title="⚔️ RPG &amp; Role-Playing Adventures" items={rpgGames} onCardClick={handleCardClick} viewAllLink="/games/all" />
+        )}
+        {shooterGames.length > 0 && (
+          <ContentRow title="🔫 Shooters &amp; FPS" items={shooterGames} onCardClick={handleCardClick} viewAllLink="/games/all" />
+        )}
+        {openWorldGames.length > 0 && (
+          <ContentRow title="🌍 Open World &amp; Sandbox" items={openWorldGames} onCardClick={handleCardClick} viewAllLink="/games/all" />
+        )}
+        {scifiGames.length > 0 && (
+          <ContentRow title="🚀 Sci-Fi &amp; Futuristic" items={scifiGames} onCardClick={handleCardClick} viewAllLink="/games/all" />
+        )}
+        {horrorGames.length > 0 && (
+          <ContentRow title="🧟 Horror &amp; Survival" items={horrorGames} onCardClick={handleCardClick} viewAllLink="/games/all" />
+        )}
+        {racingGames.length > 0 && (
+          <ContentRow title="🏎️ Racing &amp; Sports" items={racingGames} onCardClick={handleCardClick} viewAllLink="/games/all" />
+        )}
+        {indieGames.length > 0 && (
+          <ContentRow title="🎨 Indie Gems" items={indieGames} onCardClick={handleCardClick} viewAllLink="/games/all" />
         )}
       </div>
 

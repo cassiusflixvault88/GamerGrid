@@ -31,6 +31,33 @@ export const getByPlatform = async (platformKey, sort = 'rating', limit = 40) =>
 // Legacy signature kept for any code still calling getByGenre; route it to platform when possible.
 export const getByGenre = async () => [];
 
+// ---------- Genre / Theme rails (IGDB IDs) ----------
+// Generic helper: pass either genre or theme ID
+export const getByCategory = async ({ genre, theme, limit = 40, sort = 'popular', minRating = 70 } = {}) => {
+  const params = new URLSearchParams();
+  if (genre) params.set('genre', String(genre));
+  if (theme) params.set('theme', String(theme));
+  params.set('limit', String(limit));
+  params.set('sort', sort);
+  params.set('min_rating', String(minRating));
+  return unwrap(await axios.get(`${API}/games/category?${params.toString()}`));
+};
+
+// IGDB Genre IDs (verified in IGDB API v4)
+export const IGDB_GENRES = {
+  FIGHTING: 4, SHOOTER: 5, MUSIC: 7, PLATFORM: 8, PUZZLE: 9, RACING: 10,
+  RTS: 11, RPG: 12, SIMULATOR: 13, SPORT: 14, STRATEGY: 15, TURN_BASED: 16,
+  TACTICAL: 24, HACK_AND_SLASH: 25, ADVENTURE: 31, INDIE: 32, ARCADE: 33,
+  VISUAL_NOVEL: 34, CARD_BOARD: 35, MOBA: 36,
+};
+
+// IGDB Theme IDs (verified)
+export const IGDB_THEMES = {
+  ACTION: 1, FANTASY: 17, SCI_FI: 18, HORROR: 19, THRILLER: 20,
+  SURVIVAL: 21, HISTORICAL: 22, STEALTH: 23, COMEDY: 27, SANDBOX: 33,
+  OPEN_WORLD: 38, WARFARE: 39, FOUR_X: 41, MYSTERY: 43,
+};
+
 export const getDetails = async (_mediaType, id) => {
   const res = await axios.get(`${API}/games/details/${id}`);
   return res.data;
