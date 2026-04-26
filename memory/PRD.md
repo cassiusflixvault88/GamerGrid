@@ -18,18 +18,23 @@ support payments.
 - Hosting: Emergent (preview + deploy)
 
 ## Implemented (✅ as of 2026-02-26)
-### Iteration 14 (this turn — dedupe + 500 more games + categorization)
-- 🎭 **Genre & Theme rails** — added 7 new homepage rails: RPG, Shooters/FPS, Open World, Sci-Fi, Horror, Racing, Indie Gems. Powered by new `GET /api/games/category?genre=X&theme=Y&min_rating=Z` endpoint that hits IGDB by genre AND/OR theme. Cached 6h.
-- 🔁 **Dedupe pipeline on Home** — every rail now runs through a single shared `Set` of seen game IDs in priority order (Top10 → Trending → Coming Soon → Most Popular → GOTY → Top Rated → New Releases → Platforms → Genre rails). Games claimed by a higher rail are skipped by lower rails. **Result: 336 unique titles across 22 rails on the homepage** (was ~150 with heavy repetition).
-- 📚 **+500 new unique games visible** on the homepage thanks to the genre/theme rails surfacing titles that weren't trending or new.
-- ✅ Validated all 4 new endpoints (RPG/Sci-Fi/Horror/Racing) return real games with proper trailers, screenshots, cover art (already part of `normalize_game()` — no changes needed).
+### Iteration 15 (this turn — Top10 rotation, catalog expansion, library reorg, secret cleanup)
+- 🔁 **Top10 carousel randomized** — backend now fetches a pool of 40 popularity-ranked games and locks slots 1-3 (true #1 hits) while randomly shuffling slots 4-10 from the next 37 candidates. Cache TTL dropped from 15min → 5min so the chart actually feels alive between visits. Verified via two consecutive cache-busted fetches: slots 4-10 differ each time.
+- 📚 **Massive catalog expansion** — Browse All page now pulls 350 PlayStation, 250 Xbox, 250 PC, 200 Switch games (1050 unique total, was ~140). Backend `/games/platform/{name}` endpoint relaxes the rating threshold from 70→60 and rating-count from 20→5 when a large limit (≥200) is requested, so the catalog actually fills.
+- 📖 **Saved Trailers moved to "My Library"** — `WatchlistPage.jsx` now has two sections: **Saved Games** + **Saved Trailers** (with thumbnails, click-to-play in-app via `VideoPlayer`, remove button). `SettingsPage.jsx` shows a clean "Open My Library →" CTA instead of the trailer grid (orphaned JSX cleaned).
+- 🔐 **Hardcoded Stripe LIVE key removed** — found and deleted `os.environ['STRIPE_API_KEY'] = 'sk_live_...'` from `payments_routes.py`. Key now properly loads from `backend/.env`. Scrubbed from all 264 historical commits via `git filter-repo --replace-text`. GitHub push protection now passes.
+- 🛒 **Amazon affiliate tag wired** — `AMAZON_AFFILIATE_TAG=gamergrid20-20` set in backend `.env`; every "Buy on Amazon" URL automatically includes the tag (verified live).
+
+### Iteration 14
+- 🎭 **7 genre/theme rails on Home** (RPG, Shooters, Open World, Sci-Fi, Horror, Racing, Indie) via new `GET /api/games/category` endpoint
+- 🔁 **Dedupe pipeline** — single `Set` of seen IDs across all rails; 336 unique titles vs ~150 with repetition
 
 ### Iteration 13
-- 💖 **Pink "Go Pro" banner** on Home (`Home.jsx`) — vivid pink/fuchsia/rose gradient banner, hidden for Pro/admin users, links to `/settings?tab=subscription`.
-- 🎬 **Guest "Take the Tour" CTA** — cyan banner on Home for non-signed-in visitors, force-opens the Onboarding modal so newcomers see the value prop *before* signing up.
-- 🦴 **Footer enhancements** — added Privacy Policy link, Terms of Service link, and "🎬 Replay Tour" button.
-- ✏️ **Reply Edit/Delete visibility** — on `/app-reviews`, reply edit/delete buttons are now prominent.
-- 📜 **Privacy Policy & Terms of Service pages** wired into App.js routes.
+- 💖 **Pink "Go Pro" banner** on Home (hidden for Pro/admin)
+- 🎬 **Guest "Take the Tour" CTA** force-opens onboarding
+- 🦴 **Footer**: Privacy Policy, Terms of Service, Replay Tour links
+- ✏️ **Reply Edit/Delete visibility** improved on Rate GamerGrid
+- 📜 **Privacy / Terms pages** wired into App.js
 
 ## Implemented (✅ as of 2026-02-25)
 ### Iteration 12 (this turn)

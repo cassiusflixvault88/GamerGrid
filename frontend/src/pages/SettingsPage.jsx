@@ -749,71 +749,23 @@ const SettingsPage = () => {
           </div>
         )}
 
-        {/* Saved Trailers Library */}
-        <div className="bg-white/5 backdrop-blur-sm rounded-lg p-6 mb-6 border border-white/10" data-testid="saved-trailers-section">
+        {/* Saved Trailers — moved to My Library */}
+        <div className="bg-white/5 backdrop-blur-sm rounded-lg p-6 mb-6 border border-white/10" data-testid="saved-trailers-link">
           <h2 className="text-xl font-semibold text-white mb-1 flex items-center gap-2">
             <Bookmark className="w-5 h-5 text-purple-400" />
             Saved Trailers
             <span className="text-white/50 text-sm font-normal ml-2">{savedTrailers.length}</span>
           </h2>
-          <p className="text-white/60 text-sm mb-4">Trailers you've saved from any game.</p>
-          {savedTrailers.length === 0 ? (
-            <div className="text-center py-8 border border-dashed border-white/10 rounded-lg">
-              <Bookmark className="w-8 h-8 text-white/20 mx-auto mb-2" />
-              <p className="text-white/40 text-sm">No saved trailers yet</p>
-              <p className="text-white/30 text-xs mt-1">
-                Open any game trailer and tap the purple <span className="text-purple-400 font-semibold">Save Trailer</span> button.
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {savedTrailers.map(t => (
-                <div
-                  key={t.id}
-                  className="group relative bg-black/40 rounded-lg overflow-hidden border border-white/10 hover:border-purple-500/50 transition-colors"
-                  data-testid={`saved-trailer-${t.id}`}
-                >
-                  <a
-                    href={`https://www.youtube.com/watch?v=${t.youtube_id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block aspect-video bg-gradient-to-br from-purple-900/30 to-black relative"
-                  >
-                    {t.thumbnail && (
-                      <img
-                        src={t.thumbnail}
-                        alt={t.title}
-                        className="w-full h-full object-cover"
-                        onError={(e) => { e.target.style.display = 'none'; }}
-                      />
-                    )}
-                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <Play className="w-12 h-12 text-white" />
-                    </div>
-                  </a>
-                  <div className="p-3">
-                    <p className="text-white text-sm font-medium line-clamp-2" title={t.title}>{t.title}</p>
-                    {t.game_title && (
-                      <p className="text-white/50 text-xs mt-1 truncate">{t.game_title}</p>
-                    )}
-                    <div className="flex items-center justify-between mt-2">
-                      <span className="text-white/30 text-xs">
-                        {new Date(t.saved_at).toLocaleDateString()}
-                      </span>
-                      <button
-                        onClick={() => removeSavedTrailer(t.id)}
-                        className="text-white/40 hover:text-red-400 transition-colors p-1"
-                        title="Remove"
-                        data-testid={`remove-trailer-${t.id}`}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          <p className="text-white/60 text-sm mb-4">
+            Saved trailers now live in your <span className="text-purple-400 font-semibold">My Library</span> alongside your saved games.
+          </p>
+          <a
+            href="/watchlist"
+            className="inline-block px-5 py-2.5 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-semibold rounded-lg transition-all"
+            data-testid="go-to-library-from-settings"
+          >
+            🎬 Open My Library →
+          </a>
         </div>
 
         {/* Profile Information */}

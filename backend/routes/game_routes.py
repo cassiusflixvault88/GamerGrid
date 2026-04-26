@@ -417,12 +417,12 @@ async def get_most_popular(limit: int = Query(30, ge=1, le=500)):
 
 @router.get("/top10")
 async def get_top10():
-    """Top 10 games right now — blended popularity (Steam + IGDB Playing + Twitch + Top Sellers).
+    """Top 10 games right now — randomized pick from a larger blended-popularity pool
+    so the carousel feels fresh on each visit instead of showing the same fixed list.
 
-    Each item also includes `delta` — change in rank vs yesterday's snapshot
-    (positive = climbing the chart, negative = falling, null = brand new entry).
+    Each item also includes `delta` — change in rank vs yesterday's snapshot.
     """
-    cache_key = "top10_v3"
+    cache_key = "top10_v4"
     await _maybe_init_ttl()
     doc = await _cache_col.find_one({"_id": cache_key}, {"_id": 0, "data": 1, "expires_at": 1})
     if doc and doc.get("data") and doc.get("expires_at"):
@@ -437,11 +437,20 @@ async def get_top10():
         except Exception:
             pass
 
-    blended = await _fetch_blended_popularity(10)
+    # Fetch a LARGER pool (top 40) so we can rotate which 10 are featured.
+    blended = await _fetch_blended_popularity(40)
     if not blended:
         return {"results": [], "total": 0}
 
-    game_ids = [str(b["game_id"]) for b in blended]
+    # Always keep the absolute #1-3 fixed (they ARE the most popular right now),
+    # then randomly pick 7 from the next 37 — keeps the chart "real" but fresh.
+    import random
+    top_fixed = blended[:3]
+    pool = blended[3:]
+    random.shuffle(pool)
+    selected = top_fixed + pool[:7]
+
+    game_ids = [str(b["game_id"]) for b in selected]
     ids_str = ",".join(game_ids)
     games = await igdb_query(
         "games",
@@ -456,7 +465,6 @@ async def get_top10():
     snap_id = f"top10_snapshot:{today_key}"
     today_snap = await _cache_col.find_one({"_id": snap_id}, {"_id": 0, "data": 1})
     if not today_snap:
-        # Save today's ranking (BSON requires string keys)
         await _cache_col.update_one(
             {"_id": snap_id},
             {"$set": {
@@ -466,7 +474,6 @@ async def get_top10():
             upsert=True,
         )
 
-    # Yesterday's ranking for delta
     yesterday_key = (datetime.now(timezone.utc) - timedelta(days=1)).strftime("%Y-%m-%d")
     y_snap = await _cache_col.find_one({"_id": f"top10_snapshot:{yesterday_key}"}, {"_id": 0, "data": 1})
     yesterday_ranks = (y_snap or {}).get("data") or {}
@@ -475,16 +482,17 @@ async def get_top10():
         current = i + 1
         prev_rank = yesterday_ranks.get(str(n["id"])) or yesterday_ranks.get(n["id"])
         if prev_rank:
-            n["delta"] = prev_rank - current  # positive = climbed
+            n["delta"] = prev_rank - current
             n["prev_rank"] = prev_rank
         else:
             n["delta"] = None
             n["prev_rank"] = None
 
     payload = {"results": normalized, "total": len(normalized)}
+    # Shorter TTL (5 min) so the rotation actually feels alive
     await _cache_col.update_one(
         {"_id": cache_key},
-        {"$set": {"data": payload, "expires_at": datetime.now(timezone.utc) + timedelta(minutes=15)}},
+        {"$set": {"data": payload, "expires_at": datetime.now(timezone.utc) + timedelta(minutes=5)}},
         upsert=True,
     )
     return payload
@@ -612,8 +620,11 @@ async def get_games_by_platform(
 
     where_parts = [
         f"platforms = ({ids_str})",
-        "rating > 70",
-        "total_rating_count > 20",
+        # Relax the threshold when caller asks for a large catalog (>=200) so we
+        # can actually return 300+ PlayStation / 200+ Xbox titles. Smaller calls
+        # keep the higher quality bar.
+        "rating > 60" if limit >= 200 else "rating > 70",
+        "total_rating_count > 5" if limit >= 200 else "total_rating_count > 20",
     ]
     if genre:
         where_parts.append(f"genres = ({genre})")

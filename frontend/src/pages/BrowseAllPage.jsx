@@ -74,22 +74,37 @@ const BrowseAllPage = () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      params.set('limit', '200');
+      // Bigger catalog per platform: PS=300+, Xbox=200+, PC=200, Switch=200
+      const platformLimit = (key) => {
+        if (key === 'playstation') return 350;
+        if (key === 'xbox') return 250;
+        if (key === 'pc') return 250;
+        if (key === 'switch') return 200;
+        return 200;
+      };
+      const generalLimit = '200';
+      params.set('limit', generalLimit);
       if (genre) params.set('genre', genre);
       if (year && year !== 'Any') params.set('year', year);
 
       let url;
       if (activePlatform === 'all') {
         const mkUrl = (endpoint) => `${API}/games/${endpoint}?${params.toString()}`;
+        const platUrl = (key) => {
+          const p = new URLSearchParams(params);
+          p.set('limit', String(platformLimit(key)));
+          p.set('sort', 'popular');
+          return `${API}/games/platform/${key}?${p.toString()}`;
+        };
         const [trending, top, popular, newRel, ps, xbox, pc, switchGames] = await Promise.all([
           axios.get(mkUrl('trending')).then((x) => x.data?.results || []).catch(() => []),
           axios.get(mkUrl('top-rated')).then((x) => x.data?.results || []).catch(() => []),
           axios.get(mkUrl('most-popular')).then((x) => x.data?.results || []).catch(() => []),
           axios.get(mkUrl('new-releases')).then((x) => x.data?.results || []).catch(() => []),
-          axios.get(`${API}/games/platform/playstation?${params.toString()}&sort=popular`).then((x) => x.data?.results || []).catch(() => []),
-          axios.get(`${API}/games/platform/xbox?${params.toString()}&sort=popular`).then((x) => x.data?.results || []).catch(() => []),
-          axios.get(`${API}/games/platform/pc?${params.toString()}&sort=popular`).then((x) => x.data?.results || []).catch(() => []),
-          axios.get(`${API}/games/platform/switch?${params.toString()}&sort=popular`).then((x) => x.data?.results || []).catch(() => []),
+          axios.get(platUrl('playstation')).then((x) => x.data?.results || []).catch(() => []),
+          axios.get(platUrl('xbox')).then((x) => x.data?.results || []).catch(() => []),
+          axios.get(platUrl('pc')).then((x) => x.data?.results || []).catch(() => []),
+          axios.get(platUrl('switch')).then((x) => x.data?.results || []).catch(() => []),
         ]);
         const seen = new Set();
         const merged = [...popular, ...trending, ...top, ...newRel, ...ps, ...xbox, ...pc, ...switchGames].filter((g) => {
@@ -99,8 +114,10 @@ const BrowseAllPage = () => {
         });
         setGames(merged);
       } else {
-        params.set('sort', sort);
-        url = `${API}/games/platform/${activePlatform}?${params.toString()}`;
+        const platParams = new URLSearchParams(params);
+        platParams.set('limit', String(platformLimit(activePlatform)));
+        platParams.set('sort', sort);
+        url = `${API}/games/platform/${activePlatform}?${platParams.toString()}`;
         const res = await axios.get(url);
         setGames(res.data?.results || []);
       }
