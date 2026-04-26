@@ -333,3 +333,14 @@ async def digest_run_history(token_data: dict = Depends(verify_token)):
         if isinstance(r.get("ts"), datetime):
             r["ts"] = r["ts"].isoformat()
     return {"runs": runs}
+
+
+@router.get("/digest/scheduler-status")
+async def digest_scheduler_status(token_data: dict = Depends(verify_token)):
+    """Admin: confirm the auto-scheduler is running and see next run time."""
+    await _ensure_admin(token_data)
+    try:
+        from scheduler import get_scheduler_status
+        return get_scheduler_status()
+    except Exception as e:
+        return {"running": False, "error": str(e)}

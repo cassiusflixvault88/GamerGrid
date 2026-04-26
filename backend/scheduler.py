@@ -1,0 +1,118 @@
+"""
+Background scheduler — sends Top 10 Weekly Digest every Monday 9am UTC automatically.
+No manual button needed. Includes a status endpoint for the admin dashboard.
+"""
+import os
+import logging
+import asyncio
+from datetime import datetime, timezone
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.cron import CronTrigger
+from motor.motor_asyncio import AsyncIOMotorClient
+
+logger = logging.getLogger(__name__)
+
+mongo_url = os.environ['MONGO_URL']
+client = AsyncIOMotorClient(mongo_url)
+db = client[os.environ['DB_NAME']]
+
+scheduler = AsyncIOScheduler(timezone="UTC")
+_last_run = {"ts": None, "sent": 0, "failed": 0, "error": None}
+
+
+async def _run_weekly_digest():
+    """Job that runs every Monday 9am UTC."""
+    logger.info("🕘 Auto-running Top 10 Weekly Digest…")
+    api_key = (os.environ.get("RESEND_API_KEY") or "").strip()
+    if not api_key:
+        logger.warning("Skipping weekly digest — RESEND_API_KEY not set")
+        _last_run.update({"ts": datetime.now(timezone.utc).isoformat(), "error": "RESEND_API_KEY missing"})
+        return
+
+    try:
+        # Reuse the existing email-routes machinery
+        from routes.email_routes import _build_digest_html, _fetch_top10_for_email, _site_url
+
+        top10 = await _fetch_top10_for_email()
+        if not top10:
+            logger.warning("Weekly digest skipped — top10 cache empty")
+            _last_run.update({"ts": datetime.now(timezone.utc).isoformat(), "error": "top10 cache empty"})
+            return
+
+        import resend
+        resend.api_key = api_key
+        sender = os.environ.get("SENDER_EMAIL", "onboarding@resend.dev")
+        html = _build_digest_html(top10, _site_url())
+
+        cursor = db.users.find(
+            {"$or": [
+                {"email_notifications": {"$ne": False}},
+                {"email_notifications": {"$exists": False}},
+            ]},
+            {"_id": 0, "email": 1, "id": 1},
+        )
+        subscribers = await cursor.to_list(10000)
+
+        sent, failed = 0, 0
+        for sub in subscribers:
+            email = (sub.get("email") or "").strip()
+            if not email or "@" not in email:
+                continue
+            try:
+                await asyncio.to_thread(
+                    resend.Emails.send,
+                    {
+                        "from": sender,
+                        "to": [email],
+                        "subject": "🎮 GamerGrid — This Week's Top 10 Games",
+                        "html": html,
+                    },
+                )
+                sent += 1
+                await asyncio.sleep(0.6)  # Resend free tier rate limit
+            except Exception as e:
+                failed += 1
+                logger.warning(f"Auto-digest failed for {email}: {e}")
+
+        await db.digest_runs.insert_one({
+            "ts": datetime.now(timezone.utc),
+            "sent_count": sent,
+            "failed_count": failed,
+            "triggered_by": "scheduler",
+        })
+        _last_run.update({
+            "ts": datetime.now(timezone.utc).isoformat(),
+            "sent": sent,
+            "failed": failed,
+            "error": None,
+        })
+        logger.info(f"✅ Weekly digest auto-sent: {sent} success, {failed} failed")
+    except Exception as e:
+        logger.exception(f"Weekly digest auto-run crashed: {e}")
+        _last_run.update({"ts": datetime.now(timezone.utc).isoformat(), "error": str(e)})
+
+
+def start_scheduler():
+    """Called once at app startup."""
+    if scheduler.running:
+        return
+    # Every Monday at 9am UTC (4am EST / 1am PST — overnight in US, perfect timing)
+    scheduler.add_job(
+        _run_weekly_digest,
+        trigger=CronTrigger(day_of_week="mon", hour=9, minute=0),
+        id="weekly_digest",
+        replace_existing=True,
+        misfire_grace_time=3600,
+    )
+    scheduler.start()
+    logger.info("📅 Scheduler started — weekly digest fires every Monday 9am UTC")
+
+
+def get_scheduler_status():
+    job = scheduler.get_job("weekly_digest") if scheduler.running else None
+    next_run = job.next_run_time.isoformat() if job and job.next_run_time else None
+    return {
+        "running": scheduler.running,
+        "next_run": next_run,
+        "last_run": _last_run,
+    }
