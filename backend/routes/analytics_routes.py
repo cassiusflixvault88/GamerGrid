@@ -15,6 +15,7 @@ import hashlib
 import logging
 
 from auth import verify_token
+from ceo_config import is_ceo_email
 from jose import jwt as _jose_jwt
 
 logger = logging.getLogger(__name__)
@@ -80,11 +81,20 @@ async def track_page_view(
     ip = request.client.host if request.client else ""
     user_id = _user_id_from_authorization(authorization)
 
-    # Mark whether this visit is from an admin (excluded from public stats)
+    # Mark whether this visit is from an admin/CEO (excluded from public stats).
+    # We check BOTH the admins collection AND the CEO email allowlist, because
+    # the founder is sometimes recorded only via the CEO_EMAILS env var.
     is_admin_visit = False
     if user_id:
         admin = await db.admins.find_one({"user_id": user_id}, {"_id": 0, "is_admin": 1})
-        is_admin_visit = bool(admin and admin.get("is_admin"))
+        if admin and admin.get("is_admin"):
+            is_admin_visit = True
+        else:
+            user_doc = await db.users.find_one(
+                {"id": user_id}, {"_id": 0, "email": 1}
+            )
+            if user_doc and is_ceo_email(user_doc.get("email") or ""):
+                is_admin_visit = True
 
     doc = {
         "visitor_id": event.visitor_id,
@@ -284,17 +294,83 @@ async def analytics_dashboard(
 
 @router.post("/admin/backfill-admin-flag")
 async def backfill_admin_flag(token_data: dict = Depends(verify_token)):
-    """One-time backfill: mark old page_views from admin user_ids as admin visits.
-    Useful for cleaning out the data accumulated from your own browsing.
+    """One-time backfill: mark old page_views from admin user_ids AND CEO emails
+    as admin visits. Cleans out the founder's own browsing from public stats.
     """
     await _ensure_admin(token_data)
+
+    # 1) Admins collection
     admin_ids = await _admin_user_ids()
+
+    # 2) CEO emails — fetch user IDs whose email is in the allowlist
+    from ceo_config import ceo_emails as _ceo_emails
+    emails = list(_ceo_emails())
+    if emails:
+        ceo_users = await db.users.find(
+            {"email": {"$in": emails}}, {"_id": 0, "id": 1}
+        ).to_list(50)
+        for u in ceo_users:
+            if u.get("id"):
+                admin_ids.add(u["id"])
+
     if not admin_ids:
-        return {"ok": True, "updated": 0, "note": "No admin user_ids found."}
+        return {"ok": True, "updated": 0, "note": "No admin/CEO user_ids found."}
 
     result = await db.page_views.update_many(
         {"user_id": {"$in": list(admin_ids)}, "is_admin_visit": {"$ne": True}},
         {"$set": {"is_admin_visit": True}},
     )
-    return {"ok": True, "updated": result.modified_count, "admin_ids_checked": len(admin_ids)}
+    return {
+        "ok": True,
+        "updated": result.modified_count,
+        "admin_ids_checked": len(admin_ids),
+    }
+
+
+@router.get("/new-visitors-summary")
+async def new_visitors_summary(token_data: dict = Depends(verify_token)):
+    """Quick-glance card for the admin dashboard / profile widget.
+    Returns counts of visitors over the past 24h, 7d, 30d (real users only).
+    """
+    await _ensure_admin(token_data)
+    now = datetime.now(timezone.utc)
+
+    async def _unique_visitors_since(start_dt: datetime) -> int:
+        rows = await db.page_views.aggregate([
+            {"$match": {"is_admin_visit": {"$ne": True}, "ts": {"$gte": start_dt}}},
+            {"$group": {"_id": "$visitor_id"}},
+            {"$count": "n"},
+        ]).to_list(1)
+        return rows[0]["n"] if rows else 0
+
+    async def _new_visitors_since(start_dt: datetime) -> int:
+        """Visitors whose FIRST-EVER visit happened after start_dt."""
+        rows = await db.page_views.aggregate([
+            {"$match": {"is_admin_visit": {"$ne": True}}},
+            {"$group": {"_id": "$visitor_id", "first_ts": {"$min": "$ts"}}},
+            {"$match": {"first_ts": {"$gte": start_dt}}},
+            {"$count": "n"},
+        ]).to_list(1)
+        return rows[0]["n"] if rows else 0
+
+    last_24h = now - timedelta(hours=24)
+    last_7d = now - timedelta(days=7)
+    last_30d = now - timedelta(days=30)
+
+    return {
+        "last_24h": {
+            "visitors": await _unique_visitors_since(last_24h),
+            "new_visitors": await _new_visitors_since(last_24h),
+        },
+        "last_7d": {
+            "visitors": await _unique_visitors_since(last_7d),
+            "new_visitors": await _new_visitors_since(last_7d),
+        },
+        "last_30d": {
+            "visitors": await _unique_visitors_since(last_30d),
+            "new_visitors": await _new_visitors_since(last_30d),
+        },
+        "as_of": now.isoformat(),
+        "note": "Excludes admin/CEO traffic. 'new_visitors' = unique visitor_id whose first-ever pageview was inside the window.",
+    }
 

@@ -18,28 +18,23 @@ support payments.
 - Hosting: Emergent (preview + deploy)
 
 ## Implemented (✅ as of 2026-02-26)
-### Iteration 16 (this turn — retention + perf + marketing)
-- ✨ **"What's New" pulsing badge** on Navbar — `WhatsNewButton.jsx` shows a pink animated ping next to a Sparkles icon. Tracks `gg_whats_new_version` in localStorage; pulse stops once user opens the modal. Modal shows the 4 most recent shipped features (1000+ games, Top10 rotation, Saved Trailers in Library, Pro membership). Bump `CURRENT_VERSION` in the file to re-pulse for everyone.
-- 🚀 **Marketing hero for guests** — `GuestMarketingHero.jsx` replaces the small cyan "Take the Tour" banner with a full above-the-fold sales pitch: glowing gradient bg, big headline, 5 feature chips, 4 feature highlight cards (Build Library / Live Deals / Pro Perks / Real Reviews), and dual CTAs (Sign Up Free + Take Tour). Only shown to non-signed-in visitors.
-- ⚡ **N+1 query fixes** in `server.py`:
-  - `get_app_reviews()` — admin replies now batch-fetched via `$in` (1 query instead of N)
-  - `get_ratings()` — review_replies batched the same way
-  - `get_all_reviews()` — user lookups batched (was 1 query per review)
-  - All 3 endpoints verified returning identical data shape, just dramatically fewer DB round trips.
+### Iteration 17 (this turn — admin traffic widget + CEO exclusion bug fix)
+- 🐛 **CEO traffic exclusion bug fixed** — `/api/analytics/track` was only checking the `admins` collection, missing the `CEO_EMAILS` env-based allowlist. Now checks BOTH: if `user_id` matches an admin doc OR if the user's email is in `CEO_EMAILS`, the visit is flagged `is_admin_visit=True` and excluded from public stats.
+- 🧹 **Backfill upgraded** — `POST /api/analytics/admin/backfill-admin-flag` now also resolves CEO emails → user_ids, so historical CEO visits get retroactively cleaned out of public counts. Auto-runs once per session via `AdminVisitorWidget`.
+- 📊 **AdminVisitorWidget** on Public Profile (`/u/<your_username>`) — shows three time-window cards (Last 24h / 7d / 30d) with **total visitors + new visitors** counts. Only renders when the signed-in user is admin AND viewing their own profile (invisible to all other viewers). Includes "Clean my visits" button to re-run the backfill on demand and a "Full dashboard →" link to `/admin/analytics`.
+- 🆕 **`GET /api/analytics/new-visitors-summary`** endpoint — returns 24h / 7d / 30d unique-visitor + new-visitor (visitor_id whose first-ever pageview is in the window) counts. Excludes admin/CEO traffic.
+
+### Iteration 16
+- ✨ "What's New" pulsing badge on Navbar (`WhatsNewButton.jsx`) — localStorage-tracked version
+- 🚀 Guest marketing hero — replaced cyan tour banner with full above-the-fold pitch
+- ⚡ N+1 query fixes in `get_app_reviews`, `get_ratings`, `get_all_reviews`
 
 ### Iteration 15
-- 🔁 Top10 carousel randomized (slots 1-3 fixed, 4-10 shuffle) + 5min TTL
-- 📚 Catalog expansion: 350 PS / 250 Xbox / 250 PC / 200 Switch = 1050 unique games
+- 🔁 Top10 carousel randomized (slots 1-3 fixed, 4-10 shuffle), 5min TTL
+- 📚 Catalog: 350 PS / 250 Xbox / 250 PC / 200 Switch = 1050 unique games
 - 📖 Saved Trailers moved to "My Library" with in-app playback
 - 🔐 Hardcoded Stripe LIVE key removed + scrubbed from all 264 historical commits
 - 🛒 Amazon affiliate tag `gamergrid20-20` wired into every Buy on Amazon link
-
-### Iteration 14
-- 🎭 7 genre/theme rails on Home (RPG, Shooters, Open World, Sci-Fi, Horror, Racing, Indie) via new `/api/games/category` endpoint
-- 🔁 Dedupe pipeline — 336 unique titles vs ~150 with repetition
-
-### Iteration 13
-- 💖 Pink Pro banner on Home, 🎬 Guest Tour CTA, 🦴 Footer Privacy/Terms/Replay Tour, ✏️ Reply Edit/Delete visibility
 
 ## Implemented (✅ as of 2026-02-25)
 ### Iteration 12 (this turn)

@@ -7,6 +7,8 @@ import BackNavigation from '../components/BackNavigation';
 import Footer from '../components/Footer';
 import ShareButton from '../components/ShareButton';
 import AdSlot from '../components/AdSlot';
+import AdminVisitorWidget from '../components/AdminVisitorWidget';
+import { useAuth } from '../context/AuthContext';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -24,6 +26,7 @@ const renderStars = (rating) => {
 const PublicProfilePage = () => {
   const { username } = useParams();
   const navigate = useNavigate();
+  const { user: viewer } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -131,6 +134,11 @@ const PublicProfilePage = () => {
       </div>
 
       <div className="max-w-5xl mx-auto px-6 pb-24">
+        {/* Owner-only traffic widget — invisible to everyone except the admin */}
+        {viewer?.is_admin && viewer?.username === profile.username && (
+          <AdminVisitorWidget />
+        )}
+
         {/* Library */}
         <section className="mt-6">
           <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
