@@ -87,8 +87,9 @@ const ParentalPIN = ({ isOpen, onClose, onSuccess, mode = 'verify' }) => {
       <label className="block text-white/80 text-sm mb-2">{label}</label>
       <div className="flex gap-3 justify-center">
         {pinArray.map((digit, index) => (
+          // eslint-disable-next-line react/no-array-index-key -- 4-digit PIN inputs are positional, never reorder
           <input
-            key={index}
+            key={`${label}-${index}`}
             ref={refs[index]}
             type="password"
             inputMode="numeric"

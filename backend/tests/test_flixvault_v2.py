@@ -9,19 +9,19 @@ import uuid
 
 BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', '').rstrip('/')
 
-# Admin credentials (CEO account)
-ADMIN_EMAIL = "cassiusflixvault@gmail.com"
-ADMIN_PASSWORD = "FlixVault2026!"
+# Admin credentials — required env vars (test will skip if missing)
+ADMIN_EMAIL = os.environ.get("ADMIN_TEST_EMAIL", "")
+ADMIN_PASSWORD = os.environ.get("ADMIN_TEST_PASSWORD", "")
 
 # Test user credentials
-TEST_EMAIL = "testuser_v5@flixvault.com"
-TEST_PASSWORD = "Test123!"
-TEST_USERNAME = "TestUserV5"
+TEST_EMAIL = os.environ.get("TEST_USER_EMAIL", "testuser@example.com")
+TEST_PASSWORD = os.environ.get("TEST_USER_PASSWORD", "ChangeMeIfYouRunTests!")
+TEST_USERNAME = os.environ.get("TEST_USER_USERNAME", "TestUserV5")
 
 
 class TestAuthenticationFlow:
     """Test Login/Authentication flow"""
-    
+
     def test_login_admin_account(self):
         """Test admin login with CEO credentials"""
         response = requests.post(f"{BASE_URL}/api/auth/login", json={
@@ -34,7 +34,7 @@ class TestAuthenticationFlow:
         assert "user" in data
         assert data["user"]["email"] == ADMIN_EMAIL
         print(f"✅ Admin login successful: {data['user']['username']}")
-    
+
     def test_login_test_user(self):
         """Test regular user login"""
         response = requests.post(f"{BASE_URL}/api/auth/login", json={
@@ -46,7 +46,7 @@ class TestAuthenticationFlow:
         assert "access_token" in data
         assert "user" in data
         print(f"✅ Test user login successful: {data['user']['username']}")
-    
+
     def test_login_invalid_credentials(self):
         """Test login with wrong password"""
         response = requests.post(f"{BASE_URL}/api/auth/login", json={
@@ -55,7 +55,7 @@ class TestAuthenticationFlow:
         })
         assert response.status_code == 401
         print("✅ Invalid credentials correctly rejected")
-    
+
     def test_get_current_user(self):
         """Test /auth/me endpoint"""
         # First login
@@ -64,7 +64,7 @@ class TestAuthenticationFlow:
             "password": TEST_PASSWORD
         })
         token = login_resp.json()["access_token"]
-        
+
         # Get current user
         response = requests.get(
             f"{BASE_URL}/api/auth/me",
@@ -78,7 +78,7 @@ class TestAuthenticationFlow:
 
 class TestFeedbackReportIssue:
     """Test Feedback/Report Issue functionality"""
-    
+
     @pytest.fixture
     def user_token(self):
         """Get test user token"""
@@ -87,7 +87,7 @@ class TestFeedbackReportIssue:
             "password": TEST_PASSWORD
         })
         return response.json()["access_token"]
-    
+
     def test_submit_bug_report(self, user_token):
         """Test submitting a bug report"""
         response = requests.post(
@@ -104,8 +104,8 @@ class TestFeedbackReportIssue:
         data = response.json()
         assert "message" in data
         assert "id" in data or "feedback_id" in data
-        print(f"✅ Bug report submitted successfully")
-    
+        print("✅ Bug report submitted successfully")
+
     def test_submit_feature_request(self, user_token):
         """Test submitting a feature request"""
         response = requests.post(
@@ -121,8 +121,8 @@ class TestFeedbackReportIssue:
         assert response.status_code == 200, f"Feature request failed: {response.text}"
         data = response.json()
         assert "message" in data
-        print(f"✅ Feature request submitted successfully")
-    
+        print("✅ Feature request submitted successfully")
+
     def test_submit_improvement(self, user_token):
         """Test submitting an improvement suggestion"""
         response = requests.post(
@@ -136,8 +136,8 @@ class TestFeedbackReportIssue:
             headers={"Authorization": f"Bearer {user_token}"}
         )
         assert response.status_code == 200, f"Improvement failed: {response.text}"
-        print(f"✅ Improvement suggestion submitted successfully")
-    
+        print("✅ Improvement suggestion submitted successfully")
+
     def test_get_my_feedback(self, user_token):
         """Test viewing own feedback submissions"""
         response = requests.get(
@@ -149,7 +149,7 @@ class TestFeedbackReportIssue:
         assert "feedback" in data
         feedback_count = len(data["feedback"])
         print(f"✅ Retrieved {feedback_count} feedback submissions")
-        
+
         # Verify feedback has expected fields
         if feedback_count > 0:
             fb = data["feedback"][0]
@@ -158,7 +158,7 @@ class TestFeedbackReportIssue:
             assert "description" in fb
             assert "status" in fb
             print(f"✅ Feedback structure verified: {fb['title']}")
-    
+
     def test_feedback_requires_auth(self):
         """Test that feedback submission requires authentication"""
         response = requests.post(
@@ -176,7 +176,7 @@ class TestFeedbackReportIssue:
 
 class TestUserReviewManagement:
     """Test user review edit/delete functionality"""
-    
+
     @pytest.fixture
     def user_token(self):
         """Get test user token"""
@@ -185,7 +185,7 @@ class TestUserReviewManagement:
             "password": TEST_PASSWORD
         })
         return response.json()["access_token"]
-    
+
     def test_submit_review(self, user_token):
         """Test submitting a review for content"""
         # Use a known content ID (The Godfather = 238)
@@ -206,7 +206,7 @@ class TestUserReviewManagement:
         assert data["rating"] == 5
         print(f"✅ Review submitted successfully: {data['id']}")
         return data["id"]
-    
+
     def test_get_ratings_for_content(self):
         """Test getting ratings for a content item"""
         content_id = 238  # The Godfather
@@ -217,7 +217,7 @@ class TestUserReviewManagement:
         assert "count" in data
         assert "ratings" in data
         print(f"✅ Ratings retrieved: avg={data['average']}, count={data['count']}")
-    
+
     def test_get_user_rating_for_content(self, user_token):
         """Test getting user's own rating for content"""
         content_id = 238
@@ -227,8 +227,8 @@ class TestUserReviewManagement:
         )
         # May be 200 with data or null if no rating
         assert response.status_code == 200
-        print(f"✅ User rating endpoint working")
-    
+        print("✅ User rating endpoint working")
+
     def test_update_review(self, user_token):
         """Test updating own review"""
         # First submit a review
@@ -244,7 +244,7 @@ class TestUserReviewManagement:
             headers={"Authorization": f"Bearer {user_token}"}
         )
         rating_id = submit_resp.json()["id"]
-        
+
         # Update the review
         response = requests.put(
             f"{BASE_URL}/api/ratings/{rating_id}",
@@ -257,8 +257,8 @@ class TestUserReviewManagement:
             headers={"Authorization": f"Bearer {user_token}"}
         )
         assert response.status_code == 200, f"Update review failed: {response.text}"
-        print(f"✅ Review updated successfully")
-    
+        print("✅ Review updated successfully")
+
     def test_delete_review_requires_ownership(self, user_token):
         """Test that users can only delete their own reviews"""
         # Try to delete a non-existent review
@@ -274,7 +274,7 @@ class TestUserReviewManagement:
 
 class TestAdminReplySystem:
     """Test admin reply to reviews functionality"""
-    
+
     @pytest.fixture
     def admin_token(self):
         """Get admin token"""
@@ -283,7 +283,7 @@ class TestAdminReplySystem:
             "password": ADMIN_PASSWORD
         })
         return response.json()["access_token"]
-    
+
     @pytest.fixture
     def user_token(self):
         """Get test user token"""
@@ -292,7 +292,7 @@ class TestAdminReplySystem:
             "password": TEST_PASSWORD
         })
         return response.json()["access_token"]
-    
+
     def test_admin_check(self, admin_token):
         """Test admin status check"""
         response = requests.get(
@@ -301,9 +301,9 @@ class TestAdminReplySystem:
         )
         assert response.status_code == 200
         data = response.json()
-        assert data["is_admin"] == True
+        assert data["is_admin"]
         print(f"✅ Admin status verified: is_admin={data['is_admin']}")
-    
+
     def test_admin_get_all_reviews(self, admin_token):
         """Test admin getting all reviews"""
         response = requests.get(
@@ -314,7 +314,7 @@ class TestAdminReplySystem:
         data = response.json()
         assert isinstance(data, list)
         print(f"✅ Admin retrieved {len(data)} reviews")
-    
+
     def test_admin_reply_to_review(self, admin_token, user_token):
         """Test admin replying to a user review"""
         # First create a review as user
@@ -330,7 +330,7 @@ class TestAdminReplySystem:
             headers={"Authorization": f"Bearer {user_token}"}
         )
         review_id = submit_resp.json()["id"]
-        
+
         # Admin replies to the review
         response = requests.post(
             f"{BASE_URL}/api/admin/reply-to-review",
@@ -341,12 +341,12 @@ class TestAdminReplySystem:
             headers={"Authorization": f"Bearer {admin_token}"}
         )
         assert response.status_code == 200, f"Admin reply failed: {response.text}"
-        print(f"✅ Admin reply posted successfully")
-    
+        print("✅ Admin reply posted successfully")
+
     def test_admin_reply_to_app_review(self, admin_token, user_token):
         """Test admin replying to app review"""
         # First submit an app review
-        submit_resp = requests.post(
+        requests.post(
             f"{BASE_URL}/api/app-reviews/submit",
             json={
                 "rating": 5,
@@ -354,14 +354,14 @@ class TestAdminReplySystem:
             },
             headers={"Authorization": f"Bearer {user_token}"}
         )
-        
+
         # Get app reviews to find the review ID
         reviews_resp = requests.get(f"{BASE_URL}/api/app-reviews")
         reviews = reviews_resp.json()["reviews"]
-        
+
         if reviews:
             review_id = reviews[0]["id"]
-            
+
             # Admin replies
             response = requests.post(
                 f"{BASE_URL}/api/admin/reply-to-app-review",
@@ -372,14 +372,14 @@ class TestAdminReplySystem:
                 headers={"Authorization": f"Bearer {admin_token}"}
             )
             assert response.status_code == 200, f"Admin app review reply failed: {response.text}"
-            print(f"✅ Admin replied to app review successfully")
+            print("✅ Admin replied to app review successfully")
         else:
             print("⚠️ No app reviews found to reply to")
 
 
 class TestUserReplyToAdmin:
     """Test user reply to admin comments"""
-    
+
     @pytest.fixture
     def user_token(self):
         """Get test user token"""
@@ -388,7 +388,7 @@ class TestUserReplyToAdmin:
             "password": TEST_PASSWORD
         })
         return response.json()["access_token"]
-    
+
     def test_user_reply_to_admin_endpoint(self, user_token):
         """Test user reply to admin endpoint exists"""
         # This tests the endpoint exists - actual reply requires an admin_reply_id
@@ -407,7 +407,7 @@ class TestUserReplyToAdmin:
 
 class TestSearchFunctionality:
     """Test search functionality"""
-    
+
     def test_catalog_movies_search(self):
         """Test movie catalog search"""
         response = requests.get(f"{BASE_URL}/api/catalog/movies")
@@ -419,7 +419,7 @@ class TestSearchFunctionality:
         print(f"✅ Catalog: {movie_count} items available (movies + series)")
         # User mentioned 1022 total
         assert movie_count >= 1000, f"Expected at least 1000 items, got {movie_count}"
-    
+
     def test_catalog_series_count(self):
         """Test TV series count in catalog"""
         # Series are filtered from the main catalog by media_type='tv'
@@ -435,7 +435,7 @@ class TestSearchFunctionality:
 
 class TestAdminFeedbackManagement:
     """Test admin feedback management"""
-    
+
     @pytest.fixture
     def admin_token(self):
         """Get admin token"""
@@ -444,7 +444,7 @@ class TestAdminFeedbackManagement:
             "password": ADMIN_PASSWORD
         })
         return response.json()["access_token"]
-    
+
     def test_admin_get_all_feedback(self, admin_token):
         """Test admin getting all feedback"""
         response = requests.get(

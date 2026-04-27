@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, Depends, HTTPException, status, UploadFile, File
+from fastapi import FastAPI, APIRouter, Depends, HTTPException, status
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -7,13 +7,10 @@ import os
 import logging
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict
-from typing import List, Optional
 import uuid
 from datetime import datetime, timezone
 
-from models import User, UserCreate, UserLogin, UserResponse, UserProfileUpdate, WatchlistItem, Token
-from ratings import Rating, RatingCreate, RatingResponse, WatchHistory, WatchHistoryCreate, UserReplyCreate, UserReply
-from admin_models import AdminConfig, ReviewReply, ReviewReplyCreate
+from models import User, UserCreate, UserLogin, UserResponse, WatchlistItem, Token
 from auth import (
     get_password_hash,
     verify_password,
@@ -92,7 +89,7 @@ async def signup(user_data: UserCreate):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered"
         )
-    
+
     # Create user
     hashed_password = get_password_hash(user_data.password)
     user = User(
@@ -100,9 +97,9 @@ async def signup(user_data: UserCreate):
         username=user_data.username,
         hashed_password=hashed_password
     )
-    
+
     await db.users.insert_one(user.model_dump())
-    
+
     # Auto-promote CEO email to admin
     ceo_emails = ["cassius@flixvault.com", "cassiusflixvault@gmail.com", "cassiusgamergrid@gmail.com"]
     if user_data.email.lower() in ceo_emails:
@@ -115,10 +112,10 @@ async def signup(user_data: UserCreate):
         }
         await db.admins.insert_one(admin_config)
         logger.info(f"🎉 Auto-promoted CEO: {user_data.email} to admin!")
-    
+
     # Create token
     access_token = create_access_token(data={"sub": user.id})
-    
+
     return Token(
         access_token=access_token,
         token_type="bearer",
@@ -139,17 +136,17 @@ async def login(credentials: UserLogin):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password"
         )
-    
+
     # Verify password
     password_valid = verify_password(credentials.password, user["hashed_password"])
     logger.info(f"Login attempt for {credentials.email}: user_found=True, password_valid={password_valid}")
-    
+
     if not password_valid:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password"
         )
-    
+
     # Auto-promote CEO email to admin if not already
     ceo_emails = ["cassius@flixvault.com", "cassiusflixvault@gmail.com", "cassiusgamergrid@gmail.com"]
     if credentials.email.lower() in ceo_emails:
@@ -164,9 +161,9 @@ async def login(credentials: UserLogin):
             }
             await db.admins.insert_one(admin_config)
             logger.info(f"🎉 Auto-promoted CEO on login: {credentials.email}")
-    
+
     access_token = create_access_token(data={"sub": user["id"]})
-    
+
     return Token(
         access_token=access_token,
         token_type="bearer",
@@ -179,7 +176,7 @@ async def get_current_user(token_data: dict = Depends(verify_token)):
     # Optimized query - only fetch needed fields
     user = await db.users.find_one(
         {"id": token_data["user_id"]},
-        {"_id": 0, "id": 1, "email": 1, "username": 1, "created_at": 1, "watchlist": 1, "favorites": 1, 
+        {"_id": 0, "id": 1, "email": 1, "username": 1, "created_at": 1, "watchlist": 1, "favorites": 1,
          "display_name": 1, "phone": 1, "address": 1, "profile_picture_url": 1,
          "autoplay_trailers": 1, "email_notifications": 1, "maturity_rating": 1}
     )
@@ -199,19 +196,19 @@ async def add_to_watchlist(item: WatchlistItem, token_data: dict = Depends(verif
     )
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
     # Check if already in watchlist
     watchlist = user.get("watchlist", [])
     if any(w["content_id"] == item.content_id for w in watchlist):
         raise HTTPException(status_code=400, detail="Already in watchlist")
-    
+
     # Add to watchlist
     watchlist.append(item.model_dump())
     await db.users.update_one(
         {"id": token_data["user_id"]},
         {"$set": {"watchlist": watchlist}}
     )
-    
+
     return {"message": "Added to watchlist", "watchlist": watchlist}
 
 
@@ -224,15 +221,15 @@ async def remove_from_watchlist(content_id: int, token_data: dict = Depends(veri
     )
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
     watchlist = user.get("watchlist", [])
     watchlist = [w for w in watchlist if w["content_id"] != content_id]
-    
+
     await db.users.update_one(
         {"id": token_data["user_id"]},
         {"$set": {"watchlist": watchlist}}
     )
-    
+
     return {"message": "Removed from watchlist", "watchlist": watchlist}
 
 
@@ -252,7 +249,7 @@ async def get_watchlist(token_data: dict = Depends(verify_token)):
 
 class AppReview(BaseModel):
     model_config = ConfigDict(extra="ignore")
-    
+
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     user_id: str
     username: str
@@ -274,13 +271,13 @@ async def submit_app_review(review_data: AppReviewCreate, token_data: dict = Dep
     )
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
     # Check if user already reviewed the app
     existing = await db.app_reviews.find_one(
         {"user_id": token_data["user_id"]},
         {"_id": 0}
     )
-    
+
     if existing:
         # Update existing review
         await db.app_reviews.update_one(
@@ -330,7 +327,7 @@ async def get_app_reviews():
         avg_rating = sum(r.get("rating", 0) for r in reviews) / len(reviews)
     else:
         avg_rating = 0
-    
+
     return {
         "reviews": reviews,
         "total": len(reviews),
@@ -344,11 +341,11 @@ async def delete_app_review(review_id: str, token_data: dict = Depends(verify_to
     admin = await db.admins.find_one({"user_id": token_data["user_id"]})
     if not admin:
         raise HTTPException(status_code=403, detail="Admin access required")
-    
+
     result = await db.app_reviews.delete_one({"id": review_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Review not found")
-    
+
     return {"message": "App review deleted successfully"}
 
 

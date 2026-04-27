@@ -30,10 +30,9 @@ async def _run_weekly_digest():
         return
 
     try:
-        # Reuse the existing email-routes machinery
-        from routes.email_routes import _build_digest_html, _fetch_top10_for_email, _site_url
+        from email_utils import build_digest_html, fetch_top10_for_email, site_url, sender_email
 
-        top10 = await _fetch_top10_for_email()
+        top10 = await fetch_top10_for_email()
         if not top10:
             logger.warning("Weekly digest skipped — top10 cache empty")
             _last_run.update({"ts": datetime.now(timezone.utc).isoformat(), "error": "top10 cache empty"})
@@ -41,8 +40,8 @@ async def _run_weekly_digest():
 
         import resend
         resend.api_key = api_key
-        sender = os.environ.get("SENDER_EMAIL", "onboarding@resend.dev")
-        html = _build_digest_html(top10, _site_url())
+        sender = sender_email()
+        html = build_digest_html(top10, site_url())
 
         cursor = db.users.find(
             {"$or": [

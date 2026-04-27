@@ -32,17 +32,17 @@ async def add_to_watchlist(item: WatchlistItem, token_data: dict = Depends(verif
     )
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
     watchlist = user.get("watchlist", [])
     if any(w["content_id"] == item.content_id for w in watchlist):
         raise HTTPException(status_code=400, detail="Already in watchlist")
-    
+
     watchlist.append(item.model_dump())
     await db.users.update_one(
         {"id": token_data["user_id"]},
         {"$set": {"watchlist": watchlist}}
     )
-    
+
     return {"message": "Added to watchlist", "watchlist": watchlist}
 
 
@@ -55,15 +55,15 @@ async def remove_from_watchlist(content_id: int, token_data: dict = Depends(veri
     )
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
     watchlist = user.get("watchlist", [])
     watchlist = [w for w in watchlist if w["content_id"] != content_id]
-    
+
     await db.users.update_one(
         {"id": token_data["user_id"]},
         {"$set": {"watchlist": watchlist}}
     )
-    
+
     return {"message": "Removed from watchlist", "watchlist": watchlist}
 
 
@@ -76,5 +76,5 @@ async def get_watchlist(token_data: dict = Depends(verify_token)):
     )
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
     return user.get("watchlist", [])

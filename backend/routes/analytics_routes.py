@@ -140,56 +140,27 @@ def _humanize_referrer(ref: Optional[str]) -> str:
         return ref[:50]
 
 
-@router.get("/dashboard")
-async def analytics_dashboard(
-    days: int = 30,
-    token_data: dict = Depends(verify_token),
-):
-    """Admin-only analytics dashboard. EXCLUDES admin/CEO traffic from all numbers."""
-    await _ensure_admin(token_data)
-
-    if days < 1:
-        days = 1
-    if days > 365:
-        days = 365
-
-    now = datetime.now(timezone.utc)
-    start = now - timedelta(days=days)
-    last_24h = now - timedelta(hours=24)
-
-    # Common filter: never count admin/CEO visits in the dashboard.
-    base_match = {"is_admin_visit": {"$ne": True}}
-    period_match = {**base_match, "ts": {"$gte": start}}
-
-    # Totals (period)
-    total_views = await db.page_views.count_documents(period_match)
-
-    uv_agg = await db.page_views.aggregate([
-        {"$match": period_match},
+async def _count_unique_visitors(match: dict) -> int:
+    rows = await db.page_views.aggregate([
+        {"$match": match},
         {"$group": {"_id": "$visitor_id"}},
         {"$count": "count"},
     ]).to_list(1)
-    unique_visitors = uv_agg[0]["count"] if uv_agg else 0
+    return rows[0]["count"] if rows else 0
 
-    sess_agg = await db.page_views.aggregate([
-        {"$match": period_match},
+
+async def _count_unique_sessions(match: dict) -> int:
+    rows = await db.page_views.aggregate([
+        {"$match": match},
         {"$group": {"_id": "$session_id"}},
         {"$count": "count"},
     ]).to_list(1)
-    sessions = sess_agg[0]["count"] if sess_agg else 0
+    return rows[0]["count"] if rows else 0
 
-    # Last 24 hours
-    views_24h = await db.page_views.count_documents({**base_match, "ts": {"$gte": last_24h}})
-    visitors_24h_agg = await db.page_views.aggregate([
-        {"$match": {**base_match, "ts": {"$gte": last_24h}}},
-        {"$group": {"_id": "$visitor_id"}},
-        {"$count": "count"},
-    ]).to_list(1)
-    visitors_24h = visitors_24h_agg[0]["count"] if visitors_24h_agg else 0
 
-    # Daily breakdown
-    daily = await db.page_views.aggregate([
-        {"$match": period_match},
+async def _daily_breakdown(match: dict, max_days: int) -> list:
+    return await db.page_views.aggregate([
+        {"$match": match},
         {"$group": {
             "_id": "$date",
             "views": {"$sum": 1},
@@ -202,73 +173,109 @@ async def analytics_dashboard(
             "_id": 0,
         }},
         {"$sort": {"date": 1}},
-    ]).to_list(days + 5)
+    ]).to_list(max_days + 5)
 
-    # Top pages
-    top_pages = await db.page_views.aggregate([
-        {"$match": period_match},
+
+async def _top_pages(match: dict) -> list:
+    return await db.page_views.aggregate([
+        {"$match": match},
         {"$group": {"_id": "$path", "views": {"$sum": 1}}},
         {"$sort": {"views": -1}},
         {"$limit": 10},
         {"$project": {"path": "$_id", "views": 1, "_id": 0}},
     ]).to_list(10)
 
-    # Top referrers
-    top_referrers = await db.page_views.aggregate([
-        {"$match": {**period_match, "referrer": {"$nin": [None, ""]}}},
+
+async def _top_referrers(match: dict) -> list:
+    return await db.page_views.aggregate([
+        {"$match": {**match, "referrer": {"$nin": [None, ""]}}},
         {"$group": {"_id": "$referrer", "count": {"$sum": 1}}},
         {"$sort": {"count": -1}},
         {"$limit": 10},
         {"$project": {"referrer": "$_id", "count": 1, "_id": 0}},
     ]).to_list(10)
 
-    # Recent visits feed — last 50 non-admin visits
-    recent_raw = await db.page_views.find(
+
+def _device_from_ua(ua: str) -> str:
+    ua = (ua or "").lower()
+    if "iphone" in ua or "ipad" in ua:
+        return "iPhone / iPad"
+    if "android" in ua:
+        return "Android"
+    if "mac" in ua:
+        return "Mac"
+    if "windows" in ua:
+        return "Windows"
+    return "Other"
+
+
+async def _recent_visits(base_match: dict, limit: int = 50) -> list:
+    raw = await db.page_views.find(
         base_match,
         {"_id": 0, "ts": 1, "path": 1, "referrer": 1, "visitor_id": 1, "user_agent": 1},
-    ).sort("ts", -1).limit(50).to_list(50)
+    ).sort("ts", -1).limit(limit).to_list(limit)
 
-    recent = []
-    for r in recent_raw:
+    out = []
+    for r in raw:
         ts = r.get("ts")
-        if isinstance(ts, datetime):
-            ts_iso = ts.isoformat()
-        else:
-            ts_iso = str(ts) if ts else None
-        ua = (r.get("user_agent") or "").lower()
-        if "iphone" in ua or "ipad" in ua:
-            device = "iPhone / iPad"
-        elif "android" in ua:
-            device = "Android"
-        elif "mac" in ua:
-            device = "Mac"
-        elif "windows" in ua:
-            device = "Windows"
-        else:
-            device = "Other"
-        recent.append({
+        ts_iso = ts.isoformat() if isinstance(ts, datetime) else (str(ts) if ts else None)
+        out.append({
             "ts": ts_iso,
             "path": r.get("path"),
             "referrer": _humanize_referrer(r.get("referrer")),
             "visitor_id_short": (r.get("visitor_id") or "")[:8],
-            "device": device,
+            "device": _device_from_ua(r.get("user_agent")),
         })
+    return out
 
-    # Signup conversion (created_at is stored as Date in MongoDB, not string)
+
+async def _user_growth(start: datetime) -> tuple[int, int]:
     total_users = await db.users.count_documents({})
     new_users = await db.users.count_documents({"created_at": {"$gte": start}})
+    return total_users, new_users
+
+
+@router.get("/dashboard")
+async def analytics_dashboard(
+    days: int = 30,
+    token_data: dict = Depends(verify_token),
+):
+    """Admin-only analytics dashboard. EXCLUDES admin/CEO traffic from all numbers."""
+    await _ensure_admin(token_data)
+
+    days = max(1, min(days, 365))
+    now = datetime.now(timezone.utc)
+    start = now - timedelta(days=days)
+    last_24h = now - timedelta(hours=24)
+
+    base_match = {"is_admin_visit": {"$ne": True}}
+    period_match = {**base_match, "ts": {"$gte": start}}
+    last_24h_match = {**base_match, "ts": {"$gte": last_24h}}
+
+    # Period totals
+    total_views = await db.page_views.count_documents(period_match)
+    unique_visitors = await _count_unique_visitors(period_match)
+    sessions = await _count_unique_sessions(period_match)
+
+    # Last 24h
+    views_24h = await db.page_views.count_documents(last_24h_match)
+    visitors_24h = await _count_unique_visitors(last_24h_match)
+
+    # Breakdowns
+    daily = await _daily_breakdown(period_match, days)
+    top_pages = await _top_pages(period_match)
+    top_referrers = await _top_referrers(period_match)
+    recent = await _recent_visits(base_match)
+
+    # User growth
+    total_users, new_users = await _user_growth(start)
     conversion_rate = round(
         (new_users / unique_visitors * 100), 2
     ) if unique_visitors > 0 else 0.0
 
-    # All-time totals (excluding admin)
+    # All-time totals
     all_time_views = await db.page_views.count_documents(base_match)
-    all_time_visitors_agg = await db.page_views.aggregate([
-        {"$match": base_match},
-        {"$group": {"_id": "$visitor_id"}},
-        {"$count": "count"},
-    ]).to_list(1)
-    all_time_visitors = all_time_visitors_agg[0]["count"] if all_time_visitors_agg else 0
+    all_time_visitors = await _count_unique_visitors(base_match)
 
     return {
         "period_days": days,

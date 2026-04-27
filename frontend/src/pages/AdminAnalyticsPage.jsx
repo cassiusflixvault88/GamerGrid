@@ -452,7 +452,7 @@ const AdminAnalyticsPage = () => {
                 </thead>
                 <tbody>
                   {recentVisits.map((v, i) => (
-                    <tr key={i} className="border-b border-white/5 hover:bg-white/5">
+                    <tr key={`${v.ts ?? 'visit'}-${i}`} className="border-b border-white/5 hover:bg-white/5">
                       <td className="py-2 pr-3 text-white/80 whitespace-nowrap">{formatTime(v.ts)}</td>
                       <td className="py-2 pr-3 text-white font-mono text-xs">{v.path}</td>
                       <td className="py-2 pr-3 text-green-300 text-xs">{v.referrer}</td>

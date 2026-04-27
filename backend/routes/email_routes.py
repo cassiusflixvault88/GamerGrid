@@ -8,7 +8,6 @@ GamerGrid Email Routes — Top 10 Weekly Digest
 """
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
-from motor.motor_asyncio import AsyncIOMotorClient
 from datetime import datetime, timezone
 from typing import Optional
 import os
@@ -17,16 +16,19 @@ import logging
 import resend
 
 from auth import verify_token
+from email_utils import (
+    db,
+    site_url as _site_url,
+    sender_email,
+    build_digest_html as _build_digest_html,
+    fetch_top10_for_email as _fetch_top10_for_email,
+)
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/email", tags=["email"])
 
-mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
-
-SENDER_EMAIL = os.environ.get("SENDER_EMAIL", "onboarding@resend.dev")
+SENDER_EMAIL = sender_email()
 
 
 def _api_key() -> str:
@@ -39,134 +41,10 @@ def _api_key() -> str:
     return key
 
 
-def _site_url() -> str:
-    """Public URL for the app — used in email links/CTAs.
-    Set FRONTEND_URL in backend/.env once you buy a domain.
-    """
-    url = (os.environ.get("FRONTEND_URL") or "").strip()
-    if url:
-        return url.rstrip("/")
-    # Fallback to the current Emergent preview URL until a real domain is set.
-    return "https://hbo-max-app.preview.emergentagent.com"
-
-
 async def _ensure_admin(token_data: dict):
     admin = await db.admins.find_one({"user_id": token_data["user_id"]})
     if not admin or not admin.get("is_admin"):
         raise HTTPException(status_code=403, detail="Admin access required")
-
-
-# ===== HTML Template =====
-def _build_digest_html(top10: list, site_url: str = "https://gamergrid.com") -> str:
-    rows = []
-    for i, g in enumerate(top10):
-        rank = i + 1
-        title = g.get("title") or g.get("name") or "Unknown"
-        # IGDB cover lives in `poster_path` (full https URL).
-        cover = g.get("poster_path") or g.get("cover_url") or g.get("cover") or ""
-        # Ratings: vote_average (0-10) preferred; fall back to metacritic_aggregate (0-100).
-        vote_avg = g.get("vote_average")
-        meta = g.get("metacritic_aggregate")
-        if isinstance(vote_avg, (int, float)) and vote_avg > 0:
-            rating_str = f"{vote_avg:.1f}/10"
-        elif isinstance(meta, (int, float)) and meta > 0:
-            rating_str = f"{meta:.0f}/100"
-        else:
-            rating_str = ""
-        platforms = ", ".join((g.get("platforms") or [])[:3])
-        delta = g.get("delta")
-        if delta is None:
-            delta_html = '<span style="color:#888;font-size:11px;">NEW</span>'
-        elif delta > 0:
-            delta_html = f'<span style="color:#22c55e;font-size:11px;">▲ {delta}</span>'
-        elif delta < 0:
-            delta_html = f'<span style="color:#ef4444;font-size:11px;">▼ {abs(delta)}</span>'
-        else:
-            delta_html = '<span style="color:#888;font-size:11px;">—</span>'
-
-        cover_html = (
-            f'<img src="{cover}" alt="{title}" width="80" height="106" '
-            'style="border-radius:6px;display:block;object-fit:cover;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic;" />'
-            if cover else
-            '<div style="width:80px;height:106px;background:#222;border-radius:6px;"></div>'
-        )
-
-        rating_html = (
-            f'<span style="color:#fbbf24;font-weight:bold;">★ {rating_str}</span>'
-            if rating_str else ""
-        )
-
-        rows.append(f"""
-        <tr>
-          <td style="padding:12px 0;border-bottom:1px solid #1f1f1f;" valign="top">
-            <table cellpadding="0" cellspacing="0" border="0" width="100%">
-              <tr>
-                <td width="50" valign="top" style="font-size:32px;font-weight:900;color:#fbbf24;font-family:Arial,sans-serif;line-height:1;padding-right:12px;">
-                  {rank}
-                </td>
-                <td width="80" valign="top" style="padding-right:12px;">
-                  {cover_html}
-                </td>
-                <td valign="top" style="font-family:Arial,sans-serif;color:#ffffff;">
-                  <div style="font-size:18px;font-weight:bold;margin-bottom:4px;">{title}</div>
-                  <div style="font-size:12px;color:#aaa;margin-bottom:6px;">{platforms}</div>
-                  <div style="font-size:13px;">{rating_html} &nbsp; {delta_html}</div>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-        """)
-
-    week = datetime.now(timezone.utc).strftime("Week of %b %d, %Y")
-    return f"""
-<!DOCTYPE html>
-<html><body style="margin:0;padding:0;background:#0a0a0a;">
-<table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#0a0a0a;padding:24px 0;">
-  <tr><td align="center">
-    <table cellpadding="0" cellspacing="0" border="0" width="600" style="max-width:600px;background:#111;border-radius:12px;overflow:hidden;">
-      <!-- Header -->
-      <tr><td style="padding:24px;background:linear-gradient(135deg,#fbbf24,#f59e0b);text-align:center;">
-        <div style="font-family:Arial Black,Arial,sans-serif;font-size:28px;font-weight:900;color:#000;letter-spacing:1px;">GAMERGRID</div>
-        <div style="font-family:Arial,sans-serif;font-size:14px;color:#1a1a1a;margin-top:4px;">Top 10 Games — {week}</div>
-      </td></tr>
-      <!-- Intro -->
-      <tr><td style="padding:24px 24px 8px 24px;font-family:Arial,sans-serif;color:#fff;">
-        <h2 style="margin:0 0 8px 0;color:#fbbf24;font-size:20px;">This Week's Hottest Games</h2>
-        <p style="margin:0;color:#aaa;font-size:14px;line-height:1.5;">
-          Here are the 10 most-played games right now, blended from Steam, Twitch, and IGDB activity.
-        </p>
-      </td></tr>
-      <!-- Top 10 -->
-      <tr><td style="padding:8px 24px;">
-        <table cellpadding="0" cellspacing="0" border="0" width="100%">
-          {''.join(rows)}
-        </table>
-      </td></tr>
-      <!-- CTA -->
-      <tr><td style="padding:24px;text-align:center;">
-        <a href="{site_url}/top10" style="display:inline-block;background:#fbbf24;color:#000;text-decoration:none;padding:12px 28px;border-radius:8px;font-family:Arial,sans-serif;font-weight:bold;font-size:14px;">View Full Top 10 →</a>
-      </td></tr>
-      <!-- Footer -->
-      <tr><td style="padding:16px 24px;background:#000;border-top:1px solid #1f1f1f;font-family:Arial,sans-serif;color:#666;font-size:11px;text-align:center;">
-        You're getting this because you're subscribed to GamerGrid weekly digests.<br/>
-        <a href="{site_url}/settings" style="color:#666;">Manage preferences</a>
-      </td></tr>
-    </table>
-  </td></tr>
-</table>
-</body></html>
-"""
-
-
-async def _fetch_top10_for_email() -> list:
-    """Re-use the cached top10 from games_cache; fall back to empty list."""
-    cache = await db.games_cache.find_one(
-        {"_id": "top10_v3"}, {"_id": 0, "data": 1}
-    )
-    if cache and cache.get("data") and cache["data"].get("results"):
-        return cache["data"]["results"][:10]
-    return []
 
 
 # ===== Subscribe / Unsubscribe (uses existing email_notifications flag) =====

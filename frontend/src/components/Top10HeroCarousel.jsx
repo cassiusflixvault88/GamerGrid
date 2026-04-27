@@ -121,9 +121,9 @@ const Top10HeroCarousel = ({ items = [], onPlayClick, onInfoClick, intervalMs = 
 
       {/* Dots */}
       <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-10" data-testid="top10-dots">
-        {items.map((_, i) => (
+        {items.map((it, i) => (
           <button
-            key={i}
+            key={it?.id ?? `dot-${i}`}
             onClick={() => {
               setIdx(i);
               setImageLoaded(false);

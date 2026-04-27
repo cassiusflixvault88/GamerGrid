@@ -5,7 +5,6 @@ Account Routes
 - Delete own account (CEO is protected)
 """
 import os
-import re
 import logging
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, EmailStr

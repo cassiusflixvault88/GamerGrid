@@ -69,8 +69,8 @@ const DebugAdmin = () => {
                 <div>
                   <strong>Permissions:</strong>
                   <ul className="ml-4 mt-2">
-                    {adminStatus.permissions.map((perm, i) => (
-                      <li key={i}>• {perm}</li>
+                    {adminStatus.permissions.map((perm) => (
+                      <li key={perm}>• {perm}</li>
                     ))}
                   </ul>
                 </div>

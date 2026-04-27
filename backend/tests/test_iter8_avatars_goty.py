@@ -7,7 +7,6 @@ Iteration 8 backend tests:
 - Regression: trending/top-rated/upcoming/new-releases/platform/search/details/videos/genres/platforms
 """
 import os
-import time
 import uuid
 import asyncio
 import pytest

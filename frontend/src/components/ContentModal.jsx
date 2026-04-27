@@ -505,7 +505,7 @@ const ContentModal = ({ content, isOpen, onClose, onPlayTrailer, onSelectContent
                 <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
                   {content.screenshots.slice(0, 10).map((src, i) => (
                     <img
-                      key={i}
+                      key={src}
                       src={src}
                       alt={`Screenshot ${i + 1}`}
                       className="h-40 w-auto rounded-md object-cover flex-shrink-0 border border-white/10"

@@ -20,10 +20,10 @@ async def make_user_admin(email):
     mongo_url = os.environ['MONGO_URL']
     client = AsyncIOMotorClient(mongo_url)
     db = client[os.environ['DB_NAME']]
-    
+
     # Find user account (case-insensitive)
     user = await db.users.find_one({"email": {"$regex": f"^{email}$", "$options": "i"}})
-    
+
     if not user:
         print(f"❌ User with email '{email}' not found!")
         print()
@@ -33,17 +33,17 @@ async def make_user_admin(email):
         print("3. Try running: python make_admin.py <correct_email>")
         client.close()
         return
-    
+
     # Check if already admin
     existing_admin = await db.admins.find_one({"user_id": user["id"]})
-    
+
     if existing_admin:
         print(f"✓ {user['username']} is already an admin!")
         print(f"  Role: {existing_admin.get('role', 'Admin')}")
         print(f"  Permissions: {', '.join(existing_admin.get('permissions', []))}")
         client.close()
         return
-    
+
     # Grant admin access
     admin_config = {
         "user_id": user["id"],
@@ -52,16 +52,16 @@ async def make_user_admin(email):
         "created_at": datetime.now(timezone.utc).isoformat(),
         "role": "CEO & Founder"
     }
-    
+
     await db.admins.insert_one(admin_config)
-    
+
     print("=" * 60)
     print("🎉🎉🎉 SUCCESS! ADMIN PROMOTION COMPLETE! 🎉🎉🎉")
     print("=" * 60)
     print(f"👤 User ID: {user['id']}")
     print(f"👤 Username: {user['username']}")
     print(f"📧 Email: {user['email']}")
-    print(f"👑 Role: CEO & Founder")
+    print("👑 Role: CEO & Founder")
     print()
     print("✅ Permissions Granted:")
     print("   • Moderate Reviews (reply/delete)")
@@ -75,7 +75,7 @@ async def make_user_admin(email):
     print("   3. Click 'Admin Panel' (in yellow)")
     print()
     print("You now have full CEO control! 👑")
-    
+
     client.close()
 
 if __name__ == "__main__":
@@ -83,6 +83,6 @@ if __name__ == "__main__":
         print("Usage: python make_admin.py <email>")
         print("Example: python make_admin.py Cassius@FlixVault.com")
         sys.exit(1)
-    
+
     email = sys.argv[1]
     asyncio.run(make_user_admin(email))

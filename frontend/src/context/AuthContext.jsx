@@ -79,7 +79,11 @@ export const AuthProvider = ({ children }) => {
           headers: { Authorization: `Bearer ${access_token}` },
         });
         setUser(fresh.data);
-      } catch { /* silent */ }
+      } catch (err) {
+        if (process.env.NODE_ENV !== 'production') {
+          console.warn('[gg] login refresh failed:', err);
+        }
+      }
     }, 500);
 
     return userData;

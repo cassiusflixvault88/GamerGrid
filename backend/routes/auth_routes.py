@@ -111,16 +111,16 @@ async def signup(user_data: UserCreate):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered"
         )
-    
+
     hashed_password = get_password_hash(user_data.password)
     user = User(
         email=user_data.email,
         username=user_data.username,
         hashed_password=hashed_password
     )
-    
+
     await db.users.insert_one(user.model_dump())
-    
+
     # Auto-promote CEO email to admin (CEO is auto-verified, no email gate)
     ceo_emails = ["cassius@flixvault.com", "cassiusflixvault@gmail.com", "cassiusgamergrid@gmail.com"]
     is_ceo = user_data.email.lower() in ceo_emails
@@ -135,7 +135,7 @@ async def signup(user_data: UserCreate):
         await db.admins.insert_one(admin_config)
         await db.users.update_one({"id": user.id}, {"$set": {"email_verified": True}})
         logger.info(f"🎉 Auto-promoted CEO: {user_data.email} to admin!")
-    
+
     access_token = create_access_token(data={"sub": user.id})
 
     # Send welcome email + verification email (best effort)
@@ -162,24 +162,24 @@ async def login(credentials: UserLogin):
         {"email": credentials.email},
         {"_id": 0, "email": 1, "id": 1, "username": 1, "hashed_password": 1, "created_at": 1, "watchlist": 1, "favorites": 1, "profile_picture_url": 1, "is_pro": 1}
     )
-    
+
     logger.info(f"Login attempt for {credentials.email}: user_found={user is not None}")
-    
+
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password"
         )
-    
+
     password_valid = verify_password(credentials.password, user["hashed_password"])
     logger.info(f"Password verification for {credentials.email}: {password_valid}")
-    
+
     if not password_valid:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password"
         )
-    
+
     # Auto-promote CEO email to admin if not already
     ceo_emails = ["cassius@flixvault.com", "cassiusflixvault@gmail.com", "cassiusgamergrid@gmail.com"]
     if credentials.email.lower() in ceo_emails:
@@ -194,7 +194,7 @@ async def login(credentials: UserLogin):
             }
             await db.admins.insert_one(admin_config)
             logger.info(f"🎉 Auto-promoted CEO on login: {credentials.email}")
-    
+
     access_token = create_access_token(data={"sub": user["id"]})
 
     user = await _enrich_with_roles(user)
@@ -210,7 +210,7 @@ async def get_current_user(token_data: dict = Depends(verify_token)):
     """Get current authenticated user"""
     user = await db.users.find_one(
         {"id": token_data["user_id"]},
-        {"_id": 0, "id": 1, "email": 1, "username": 1, "created_at": 1, "watchlist": 1, "favorites": 1, 
+        {"_id": 0, "id": 1, "email": 1, "username": 1, "created_at": 1, "watchlist": 1, "favorites": 1,
          "display_name": 1, "phone": 1, "address": 1, "profile_picture_url": 1,
          "autoplay_trailers": 1, "email_notifications": 1, "maturity_rating": 1, "is_pro": 1}
     )
@@ -239,23 +239,23 @@ async def get_user_profile(token_data: dict = Depends(verify_token)):
 async def update_user_profile(profile_data: UserProfileUpdate, token_data: dict = Depends(verify_token)):
     """Update user profile settings"""
     update_data = {k: v for k, v in profile_data.model_dump().items() if v is not None}
-    
+
     if not update_data:
         raise HTTPException(status_code=400, detail="No data to update")
-    
+
     logger.info(f"Updating profile for user_id: {token_data['user_id']}")
     logger.info(f"Update data: {update_data}")
-    
+
     result = await db.users.update_one(
         {"id": token_data["user_id"]},
         {"$set": update_data}
     )
-    
+
     logger.info(f"Update result - matched: {result.matched_count}, modified: {result.modified_count}")
-    
+
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="User not found")
-    
+
     return {"message": "Profile updated successfully", "updated_fields": list(update_data.keys())}
 
 
@@ -266,36 +266,36 @@ async def upload_profile_picture(file: UploadFile = File(...), token_data: dict 
     allowed_types = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"]
     if file.content_type not in allowed_types:
         raise HTTPException(status_code=400, detail="Invalid file type. Only images allowed.")
-    
+
     # Validate file size (5MB max)
     file.file.seek(0, 2)
     file_size = file.file.tell()
     file.file.seek(0)
-    
+
     if file_size > 5 * 1024 * 1024:  # 5MB
         raise HTTPException(status_code=400, detail="File too large. Max 5MB.")
-    
+
     try:
         # Create uploads directory if it doesn't exist
         upload_dir = ROOT_DIR / "uploads" / "profile_pictures"
         upload_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Generate unique filename
         file_extension = file.filename.split(".")[-1]
         unique_filename = f"{token_data['user_id']}_{uuid.uuid4().hex[:8]}.{file_extension}"
         file_path = upload_dir / unique_filename
-        
+
         # Save file
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
-        
+
         # Generate URL (using backend URL)
         file_url = f"/uploads/profile_pictures/{unique_filename}"
-        
+
         logger.info(f"Profile picture uploaded: {file_url}")
-        
+
         return {"url": file_url, "message": "Profile picture uploaded successfully"}
-        
+
     except Exception as e:
         logger.error(f"Error uploading profile picture: {e}")
         raise HTTPException(status_code=500, detail="Failed to upload image")

@@ -102,9 +102,9 @@ const WhatsNewButton = () => {
             <p className="text-white/60 text-sm mb-5">v{CURRENT_VERSION}</p>
 
             <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
-              {ENTRIES.map((entry, idx) => (
+              {ENTRIES.map((entry) => (
                 <div
-                  key={idx}
+                  key={entry.title}
                   className="flex items-start gap-3 p-3 rounded-xl bg-white/5 border border-white/10"
                 >
                   <div className="text-2xl flex-shrink-0">{entry.emoji}</div>

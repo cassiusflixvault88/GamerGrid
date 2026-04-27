@@ -1,6 +1,6 @@
 """Public user profile routes — shareable /u/:username pages."""
 from fastapi import APIRouter, HTTPException
-from typing import Optional, Dict, Any
+from typing import Dict, Any
 import os
 from motor.motor_asyncio import AsyncIOMotorClient
 
