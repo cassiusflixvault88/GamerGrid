@@ -57,18 +57,27 @@ const WhatsNewButton = () => {
         onClick={handleOpen}
         title="What's new"
         aria-label="What's new"
-        className="relative p-2 text-white/80 hover:text-white transition-colors"
+        className="relative flex flex-col items-center gap-0.5 px-2 py-1 text-white/80 hover:text-white transition-colors group"
         data-testid="whats-new-btn"
       >
-        <Sparkles className="w-5 h-5" />
-        {hasUnseen && (
-          <>
-            {/* Pulsing ping ring */}
-            <span className="absolute top-1 right-1 inline-flex h-2.5 w-2.5 rounded-full bg-pink-500 opacity-75 animate-ping" />
-            {/* Solid dot */}
-            <span className="absolute top-1 right-1 inline-flex h-2.5 w-2.5 rounded-full bg-pink-500 ring-2 ring-black" />
-          </>
-        )}
+        <div className="relative">
+          <Sparkles className="w-5 h-5" />
+          {hasUnseen && (
+            <>
+              {/* Pulsing ping ring */}
+              <span className="absolute -top-1 -right-1 inline-flex h-2.5 w-2.5 rounded-full bg-pink-500 opacity-75 animate-ping" />
+              {/* Solid dot */}
+              <span className="absolute -top-1 -right-1 inline-flex h-2.5 w-2.5 rounded-full bg-pink-500 ring-2 ring-black" />
+            </>
+          )}
+        </div>
+        <span
+          className={`text-[10px] font-bold uppercase tracking-wider leading-none ${
+            hasUnseen ? 'text-pink-400' : 'text-white/60 group-hover:text-white/80'
+          }`}
+        >
+          New Features
+        </span>
       </button>
 
       <Dialog open={open} onOpenChange={setOpen}>
