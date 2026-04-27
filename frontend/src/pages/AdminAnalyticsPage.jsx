@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { BarChart3, Users, Eye, MousePointerClick, TrendingUp, Globe, Calendar, ArrowLeft, Mail, Send, Eye as EyeIcon, Clock, Smartphone, Trash2 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import BackNavigation from '../components/BackNavigation';
 import { useAuth } from '../context/AuthContext';
 import { Card } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -201,6 +202,7 @@ const AdminAnalyticsPage = () => {
   return (
     <div className="min-h-screen bg-black">
       <Navbar />
+      <BackNavigation />
       <div className="pt-24 pb-16 px-6 lg:px-12 max-w-7xl mx-auto" data-testid="admin-analytics-page">
         {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-4 mb-8">

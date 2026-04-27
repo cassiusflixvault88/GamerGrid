@@ -4,6 +4,7 @@ import axios from 'axios';
 import { CheckCircle, Crown, Heart, Loader } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import BackNavigation from '../components/BackNavigation';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 
@@ -60,6 +61,7 @@ const PaymentSuccessPage = () => {
     return (
       <div className="min-h-screen bg-gradient-to-b from-gray-900 via-purple-900 to-gray-900">
         <Navbar />
+        <BackNavigation />
         <div className="flex items-center justify-center min-h-[80vh]">
           <Card className="p-12 bg-gray-800 border-gray-700 text-center max-w-md">
             <Loader className="w-16 h-16 text-purple-500 mx-auto mb-4 animate-spin" />
@@ -80,6 +82,7 @@ const PaymentSuccessPage = () => {
     return (
       <div className="min-h-screen bg-gradient-to-b from-gray-900 via-purple-900 to-gray-900">
         <Navbar />
+        <BackNavigation />
         <div className="flex items-center justify-center min-h-[80vh]">
           <Card className="p-12 bg-gray-800 border-gray-700 text-center max-w-md">
             <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -111,6 +114,7 @@ const PaymentSuccessPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 via-purple-900 to-gray-900">
       <Navbar />
+      <BackNavigation />
       <div className="flex items-center justify-center min-h-[80vh] px-4">
         <Card className="p-12 bg-gray-800 border-gray-700 text-center max-w-md">
           <CheckCircle className="w-20 h-20 text-green-500 mx-auto mb-6" />

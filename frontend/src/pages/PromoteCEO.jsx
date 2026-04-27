@@ -4,6 +4,8 @@ import { Crown, CheckCircle, XCircle } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/button';
+import Navbar from '../components/Navbar';
+import BackNavigation from '../components/BackNavigation';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -48,7 +50,10 @@ const PromoteCEO = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-purple-900/20 to-black flex items-center justify-center p-6">
+    <div className="min-h-screen bg-gradient-to-b from-black via-purple-900/20 to-black">
+      <Navbar />
+      <BackNavigation />
+      <div className="flex items-center justify-center p-6 min-h-[80vh]">
       <div className="max-w-md w-full bg-gradient-to-br from-purple-600/10 to-blue-600/10 rounded-2xl border border-purple-500/30 p-8 shadow-2xl">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-purple-500 to-blue-500 rounded-full mb-4">
@@ -149,6 +154,7 @@ const PromoteCEO = () => {
             </Button>
           </div>
         )}
+      </div>
       </div>
     </div>
   );

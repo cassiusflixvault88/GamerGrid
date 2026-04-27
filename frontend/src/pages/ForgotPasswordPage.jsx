@@ -6,6 +6,8 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { useToast } from '../hooks/use-toast';
+import Navbar from '../components/Navbar';
+import BackNavigation from '../components/BackNavigation';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -38,7 +40,10 @@ const ForgotPasswordPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-purple-900/10 flex items-center justify-center px-6">
+    <div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-purple-900/10">
+      <Navbar />
+      <BackNavigation />
+      <div className="flex items-center justify-center px-6 pt-4 pb-16 min-h-[80vh]">
       <div className="w-full max-w-md bg-white/5 border border-white/10 rounded-2xl p-8 backdrop-blur-sm" data-testid="forgot-password-page">
         <button
           onClick={() => navigate('/')}
@@ -106,6 +111,7 @@ const ForgotPasswordPage = () => {
             </Button>
           </form>
         )}
+      </div>
       </div>
     </div>
   );

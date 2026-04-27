@@ -1,80 +1,81 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ChevronLeft, Home, Film, Tv } from 'lucide-react';
+import { ChevronLeft, Home as HomeIcon, Search, Library, Settings as SettingsIcon } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const BackNavigation = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
 
   // Don't show on homepage
-  if (location.pathname === '/') {
-    return null;
-  }
+  if (location.pathname === '/') return null;
 
-  // Generate breadcrumb based on current path
-  const getBreadcrumbs = () => {
-    const path = location.pathname;
-    const breadcrumbs = [{ name: 'Home', path: '/', icon: Home }];
+  const path = location.pathname;
 
-    if (path.includes('/movies')) {
-      breadcrumbs.push({ name: 'Movies', path: '/movies', icon: Film });
-    } else if (path.includes('/series')) {
-      breadcrumbs.push({ name: 'Series', path: '/series', icon: Tv });
-    } else if (path.includes('/public-domain')) {
-      breadcrumbs.push({ name: 'Free Movies', path: '/public-domain', icon: Film });
-    } else if (path.includes('/watchlist')) {
-      breadcrumbs.push({ name: 'My Library', path: '/watchlist', icon: Film });
-    } else if (path.includes('/search')) {
-      breadcrumbs.push({ name: 'Search', path: '/search', icon: Film });
-    } else if (path.includes('/app-reviews')) {
-      breadcrumbs.push({ name: 'Rate GamerGrid', path: '/app-reviews', icon: Film });
-    } else if (path.includes('/settings')) {
-      breadcrumbs.push({ name: 'Settings', path: '/settings', icon: Film });
-    } else if (path.includes('/admin')) {
-      breadcrumbs.push({ name: 'Admin Dashboard', path: '/admin', icon: Film });
-    }
-
-    return breadcrumbs;
-  };
-
-  const breadcrumbs = getBreadcrumbs();
+  const QuickBtn = ({ onClick, icon: Icon, label, active, testid }) => (
+    <button
+      onClick={onClick}
+      className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors text-sm font-medium ${
+        active
+          ? 'bg-purple-600/30 text-white border border-purple-500/50'
+          : 'bg-white/10 hover:bg-white/20 text-white/90 hover:text-white'
+      }`}
+      data-testid={testid}
+    >
+      <Icon className="w-4 h-4" />
+      <span className="hidden sm:inline">{label}</span>
+    </button>
+  );
 
   return (
-    <div className="px-4 md:px-8 pt-20 pb-4">
-      <div className="flex items-center gap-4">
-        {/* Back Arrow Button */}
+    <div className="px-4 md:px-8 pt-20 pb-4" data-testid="back-navigation">
+      <div className="flex flex-wrap items-center gap-2">
+        {/* Back Arrow */}
         <button
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 px-3 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-white"
+          className="flex items-center gap-1.5 px-3 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition-colors text-white text-sm font-medium"
+          data-testid="back-btn"
         >
           <ChevronLeft className="w-5 h-5" />
-          <span className="text-sm font-medium">Back</span>
+          <span className="hidden sm:inline">Back</span>
         </button>
 
-        {/* Breadcrumb Navigation */}
-        <div className="flex items-center gap-2 text-sm">
-          {breadcrumbs.map((crumb, index) => {
-            const Icon = crumb.icon;
-            const isLast = index === breadcrumbs.length - 1;
+        <div className="w-px h-6 bg-white/10 mx-1" />
 
-            return (
-              <React.Fragment key={crumb.path}>
-                <button
-                  onClick={() => navigate(crumb.path)}
-                  className={`flex items-center gap-1.5 px-2 py-1 rounded transition-colors ${
-                    isLast
-                      ? 'text-white font-semibold'
-                      : 'text-gray-400 hover:text-white'
-                  }`}
-                >
-                  <Icon className="w-4 h-4" />
-                  <span>{crumb.name}</span>
-                </button>
-                {!isLast && <span className="text-gray-600">/</span>}
-              </React.Fragment>
-            );
-          })}
-        </div>
+        {/* Quick nav */}
+        <QuickBtn
+          onClick={() => navigate('/')}
+          icon={HomeIcon}
+          label="Home"
+          active={path === '/'}
+          testid="nav-home"
+        />
+        <QuickBtn
+          onClick={() => navigate('/search')}
+          icon={Search}
+          label="Search"
+          active={path.startsWith('/search')}
+          testid="nav-search"
+        />
+        {user && (
+          <QuickBtn
+            onClick={() => navigate('/watchlist')}
+            icon={Library}
+            label="My Library"
+            active={path.startsWith('/watchlist')}
+            testid="nav-library"
+          />
+        )}
+        {user && (
+          <QuickBtn
+            onClick={() => navigate('/settings')}
+            icon={SettingsIcon}
+            label="Settings"
+            active={path.startsWith('/settings')}
+            testid="nav-settings"
+          />
+        )}
       </div>
     </div>
   );

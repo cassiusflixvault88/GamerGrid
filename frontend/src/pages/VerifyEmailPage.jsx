@@ -3,6 +3,8 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { CheckCircle2, XCircle, Loader2 } from 'lucide-react';
 import { Button } from '../components/ui/button';
+import Navbar from '../components/Navbar';
+import BackNavigation from '../components/BackNavigation';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -28,7 +30,10 @@ const VerifyEmailPage = () => {
   }, [token]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-purple-900/10 flex items-center justify-center px-6">
+    <div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-purple-900/10">
+      <Navbar />
+      <BackNavigation />
+      <div className="flex items-center justify-center px-6 pt-4 pb-16 min-h-[80vh]">
       <div className="w-full max-w-md bg-white/5 border border-white/10 rounded-2xl p-8 backdrop-blur-sm text-center" data-testid="verify-email-page">
         {status === 'verifying' && (
           <>
@@ -65,6 +70,7 @@ const VerifyEmailPage = () => {
             </Button>
           </>
         )}
+      </div>
       </div>
     </div>
   );
