@@ -23,7 +23,11 @@ const SORTS = [
   { key: 'rating', label: 'Top Rated' },
   { key: 'popular', label: 'Most Popular' },
   { key: 'release', label: 'Newest' },
+  { key: 'oldest', label: 'Oldest' },
+  { key: 'trending', label: 'Trending' },
 ];
+
+const PAGE_SIZE = 100;
 
 const CURRENT_YEAR = new Date().getFullYear();
 const YEARS = ['Any', ...Array.from({ length: 30 }, (_, i) => CURRENT_YEAR - i)];
@@ -42,6 +46,7 @@ const BrowseAllPage = () => {
   const [genre, setGenre] = useState(null); // genre id or null
   const [year, setYear] = useState('Any');
   const [genres, setGenres] = useState([]);
+  const [visible, setVisible] = useState(PAGE_SIZE);
 
   const [games, setGames] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -67,6 +72,7 @@ const BrowseAllPage = () => {
 
   useEffect(() => {
     loadGames();
+    setVisible(PAGE_SIZE);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activePlatform, sort, genre, year]);
 
@@ -74,15 +80,15 @@ const BrowseAllPage = () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      // Bigger catalog per platform: PS=300+, Xbox=200+, PC=200, Switch=200
+      // Bigger catalog per platform: bumped to give Browse All deeper inventory
       const platformLimit = (key) => {
-        if (key === 'playstation') return 350;
-        if (key === 'xbox') return 250;
-        if (key === 'pc') return 250;
-        if (key === 'switch') return 200;
-        return 200;
+        if (key === 'playstation') return 500;
+        if (key === 'xbox') return 400;
+        if (key === 'pc') return 400;
+        if (key === 'switch') return 350;
+        return 350;
       };
-      const generalLimit = '200';
+      const generalLimit = '350';
       params.set('limit', generalLimit);
       if (genre) params.set('genre', genre);
       if (year && year !== 'Any') params.set('year', year);
@@ -116,7 +122,9 @@ const BrowseAllPage = () => {
       } else {
         const platParams = new URLSearchParams(params);
         platParams.set('limit', String(platformLimit(activePlatform)));
-        platParams.set('sort', sort);
+        // Server understands rating/popular/release; trending+oldest are client-side
+        const serverSort = sort === 'trending' || sort === 'oldest' ? 'rating' : sort;
+        platParams.set('sort', serverSort);
         url = `${API}/games/platform/${activePlatform}?${platParams.toString()}`;
         const res = await axios.get(url);
         setGames(res.data?.results || []);
@@ -136,10 +144,41 @@ const BrowseAllPage = () => {
   };
 
   const filtered = useMemo(() => {
-    if (!searchQuery.trim()) return games;
-    const q = searchQuery.toLowerCase();
-    return games.filter((g) => (g.title || g.name || '').toLowerCase().includes(q));
-  }, [games, searchQuery]);
+    let list = games;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter((g) => (g.title || g.name || '').toLowerCase().includes(q));
+    }
+
+    // Client-side sort so every option works on every platform (incl. "All")
+    const arr = [...list];
+    const dateOf = (g) => {
+      const d = g.release_date || g.first_release_date || '';
+      const t = typeof d === 'string' ? Date.parse(d) : (typeof d === 'number' ? d * 1000 : NaN);
+      return Number.isFinite(t) ? t : 0;
+    };
+    if (sort === 'rating') {
+      arr.sort((a, b) => (b.vote_average || 0) - (a.vote_average || 0));
+    } else if (sort === 'popular') {
+      arr.sort((a, b) => (b.popularity || b.vote_count || 0) - (a.popularity || a.vote_count || 0));
+    } else if (sort === 'release') {
+      arr.sort((a, b) => dateOf(b) - dateOf(a));
+    } else if (sort === 'oldest') {
+      arr.sort((a, b) => dateOf(a) - dateOf(b));
+    } else if (sort === 'trending') {
+      // Trending = recent + popular weighted
+      const now = Date.now();
+      const score = (g) => {
+        const rec = Math.max(0, 1 - (now - dateOf(g)) / (1000 * 60 * 60 * 24 * 365 * 2)); // last 2y
+        return (g.popularity || g.vote_count || 0) * (0.6 + 0.4 * rec) + (g.vote_average || 0) * 5;
+      };
+      arr.sort((a, b) => score(b) - score(a));
+    }
+    return arr;
+  }, [games, searchQuery, sort]);
+
+  const visibleGames = useMemo(() => filtered.slice(0, visible), [filtered, visible]);
+  const hasMore = visible < filtered.length;
 
   const onSearchSubmit = async (e) => {
     e.preventDefault();
@@ -242,19 +281,18 @@ const BrowseAllPage = () => {
               </select>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="text-white/60 text-sm">Sort:</span>
               {SORTS.map((s) => (
                 <button
                   key={s.key}
                   onClick={() => setSort(s.key)}
-                  disabled={activePlatform === 'all'}
                   data-testid={`sort-${s.key}`}
                   className={`px-3 py-1 rounded-md text-xs font-semibold transition-all ${
-                    sort === s.key && activePlatform !== 'all'
+                    sort === s.key
                       ? 'bg-blue-600 text-white'
                       : 'bg-white/5 text-white/70 hover:bg-white/10'
-                  } ${activePlatform === 'all' ? 'opacity-40 cursor-not-allowed' : ''}`}
+                  }`}
                 >
                   {s.label}
                 </button>
@@ -291,10 +329,10 @@ const BrowseAllPage = () => {
         ) : (
           <>
             <p className="text-white/80 mb-6">
-              {filtered.length} game{filtered.length === 1 ? '' : 's'}
+              Showing <span className="text-purple-300 font-semibold">{visibleGames.length}</span> of {filtered.length} game{filtered.length === 1 ? '' : 's'}
             </p>
             <div className="flex flex-wrap gap-4">
-              {filtered.map((g) => (
+              {visibleGames.map((g) => (
                 <ContentCard key={g.id} content={g} onClick={setSelectedContent} />
               ))}
               {filtered.length === 0 && (
@@ -316,6 +354,18 @@ const BrowseAllPage = () => {
                 </div>
               )}
             </div>
+
+            {hasMore && (
+              <div className="flex justify-center mt-10">
+                <button
+                  onClick={() => setVisible((v) => v + PAGE_SIZE)}
+                  data-testid="load-more-games"
+                  className="px-8 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold rounded-xl transition-all transform hover:scale-105 shadow-lg"
+                >
+                  Load 100 More ({filtered.length - visible} remaining)
+                </button>
+              </div>
+            )}
           </>
         )}
       </div>

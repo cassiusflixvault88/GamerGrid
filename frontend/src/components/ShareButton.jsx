@@ -12,23 +12,24 @@ const ShareButton = ({ variant = 'default', size = 'default', showText = true })
   // Use the production URL when available, fall back to current origin (works on preview too)
   const shareUrl = process.env.REACT_APP_PUBLIC_URL || (typeof window !== 'undefined' ? window.location.origin : 'https://gamer-grid.com');
 
-  const shareMessage = `🎬 Check out GamerGrid - Movie Discovery & Trailer App!
+  const shareMessage = `🎮 Check out GamerGrid — Ultimate Gaming Discovery Hub!
 
 ✨ Features:
-• Watch trailers for thousands of movies
-• Rate & review like IGN
-• Build your watchlist
-• FREE full-length movies available
-• Top 10 Rankings
-• What's Hot trending section
+• Discover 1,000+ games across PS5, Xbox, PC & Switch
+• Watch HD trailers & gameplay
+• Build your game library
+• Live PC deals & price tracking
+• 🛒 Buy games — direct links to PlayStation Store, Xbox, Steam, GameStop, Amazon & more
+• Top 10 weekly rankings
+• Community ratings & reviews — IGN-style scores
 
-🚀 Try it now (Preview):
+🚀 Try it now (free):
 ${shareUrl}
 
 📝 We'd love your feedback!
 • Test features & report issues
 • Leave reviews
-• Request content you want to see
+• Request games you want to see
 
 Created by Cassius Fox | GamerGrid`;
 
@@ -63,7 +64,7 @@ Created by Cassius Fox | GamerGrid`;
       try {
         await navigator.share({
           title: 'GamerGrid - Ultimate Gaming Hub',
-          text: 'Check out GamerGrid! Discover games, watch trailers, track releases on PS5, Xbox, PC & Switch!',
+          text: 'Check out GamerGrid! Discover games, watch trailers, track releases AND buy games (PS Store, Xbox, Steam, GameStop, Amazon) — PS5, Xbox, PC & Switch.',
           url: shareUrl,
         });
       } catch (err) {
@@ -257,6 +258,14 @@ Created by Cassius Fox | GamerGrid`;
                   Share via Apps
                 </Button>
               )}
+
+              <a
+                href="/share"
+                data-testid="share-open-share-page"
+                className="block text-center w-full px-4 py-3 bg-gradient-to-r from-pink-600 to-orange-500 hover:from-pink-700 hover:to-orange-600 text-white font-bold rounded-md transition-all"
+              >
+                🚀 Open Full Share Hub (12+ platforms)
+              </a>
             </div>
 
             {/* Preview URL Display */}

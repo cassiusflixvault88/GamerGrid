@@ -5,6 +5,7 @@ import { Shield, Users, Star, MessageSquare, Home, TrendingUp } from 'lucide-rea
 import Navbar from '../components/Navbar';
 import BackNavigation from '../components/BackNavigation';
 import Footer from '../components/Footer';
+import AdminNotifications from '../components/AdminNotifications';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/button';
 import { Textarea } from '../components/ui/textarea';
@@ -240,6 +241,11 @@ const AdminDashboard = () => {
           </button>
         </div>
 
+        {/* Notifications card */}
+        <div className="mb-8">
+          <AdminNotifications />
+        </div>
+
         {/* Tab Navigation */}
         <div className="flex space-x-2 mb-8 border-b border-white/10 overflow-x-auto">
           <button
@@ -296,47 +302,75 @@ const AdminDashboard = () => {
             <div>
               {/* Stats Cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <Card className="bg-gradient-to-br from-purple-600/20 to-blue-600/20 border-purple-500/30 p-6">
-                  <div className="flex items-center space-x-4">
-                    <Users className="w-10 h-10 text-purple-400" />
-                    <div>
-                      <p className="text-white/60 text-sm">Total Users</p>
-                      <p className="text-3xl font-bold text-white">{stats?.total_users || 0}</p>
+                <button
+                  onClick={() => setActiveTab('users')}
+                  data-testid="stat-card-users"
+                  className="text-left"
+                >
+                  <Card className="bg-gradient-to-br from-purple-600/20 to-blue-600/20 border-purple-500/30 p-6 hover:border-purple-400 hover:scale-[1.02] transition-all cursor-pointer">
+                    <div className="flex items-center space-x-4">
+                      <Users className="w-10 h-10 text-purple-400" />
+                      <div>
+                        <p className="text-white/60 text-sm">Total Users</p>
+                        <p className="text-3xl font-bold text-white">{stats?.total_users || 0}</p>
+                        <p className="text-purple-300 text-xs mt-1">View users →</p>
+                      </div>
                     </div>
-                  </div>
-                </Card>
+                  </Card>
+                </button>
 
-                <Card className="bg-gradient-to-br from-yellow-600/20 to-orange-600/20 border-yellow-500/30 p-6">
-                  <div className="flex items-center space-x-4">
-                    <Star className="w-10 h-10 text-yellow-400" />
-                    <div>
-                      <p className="text-white/60 text-sm">Total Reviews</p>
-                      <p className="text-3xl font-bold text-white">{stats?.total_reviews || 0}</p>
+                <button
+                  onClick={() => setActiveTab('reviews')}
+                  data-testid="stat-card-reviews"
+                  className="text-left"
+                >
+                  <Card className="bg-gradient-to-br from-yellow-600/20 to-orange-600/20 border-yellow-500/30 p-6 hover:border-yellow-400 hover:scale-[1.02] transition-all cursor-pointer">
+                    <div className="flex items-center space-x-4">
+                      <Star className="w-10 h-10 text-yellow-400" />
+                      <div>
+                        <p className="text-white/60 text-sm">Total Reviews</p>
+                        <p className="text-3xl font-bold text-white">{stats?.total_reviews || 0}</p>
+                        <p className="text-yellow-300 text-xs mt-1">View reviews →</p>
+                      </div>
                     </div>
-                  </div>
-                </Card>
+                  </Card>
+                </button>
 
-                <Card className="bg-gradient-to-br from-green-600/20 to-emerald-600/20 border-green-500/30 p-6">
-                  <div className="flex items-center space-x-4">
-                    <MessageSquare className="w-10 h-10 text-green-400" />
-                    <div>
-                      <p className="text-white/60 text-sm">Avg Rating</p>
-                      <p className="text-3xl font-bold text-white">
-                        {stats?.average_rating ? stats.average_rating.toFixed(1) : '0.0'}
-                      </p>
+                <button
+                  onClick={() => setActiveTab('app-reviews')}
+                  data-testid="stat-card-rating"
+                  className="text-left"
+                >
+                  <Card className="bg-gradient-to-br from-green-600/20 to-emerald-600/20 border-green-500/30 p-6 hover:border-green-400 hover:scale-[1.02] transition-all cursor-pointer">
+                    <div className="flex items-center space-x-4">
+                      <MessageSquare className="w-10 h-10 text-green-400" />
+                      <div>
+                        <p className="text-white/60 text-sm">Avg Rating</p>
+                        <p className="text-3xl font-bold text-white">
+                          {stats?.average_rating ? stats.average_rating.toFixed(1) : '0.0'}
+                        </p>
+                        <p className="text-green-300 text-xs mt-1">App reviews →</p>
+                      </div>
                     </div>
-                  </div>
-                </Card>
+                  </Card>
+                </button>
 
-                <Card className="bg-gradient-to-br from-blue-600/20 to-cyan-600/20 border-blue-500/30 p-6">
-                  <div className="flex items-center space-x-4">
-                    <TrendingUp className="w-10 h-10 text-blue-400" />
-                    <div>
-                      <p className="text-white/60 text-sm">Platform Status</p>
-                      <p className="text-xl font-bold text-green-400">Active</p>
+                <button
+                  onClick={() => navigate('/admin/analytics')}
+                  data-testid="stat-card-analytics"
+                  className="text-left"
+                >
+                  <Card className="bg-gradient-to-br from-blue-600/20 to-cyan-600/20 border-blue-500/30 p-6 hover:border-blue-400 hover:scale-[1.02] transition-all cursor-pointer">
+                    <div className="flex items-center space-x-4">
+                      <TrendingUp className="w-10 h-10 text-blue-400" />
+                      <div>
+                        <p className="text-white/60 text-sm">Visitor Analytics</p>
+                        <p className="text-xl font-bold text-green-400">Live</p>
+                        <p className="text-blue-300 text-xs mt-1">Open dashboard →</p>
+                      </div>
                     </div>
-                  </div>
-                </Card>
+                  </Card>
+                </button>
               </div>
 
               {/* Quick Info */}

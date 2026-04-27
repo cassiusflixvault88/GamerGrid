@@ -28,6 +28,7 @@ import ResetPasswordPage from "./pages/ResetPasswordPage";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
 import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 import TermsOfServicePage from "./pages/TermsOfServicePage";
+import ShareLinksPage from "./pages/ShareLinksPage";
 import PageTracker from "./components/PageTracker";
 
 function App() {
@@ -63,6 +64,8 @@ function App() {
               <Route path="/verify-email" element={<VerifyEmailPage />} />
               <Route path="/privacy" element={<PrivacyPolicyPage />} />
               <Route path="/terms" element={<TermsOfServicePage />} />
+              <Route path="/share" element={<ShareLinksPage />} />
+              <Route path="/share-links" element={<ShareLinksPage />} />
             </Routes>
             <InstallPWA />
             <Toaster />

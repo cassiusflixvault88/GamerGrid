@@ -6,7 +6,7 @@ from the app's main router via include_router.
 import logging
 import os
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -449,3 +449,76 @@ async def respond_to_content_request(
         }},
     )
     return {"message": "Response sent successfully"}
+
+
+
+# ============= NOTIFICATIONS =============
+# Surface new tips, new Pro subscriptions, and new app reviews since the admin
+# last opened their dashboard. The "seen" marker lives on the admin doc.
+
+@router.get("/admin/notifications")
+async def get_admin_notifications(token_data: dict = Depends(verify_admin)):
+    admin = await db.admins.find_one({"user_id": token_data["user_id"]}, {"_id": 0})
+    last_seen = admin.get("notifications_last_seen") if admin else None
+    if isinstance(last_seen, str):
+        try:
+            last_seen = datetime.fromisoformat(last_seen)
+        except Exception:
+            last_seen = None
+    if not last_seen:
+        last_seen = datetime.now(timezone.utc) - timedelta(days=30)
+    if last_seen.tzinfo is None:
+        last_seen = last_seen.replace(tzinfo=timezone.utc)
+
+    last_seen_iso = last_seen.isoformat()
+
+    # New completed tips (one-time + custom)
+    new_tips = await db.payment_transactions.count_documents({
+        "status": "completed",
+        "payment_type": {"$in": ["tip", "custom_tip"]},
+        "created_at": {"$gt": last_seen_iso},
+    })
+
+    # New completed Pro subscriptions
+    new_subs = await db.payment_transactions.count_documents({
+        "status": "completed",
+        "payment_type": "pro_subscription",
+        "created_at": {"$gt": last_seen_iso},
+    })
+
+    # New app reviews (created_at stored as ISO string)
+    new_app_reviews = await db.app_reviews.count_documents({
+        "created_at": {"$gt": last_seen_iso},
+    })
+
+    # New game ratings/reviews
+    new_game_reviews = await db.ratings.count_documents({
+        "created_at": {"$gt": last_seen_iso},
+    })
+
+    # New users (signups) for context
+    new_users = await db.users.count_documents({
+        "created_at": {"$gt": last_seen_iso},
+    })
+
+    total = new_tips + new_subs + new_app_reviews + new_game_reviews + new_users
+
+    return {
+        "last_seen": last_seen_iso,
+        "total": total,
+        "new_tips": new_tips,
+        "new_subscriptions": new_subs,
+        "new_app_reviews": new_app_reviews,
+        "new_game_reviews": new_game_reviews,
+        "new_users": new_users,
+    }
+
+
+@router.post("/admin/notifications/seen")
+async def mark_admin_notifications_seen(token_data: dict = Depends(verify_admin)):
+    now = datetime.now(timezone.utc).isoformat()
+    await db.admins.update_one(
+        {"user_id": token_data["user_id"]},
+        {"$set": {"notifications_last_seen": now}},
+    )
+    return {"ok": True, "last_seen": now}

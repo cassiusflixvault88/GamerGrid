@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import AuthModal from './AuthModal';
 import SearchAutocomplete from './SearchAutocomplete';
 import WhatsNewButton from './WhatsNewButton';
+import AutoFetchBadge from './AutoFetchBadge';
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -181,6 +182,9 @@ const Navbar = () => {
                       </div>
                       <p className="text-xs text-white/50 uppercase tracking-wide mb-1">Signed in as</p>
                       <p className="text-xs text-purple-400 truncate">{user?.email}</p>
+                      <div className="mt-2">
+                        <AutoFetchBadge size="sm" />
+                      </div>
                     </div>
                     
                     <Link
@@ -234,6 +238,15 @@ const Navbar = () => {
                       <Heart className="w-4 h-4" />
                       <span>💜 Support GamerGrid</span>
                     </button>
+                    <Link
+                      to="/share"
+                      className="flex items-center space-x-2 px-4 py-2 text-pink-400 hover:bg-white/10 transition-colors font-semibold"
+                      onClick={() => setShowUserMenu(false)}
+                      data-testid="nav-menu-share"
+                    >
+                      <span>🚀</span>
+                      <span>Share GamerGrid</span>
+                    </Link>
                     <a
                       href="mailto:cassiusgamergrid@gmail.com"
                       className="flex items-center space-x-2 px-4 py-2 text-white/90 hover:bg-white/10 transition-colors"

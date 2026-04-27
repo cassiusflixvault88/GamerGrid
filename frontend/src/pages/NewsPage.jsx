@@ -67,6 +67,12 @@ const NewsPage = () => {
           <p className="text-white/60 mt-3 text-lg">
             Latest patches, DLC drops, announcements and reviews — straight from IGN, GameSpot, PCGamer, Eurogamer, Polygon and more.
           </p>
+          <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/40">
+            <span className="text-yellow-300 text-sm font-bold">🛒 Tip:</span>
+            <span className="text-white/80 text-sm">
+              Open any game on GamerGrid and use the <strong className="text-yellow-200">Buy Now</strong> buttons — direct links to PlayStation Store, Xbox, Steam, GameStop, Amazon &amp; more.
+            </span>
+          </div>
           {fetchedAt && (
             <p className="text-white/40 text-xs mt-2">
               Last updated: {new Date(fetchedAt).toLocaleString()}
@@ -160,6 +166,13 @@ const NewsPage = () => {
                       <span>{a.author || ''}</span>
                       <span>{timeAgo(a.published)}</span>
                     </div>
+                  </a>
+                  <a
+                    href="/games/all"
+                    className="mt-3 flex items-center justify-center gap-2 px-3 py-2 bg-gradient-to-r from-yellow-500/15 to-orange-500/15 hover:from-yellow-500/25 hover:to-orange-500/25 border border-yellow-500/40 rounded-lg text-yellow-200 text-xs font-semibold transition-all"
+                    data-testid={`news-buy-cta-${i}`}
+                  >
+                    🛒 Discover &amp; buy games on GamerGrid →
                   </a>
                   <NewsArticleSocial article={a} />
                 </div>

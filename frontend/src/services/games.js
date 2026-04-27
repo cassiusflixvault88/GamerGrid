@@ -20,12 +20,12 @@ export const getImageUrl = (path /*, size */) => {
 
 const unwrap = (res) => (res?.data?.results ?? []);
 
-export const getTrending = async () => unwrap(await axios.get(`${API}/games/trending?limit=30`));
-export const getPopular = async () => unwrap(await axios.get(`${API}/games/trending?limit=30`));
-export const getTopRated = async () => unwrap(await axios.get(`${API}/games/top-rated?limit=30`));
-export const getUpcoming = async () => unwrap(await axios.get(`${API}/games/upcoming?limit=30`));
-export const getNewReleases = async () => unwrap(await axios.get(`${API}/games/new-releases?limit=30`));
-export const getByPlatform = async (platformKey, sort = 'rating', limit = 40) =>
+export const getTrending = async () => unwrap(await axios.get(`${API}/games/trending?limit=60`));
+export const getPopular = async () => unwrap(await axios.get(`${API}/games/trending?limit=60`));
+export const getTopRated = async () => unwrap(await axios.get(`${API}/games/top-rated?limit=60`));
+export const getUpcoming = async () => unwrap(await axios.get(`${API}/games/upcoming?limit=60`));
+export const getNewReleases = async () => unwrap(await axios.get(`${API}/games/new-releases?limit=60`));
+export const getByPlatform = async (platformKey, sort = 'rating', limit = 60) =>
   unwrap(await axios.get(`${API}/games/platform/${platformKey}?sort=${sort}&limit=${limit}`));
 
 // Legacy signature kept for any code still calling getByGenre; route it to platform when possible.

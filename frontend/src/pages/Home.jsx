@@ -10,6 +10,7 @@ import VideoPlayer from '../components/VideoPlayer';
 import Onboarding from '../components/Onboarding';
 import ShareButton from '../components/ShareButton';
 import GuestMarketingHero from '../components/GuestMarketingHero';
+import AutoFetchBadge from '../components/AutoFetchBadge';
 import { useAuth } from '../context/AuthContext';
 import Footer from '../components/Footer';
 import AdSlot from '../components/AdSlot';
@@ -112,13 +113,13 @@ const Home = () => {
         getByPlatform('xbox').catch(() => []),
         getByPlatform('pc').catch(() => []),
         getByPlatform('switch').catch(() => []),
-        getByCategory({ genre: IGDB_GENRES.RPG, limit: 40 }).catch(() => []),
-        getByCategory({ genre: IGDB_GENRES.SHOOTER, limit: 40 }).catch(() => []),
-        getByCategory({ theme: IGDB_THEMES.SCI_FI, limit: 40 }).catch(() => []),
-        getByCategory({ theme: IGDB_THEMES.HORROR, limit: 40, minRating: 65 }).catch(() => []),
-        getByCategory({ genre: IGDB_GENRES.RACING, limit: 40, minRating: 65 }).catch(() => []),
-        getByCategory({ theme: IGDB_THEMES.OPEN_WORLD, limit: 40 }).catch(() => []),
-        getByCategory({ genre: IGDB_GENRES.INDIE, limit: 40, minRating: 75 }).catch(() => []),
+        getByCategory({ genre: IGDB_GENRES.RPG, limit: 60 }).catch(() => []),
+        getByCategory({ genre: IGDB_GENRES.SHOOTER, limit: 60 }).catch(() => []),
+        getByCategory({ theme: IGDB_THEMES.SCI_FI, limit: 60 }).catch(() => []),
+        getByCategory({ theme: IGDB_THEMES.HORROR, limit: 60, minRating: 65 }).catch(() => []),
+        getByCategory({ genre: IGDB_GENRES.RACING, limit: 60, minRating: 65 }).catch(() => []),
+        getByCategory({ theme: IGDB_THEMES.OPEN_WORLD, limit: 60 }).catch(() => []),
+        getByCategory({ genre: IGDB_GENRES.INDIE, limit: 60, minRating: 75 }).catch(() => []),
       ]);
 
       // ---------- Dedupe pipeline ----------
@@ -126,7 +127,7 @@ const Home = () => {
       // game already shown in a higher rail. This ends the "same games everywhere"
       // problem on the homepage.
       const seen = new Set();
-      const claim = (list, max = 30) => {
+      const claim = (list, max = 50) => {
         const out = [];
         for (const g of list || []) {
           const id = g?.id;
@@ -150,17 +151,17 @@ const Home = () => {
       // GOTY fetched below — handled separately
       const dedupedTopRated = claim(topRatedData);
       const dedupedNewReleases = claim(newReleasesData);
-      const dedupedPs = claim(psData, 25);
-      const dedupedXbox = claim(xboxData, 25);
-      const dedupedPc = claim(pcData, 25);
-      const dedupedSwitch = claim(switchData, 25);
-      const dedupedRpg = claim(rpgData, 25);
-      const dedupedShooter = claim(shooterData, 25);
-      const dedupedScifi = claim(scifiData, 25);
-      const dedupedHorror = claim(horrorData, 25);
-      const dedupedRacing = claim(racingData, 25);
-      const dedupedOpenWorld = claim(openWorldData, 25);
-      const dedupedIndie = claim(indieData, 25);
+      const dedupedPs = claim(psData, 50);
+      const dedupedXbox = claim(xboxData, 50);
+      const dedupedPc = claim(pcData, 50);
+      const dedupedSwitch = claim(switchData, 50);
+      const dedupedRpg = claim(rpgData, 50);
+      const dedupedShooter = claim(shooterData, 50);
+      const dedupedScifi = claim(scifiData, 50);
+      const dedupedHorror = claim(horrorData, 50);
+      const dedupedRacing = claim(racingData, 50);
+      const dedupedOpenWorld = claim(openWorldData, 50);
+      const dedupedIndie = claim(indieData, 50);
 
       setTrending(dedupedTrending);
       setTop10(top10Data);
@@ -184,11 +185,11 @@ const Home = () => {
       try {
         const r = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/games/goty`);
         const gotyRaw = r.data?.results || [];
-        setGoty(claim(gotyRaw, 20));
+        setGoty(claim(gotyRaw, 30));
         setGotyYear(r.data?.year || null);
       } catch (e) {
         const fallback = await getGOTY().catch(() => []);
-        setGoty(claim(fallback, 20));
+        setGoty(claim(fallback, 30));
       }
 
       const hero = (trendingData || []).filter((g) => g.backdrop_path).slice(0, 6);
@@ -270,6 +271,11 @@ const Home = () => {
       )}
 
       <div className="relative -mt-32 z-20 space-y-8 pb-20">
+        {/* AUTO-FETCH BADGE */}
+        <div className="px-6 lg:px-12 max-w-[1920px] mx-auto flex justify-center md:justify-start">
+          <AutoFetchBadge />
+        </div>
+
         {/* GO PRO PINK BANNER (hidden for Pro/admin) */}
         {!isPro && (
         <div className="px-6 lg:px-12 max-w-[1920px] mx-auto mb-4" data-testid="home-pro-banner">

@@ -18,7 +18,20 @@ support payments.
 - Hosting: Emergent (preview + deploy)
 
 ## Implemented (✅ as of 2026-02-26)
-### Iteration 18 (this turn — full code cleanup pass)
+### Iteration 19 (this turn — UX expansion + monetization)
+- 🛒 **GameStop affiliate link** added to every game's `buy_links` (alongside Amazon, Steam, PSN, Xbox, eShop, Epic, GOG, Itch). Set `GAMESTOP_AFFILIATE_ID` env var to enable CJ Affiliate deep-link wrapping.
+- 🔗 **New dedicated Share Hub page** (`/share` and `/share-links`): 12 one-click platforms (Facebook, Messenger, X/Twitter, Reddit, WhatsApp, Telegram, Discord, LinkedIn, Pinterest, Tumblr, Email, SMS) + Copy Link + Native Share + QR code generator.
+- 🔍 **Search bar empty-state**: focus the search box and immediately see Popular & Trending games (18 pre-loaded) before typing — courtesy of `SearchAutocomplete` upgrade.
+- 🎮 **Bigger homepage carousels**: every rail now serves up to 50 unique games (was 25–30). Backend `getTrending/TopRated/Upcoming/NewReleases/byPlatform` bumped to limit 60.
+- 📦 **BrowseAll page**: 5 sort options (Top Rated, Most Popular, Newest, Oldest, Trending), client-side sorting works on every platform incl. "All", lazy-load "Load 100 More" button. Catalog grew from ~783 to **1,137 games** by bumping platform limits (PS=500, Xbox/PC=400, Switch=350).
+- 🔔 **Admin notifications widget** (`/api/admin/notifications` + `/seen`): live counts of new tips, Pro subs, app reviews, game reviews, and signups since last seen — pulses pink badge on AdminDashboard.
+- 📊 **Clickable analytics**: AdminDashboard stat cards now route to their relevant tab (Users, Reviews, App Reviews, Visitor Analytics).
+- ⚡ **Auto-fetch 15-min badge** (`AutoFetchBadge`): pulsing green pill on Home banner and Profile dropdown advertising the auto-refresh.
+- 📰 **News page**: prominent "Buy games" CTA banner up top + per-article "Discover & buy games on GamerGrid →" link beneath every article.
+- 🏷️ **OpenGraph fix**: `index.html` favicon, apple-touch-icon, and og:image now point to `/gamergrid-icon.svg` (was legacy FlixVault).
+- 💬 **ShareButton message**: rewritten with gaming-focused copy + buy-games promo (Steam/PSN/Xbox/GameStop/Amazon).
+
+### Iteration 18 (full code cleanup pass)
 - 🧹 **`server.py`: 1745 → 392 lines** (-77%, target was 400). Extracted into:
   - `routes/ratings_routes.py` (267 lines) — ratings, reviews/all, user replies, edit/delete
   - `routes/admin_routes.py` (451 lines) — dashboard, user mgmt, moderation, feedback, content requests, CEO promotion
@@ -155,7 +168,19 @@ support payments.
 
 ## Roadmap
 
+### P0 — Live blockers
+- _(none — BackNavigation verified working in screenshots; was a false alarm.)_
+
 ### P1 (high value, next up)
+- **Google AdSense**: waiting on user's `ca-pub-XXXXXXXXXX` ID before wiring up.
+- **RESEND_API_KEY**: not configured — admin "Send Test to Me"/Weekly Digest broadcasts fail. Set in `backend/.env` (free at https://resend.com).
+- **GameStop affiliate**: free CJ Affiliate sign-up needed at https://www.cj.com → join GameStop's program → set `GAMESTOP_AFFILIATE_ID` env var.
+- **Visitor analytics — geolocation**: add country/city from IP (e.g. via `ip-api.com` or `ipapi.co`) for the "source/location" data on Admin Analytics.
+- **Game catalog +1,000–2,000**: bump `platformLimit` & loadable rails further once IGDB caches handle the load.
+
+### P2
+- High-risk refactor: `get_top10`, `get_game_details`, `_build_buy_links` (deferred until Amazon/GameStop tags stabilize).
+- Refactor oversized components: `AdminDashboard.jsx` (~770L), `ContentModal.jsx` (585L), `RatingsReviews.jsx` (585L).
 - "Game of the Year" curated rail.
 - Wishlist / "Watchlist" relabeled to "Library" for games.
 - Pre-order CTA → external store (Steam/PSN/Xbox) wired into hero + cards.

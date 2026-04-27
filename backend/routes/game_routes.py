@@ -806,6 +806,18 @@ def _build_buy_links(game: dict, normalized: dict) -> List[Dict[str, str]]:
         amz += f"&tag={AMAZON_AFFILIATE_TAG}"
     links.append({"label": "Amazon", "url": amz, "kind": "amazon"})
 
+    # GameStop (always — physical + digital, biggest dedicated US gaming retailer).
+    # If GAMESTOP_AFFILIATE_ID env var is set (e.g. via CJ Affiliate / Impact),
+    # we wrap the search URL through the deep-link tracker. Otherwise plain search.
+    gs_search = f"https://www.gamestop.com/search/?q={name_q}"
+    gs_aff_id = os.getenv("GAMESTOP_AFFILIATE_ID")
+    if gs_aff_id:
+        # CJ Affiliate deep link wrapper — works once user has joined GameStop's CJ program
+        gs_url = f"https://www.anrdoezrs.net/click-{gs_aff_id}?url={quote_plus(gs_search)}"
+    else:
+        gs_url = gs_search
+    links.append({"label": "GameStop", "url": gs_url, "kind": "gamestop"})
+
     return links
 
 
