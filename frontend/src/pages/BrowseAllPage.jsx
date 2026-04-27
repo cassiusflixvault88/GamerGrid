@@ -7,7 +7,7 @@ import Footer from '../components/Footer';
 import ContentModal from '../components/ContentModal';
 import ContentCard from '../components/ContentCard';
 import VideoPlayer from '../components/VideoPlayer';
-import { search as searchGames } from '../services/tmdb';
+import { search as searchGames } from '../services/games';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 

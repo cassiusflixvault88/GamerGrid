@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Play, Info } from 'lucide-react';
 import { Button } from './ui/button';
-import { getImageUrl } from '../services/tmdb';
+import { getImageUrl } from '../services/games';
 
 const HeroBanner = ({ content, onPlayClick, onInfoClick }) => {
   const [imageLoaded, setImageLoaded] = useState(false);

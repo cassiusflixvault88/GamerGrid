@@ -5,7 +5,7 @@ import BackNavigation from '../components/BackNavigation';
 import Footer from '../components/Footer';
 import ContentModal from '../components/ContentModal';
 import VideoPlayer from '../components/VideoPlayer';
-import { getImageUrl, getTop10 } from '../services/tmdb';
+import { getImageUrl, getTop10 } from '../services/games';
 
 const Top10Page = () => {
   const [items, setItems] = useState([]);

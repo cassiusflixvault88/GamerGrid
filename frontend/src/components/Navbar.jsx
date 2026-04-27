@@ -32,13 +32,7 @@ const Navbar = () => {
     }
   };
 
-  // Debug: Log when user profile picture changes
-  useEffect(() => {
-    if (user) {
-      console.log('👤 Navbar detected user change:', user.username);
-      console.log('📸 Current profile picture:', user.profile_picture_url || 'NOT SET');
-    }
-  }, [user, user?.profile_picture_url]);
+  // Profile picture changes are handled by AuthContext refreshes — no logging needed.
 
   const handleLogout = () => {
     logout();
@@ -155,8 +149,7 @@ const Navbar = () => {
                     alt={user.username}
                     className="w-10 h-10 rounded-full object-cover border-2 border-purple-500 bg-gray-800 p-1"
                     onError={(e) => {
-                      console.error('❌ Profile picture failed to load:', user.profile_picture_url);
-                      // Fallback to GamerGrid logo
+                      // Fallback to GamerGrid logo on broken image
                       e.target.src = '/gamergrid-icon.svg';
                     }}
                   />

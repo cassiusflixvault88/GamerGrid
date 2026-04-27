@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Play, Info, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from './ui/button';
-import { getImageUrl } from '../services/tmdb';
+import { getImageUrl } from '../services/games';
 
 /**
  * Top 10 hero carousel — Netflix/PS-Store-style: a giant rotating hero banner

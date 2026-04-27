@@ -18,23 +18,42 @@ support payments.
 - Hosting: Emergent (preview + deploy)
 
 ## Implemented (✅ as of 2026-02-26)
-### Iteration 17 (this turn — admin traffic widget + CEO exclusion bug fix)
-- 🐛 **CEO traffic exclusion bug fixed** — `/api/analytics/track` was only checking the `admins` collection, missing the `CEO_EMAILS` env-based allowlist. Now checks BOTH: if `user_id` matches an admin doc OR if the user's email is in `CEO_EMAILS`, the visit is flagged `is_admin_visit=True` and excluded from public stats.
-- 🧹 **Backfill upgraded** — `POST /api/analytics/admin/backfill-admin-flag` now also resolves CEO emails → user_ids, so historical CEO visits get retroactively cleaned out of public counts. Auto-runs once per session via `AdminVisitorWidget`.
-- 📊 **AdminVisitorWidget** on Public Profile (`/u/<your_username>`) — shows three time-window cards (Last 24h / 7d / 30d) with **total visitors + new visitors** counts. Only renders when the signed-in user is admin AND viewing their own profile (invisible to all other viewers). Includes "Clean my visits" button to re-run the backfill on demand and a "Full dashboard →" link to `/admin/analytics`.
-- 🆕 **`GET /api/analytics/new-visitors-summary`** endpoint — returns 24h / 7d / 30d unique-visitor + new-visitor (visitor_id whose first-ever pageview is in the window) counts. Excludes admin/CEO traffic.
+### Iteration 18 (this turn — full code cleanup pass)
+- 🧹 **`server.py`: 1745 → 392 lines** (-77%, target was 400). Extracted into:
+  - `routes/ratings_routes.py` (267 lines) — ratings, reviews/all, user replies, edit/delete
+  - `routes/admin_routes.py` (451 lines) — dashboard, user mgmt, moderation, feedback, content requests, CEO promotion
+  - Deleted dead code: `/trending/whats-hot` (200 lines), `/trending/flixvault`, `/watch-history`, `/continue-watching`, `/api/status`, FlixVault `/submit-movie` + `/admin/approve-movie`, legacy `/user/profile_legacy_disabled`, the dangerous `/admin/reset-ceo-accounts` endpoint, plus a 96-line block of commented-out feedback code.
+- 🧩 **`SettingsPage.jsx`: 936 → 146 lines** (-84%). Split into 5 tab components:
+  - `components/settings/ProfileTab.jsx` — profile fields, preset avatars, image upload
+  - `components/settings/SecurityTab.jsx` — change email, change password
+  - `components/settings/SubscriptionTab.jsx` — Pro upgrade card / Pro-active card
+  - `components/settings/MessagesTab.jsx` — admin inbox + saved trailers link
+  - `components/settings/NotificationsTab.jsx` — appearance/dark mode
+  - Tabs sync with `?tab=` URL param so deep-linking still works.
+- 🗑️ **Dead-code sweep**:
+  - Deleted `pages/AdminDashboard_OLD.jsx` and `pages/PublicDomainPage.jsx`
+  - Deleted backend orphans: `public_domain_videos.py`, `public_domain_videos_clean.py`, `tmdb_catalog_backup.py`, `fetch_games_catalog.py`
+- 🛁 **`.gitignore` deduplicated** — 12 duplicate env blocks merged into one clean canonical block
+- 🐍 **server.py lint errors fixed** — `$ne` → `$nin`, removed redefined `get_all_reviews`, removed unused `deleted_count`. `ruff` now clean across entire backend.
+- 🔇 **Stripped console.log noise** from `Navbar.jsx` and rewrote `AuthContext.jsx` (250 → 165 lines, removed 14 debug logs while keeping behavior)
+- 📁 **Renamed `services/tmdb.js` → `services/games.js`** (file is IGDB now, not TMDB) — all 8 importing files updated
+
+### Iteration 17
+- 🐛 CEO traffic exclusion bug fixed (`/api/analytics/track`)
+- 📊 AdminVisitorWidget on Public Profile (Owner-only, 24h/7d/30d cards)
+- 🆕 `GET /api/analytics/new-visitors-summary`
 
 ### Iteration 16
-- ✨ "What's New" pulsing badge on Navbar (`WhatsNewButton.jsx`) — localStorage-tracked version
-- 🚀 Guest marketing hero — replaced cyan tour banner with full above-the-fold pitch
-- ⚡ N+1 query fixes in `get_app_reviews`, `get_ratings`, `get_all_reviews`
+- ✨ "What's New" pulsing badge with "NEW FEATURES" label
+- 🚀 Guest marketing hero (full above-the-fold pitch)
+- ⚡ N+1 fixes in `get_app_reviews`, `get_ratings`, `get_all_reviews`
 
 ### Iteration 15
-- 🔁 Top10 carousel randomized (slots 1-3 fixed, 4-10 shuffle), 5min TTL
-- 📚 Catalog: 350 PS / 250 Xbox / 250 PC / 200 Switch = 1050 unique games
-- 📖 Saved Trailers moved to "My Library" with in-app playback
-- 🔐 Hardcoded Stripe LIVE key removed + scrubbed from all 264 historical commits
-- 🛒 Amazon affiliate tag `gamergrid20-20` wired into every Buy on Amazon link
+- 🔁 Top10 carousel randomized + 5min TTL
+- 📚 1050 unique games (350 PS / 250 Xbox / 250 PC / 200 Switch)
+- 📖 Saved Trailers in My Library
+- 🔐 Hardcoded Stripe key removed + scrubbed from history
+- 🛒 Amazon affiliate tag wired
 
 ## Implemented (✅ as of 2026-02-25)
 ### Iteration 12 (this turn)

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { getImageUrl } from '../services/tmdb';
+import { getImageUrl } from '../services/games';
 import { Play, Star, CheckCircle, ExternalLink } from 'lucide-react';
 
 const ContentCard = ({ content, onClick, rating }) => {

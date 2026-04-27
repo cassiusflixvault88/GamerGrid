@@ -6,7 +6,7 @@ import ContentCard from '../components/ContentCard';
 import ContentModal from '../components/ContentModal';
 import VideoPlayer from '../components/VideoPlayer';
 import Footer from '../components/Footer';
-import { search as searchGames } from '../services/tmdb';
+import { search as searchGames } from '../services/games';
 
 const SearchPage = () => {
   const [searchParams] = useSearchParams();

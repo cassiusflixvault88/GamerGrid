@@ -4,7 +4,7 @@ import { X, Play, Plus, ThumbsUp, Check } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog';
 import { Button } from './ui/button';
 import { Separator } from './ui/separator';
-import { getImageUrl, getDetails, getVideos } from '../services/tmdb';
+import { getImageUrl, getDetails, getVideos } from '../services/games';
 import { Badge } from './ui/badge';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../hooks/use-toast';

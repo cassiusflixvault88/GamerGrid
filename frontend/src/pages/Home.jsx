@@ -26,7 +26,7 @@ import {
   getByCategory,
   IGDB_GENRES,
   IGDB_THEMES,
-} from '../services/tmdb';
+} from '../services/games';
 
 const Home = () => {
   const { user } = useAuth();
