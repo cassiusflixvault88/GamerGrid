@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
 import ShareButton from './ShareButton';
 import InstallInstructions from './InstallInstructions';
 import AboutGamerGrid from './AboutGamerGrid';
@@ -7,6 +8,23 @@ import AboutGamerGrid from './AboutGamerGrid';
 const Footer = () => {
   const [showInstructions, setShowInstructions] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
+  const [founderUsername, setFounderUsername] = useState(null);
+
+  // Fetch the founder's username so the "Created by Cassius Fox" badge becomes
+  // a one-click link straight to his public profile (where you can rate him +
+  // message him).
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/users/founder`);
+        if (!cancelled) setFounderUsername(r.data?.username || null);
+      } catch { /* silent */ }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  const founderHref = founderUsername ? `/u/${encodeURIComponent(founderUsername)}` : null;
 
   const handleReplayTour = () => {
     try {
@@ -39,10 +57,29 @@ const Footer = () => {
             <div className="flex flex-col items-center md:items-end space-y-2">
               <p className="text-white/60 text-sm">
                 Created by{' '}
-                <span className="text-white font-semibold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
-                  Cassius Fox
-                </span>
+                {founderHref ? (
+                  <Link
+                    to={founderHref}
+                    className="text-white font-semibold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent hover:underline"
+                    data-testid="footer-creator-link"
+                  >
+                    Cassius Fox →
+                  </Link>
+                ) : (
+                  <span className="text-white font-semibold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+                    Cassius Fox
+                  </span>
+                )}
               </p>
+              {founderHref && (
+                <Link
+                  to={founderHref}
+                  className="text-yellow-300 hover:text-yellow-200 text-xs font-semibold flex items-center gap-1"
+                  data-testid="footer-meet-creator"
+                >
+                  ⭐ Meet · Message · Rate the Creator
+                </Link>
+              )}
               <p className="text-white/40 text-xs">
                 © {new Date().getFullYear()} GamerGrid. All rights reserved.
               </p>

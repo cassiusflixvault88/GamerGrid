@@ -11,6 +11,7 @@ import Onboarding from '../components/Onboarding';
 import ShareButton from '../components/ShareButton';
 import GuestMarketingHero from '../components/GuestMarketingHero';
 import AutoFetchBadge from '../components/AutoFetchBadge';
+import MeetCreatorCard from '../components/MeetCreatorCard';
 import { useAuth } from '../context/AuthContext';
 import Footer from '../components/Footer';
 import AdSlot from '../components/AdSlot';
@@ -274,6 +275,11 @@ const Home = () => {
         {/* AUTO-FETCH BADGE */}
         <div className="px-6 lg:px-12 max-w-[1920px] mx-auto flex justify-center md:justify-start">
           <AutoFetchBadge />
+        </div>
+
+        {/* MEET THE CREATOR — message Cassius, rate the app, leave a review */}
+        <div className="px-6 lg:px-12 max-w-[1920px] mx-auto">
+          <MeetCreatorCard />
         </div>
 
         {/* GO PRO PINK BANNER (hidden for Pro/admin) */}

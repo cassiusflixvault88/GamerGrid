@@ -136,11 +136,17 @@ const ProfileReviews = ({ username, isOwner, displayName }) => {
   };
 
   return (
-    <section className="max-w-3xl mx-auto px-6 py-10" data-testid="profile-reviews-section">
+    <section
+      className="max-w-3xl mx-auto px-6 py-10"
+      data-testid="profile-reviews-section"
+      id="rate-creator"
+    >
       <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
         <div className="flex items-center gap-3">
           <MessageSquare className="w-6 h-6 text-purple-400" />
-          <h2 className="text-2xl font-bold text-white">Reviews for {displayName}</h2>
+          <h2 className="text-2xl font-bold text-white">
+            {isOwner ? `Reviews left on your profile` : `Rate ${displayName} & GamerGrid`}
+          </h2>
         </div>
         {avg !== null && (
           <div className="flex items-center gap-2 px-3 py-1.5 bg-yellow-500/10 border border-yellow-500/30 rounded-full">
@@ -150,6 +156,12 @@ const ProfileReviews = ({ username, isOwner, displayName }) => {
           </div>
         )}
       </div>
+
+      {!isOwner && (
+        <p className="text-white/70 text-sm mb-5">
+          What do you think of {displayName} and the work he's done on GamerGrid? Drop a star rating and a quick review — he reads every single one.
+        </p>
+      )}
 
       {/* Compose */}
       {!isOwner && (
