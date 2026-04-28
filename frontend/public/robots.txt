@@ -1,0 +1,10 @@
+# GamerGrid robots.txt
+# Allow all friendly crawlers full access; expose the sitemap.
+
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /payment-success
+Disallow: /api/
+
+Sitemap: https://gamer-grid.com/sitemap.xml

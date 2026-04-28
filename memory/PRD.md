@@ -18,6 +18,13 @@ support payments.
 - Hosting: Emergent (preview + deploy)
 
 ## Implemented (✅ as of 2026-02-28)
+### Iteration 33 (this turn — full SEO upgrade for Google search rich preview)
+- 🔍 **Google search now shows a rich preview** instead of a blank result. Why it was blank: title was generic, description was 1 line, og:image was SVG (Google ignores SVG previews), no canonical URL, no structured data.
+- 📝 **Rewrote `<head>` SEO block** with keyword-rich title, 160-char description ("4,000+ games" social proof), canonical URL, OpenGraph + Twitter Card with 1200×630 PNG, JSON-LD `WebSite` + `Organization` schemas (unlocks Google sitelinks search box + brand panel).
+- 🎨 **Generated `og-cover.png` (1200×630, 206KB)** via cairosvg — branded gradient hero with controller icon, "4,000+ Games · HD Trailers" headline, platform pills, watermark.
+- 🤖 **`robots.txt`** allows crawlers, blocks `/admin` and `/api/`, links sitemap.
+- 🗺️ **`sitemap.xml`** lists 12 key URLs with proper changefreq/priority for indexing.
+
 ### Iteration 32 (this turn — Save Trailer button stuck-state bug fix)
 - 🐛 **Bug:** Every trailer's Save button showed "Saved" without actually saving anything. Root cause: the `saved` React state in `VideoPlayer.jsx` persisted across video changes — once the user saved trailer A, opening trailer B inherited that stale `true` and the button's early-return guard `if (saved) return` blocked the save call.
 - 🛠 **Fix:** Added `useEffect` that resets `saved`/`saving` whenever the dialog opens or `video.key` changes, AND fetches the user's saved-trailers list to set `saved` to the TRUE per-trailer DB state. Now opening any new trailer correctly shows the right button state, and saves go through. Catalog disambiguation note: "4,000 raw slots ≈ ~2,000 unique titles" because cross-platform games (e.g. Elden Ring on PS5+PS4+XSX+XB1) dedupe to one card after merging.

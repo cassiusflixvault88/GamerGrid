@@ -3,9 +3,16 @@
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-        <meta name="theme-color" content="#FFD700" />
-        <meta name="description" content="GamerGrid - Your ultimate gaming hub. Discover games, watch trailers, track releases across PS5, Xbox, PC & Switch. Created by Cassius Fox." />
-        
+        <meta name="theme-color" content="#a855f7" />
+
+        <!-- Primary SEO -->
+        <title>GamerGrid — Discover Games, Watch Trailers & Track Releases | PS5 · Xbox · PC · Switch</title>
+        <meta name="description" content="GamerGrid is the ultimate gaming hub for PS5, Xbox, PC & Switch. Browse 4,000+ games, watch HD trailers, track new releases, read reviews, and find live deals. Built by gamers, for gamers." />
+        <meta name="keywords" content="GamerGrid, video games, PS5 games, Xbox games, PC gaming, Nintendo Switch, game trailers, game reviews, game release tracker, IGDB, gaming news" />
+        <meta name="author" content="Cassius Fox" />
+        <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+        <link rel="canonical" href="https://gamer-grid.com/" />
+
         <!-- PWA Meta Tags -->
         <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
         <link rel="apple-touch-icon" href="%PUBLIC_URL%/gamergrid-icon.svg" />
@@ -13,12 +20,57 @@
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="GamerGrid" />
-        
-        <!-- Open Graph / Social Media -->
+
+        <!-- Open Graph (Facebook, LinkedIn, Discord, Slack previews) -->
         <meta property="og:type" content="website" />
-        <meta property="og:title" content="GamerGrid - Your Ultimate Gaming Hub" />
-        <meta property="og:description" content="Discover games, watch trailers, and track releases across all platforms. Created by Cassius Fox." />
-        <meta property="og:image" content="%PUBLIC_URL%/gamergrid-icon.svg" />
+        <meta property="og:site_name" content="GamerGrid" />
+        <meta property="og:title" content="GamerGrid — Discover Games, Watch Trailers & Track Releases" />
+        <meta property="og:description" content="The ultimate gaming hub for PS5, Xbox, PC & Switch. Browse 4,000+ games, watch HD trailers, track releases, and find live deals." />
+        <meta property="og:url" content="https://gamer-grid.com/" />
+        <meta property="og:image" content="https://gamer-grid.com/og-cover.png" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:image:alt" content="GamerGrid — gaming discovery hub" />
+        <meta property="og:locale" content="en_US" />
+
+        <!-- Twitter / X Card -->
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="GamerGrid — Discover Games, Watch Trailers & Track Releases" />
+        <meta name="twitter:description" content="The ultimate gaming hub for PS5, Xbox, PC & Switch. Browse 4,000+ games, watch HD trailers, track releases, find live deals." />
+        <meta name="twitter:image" content="https://gamer-grid.com/og-cover.png" />
+
+        <!-- Structured data — WebSite (enables Google sitelinks search box) + Organization -->
+        <script type="application/ld+json">
+        {
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "WebSite",
+              "@id": "https://gamer-grid.com/#website",
+              "url": "https://gamer-grid.com/",
+              "name": "GamerGrid",
+              "description": "Discover games, watch trailers, and track releases across PS5, Xbox, PC & Switch.",
+              "publisher": { "@id": "https://gamer-grid.com/#org" },
+              "potentialAction": {
+                "@type": "SearchAction",
+                "target": "https://gamer-grid.com/search?q={search_term_string}",
+                "query-input": "required name=search_term_string"
+              }
+            },
+            {
+              "@type": "Organization",
+              "@id": "https://gamer-grid.com/#org",
+              "name": "GamerGrid",
+              "url": "https://gamer-grid.com/",
+              "logo": "https://gamer-grid.com/gamergrid-icon.svg",
+              "founder": {
+                "@type": "Person",
+                "name": "Cassius Fox"
+              }
+            }
+          ]
+        }
+        </script>
         
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -36,7 +88,6 @@
         work correctly both with client-side routing and a non-root public URL.
         Learn how to configure a non-root public URL by running `npm run build`.
         -->
-        <title>GamerGrid - Discover & Track Games</title>
 
         <!-- Google AdSense — verifies site ownership + loads ads after approval -->
         <meta name="google-adsense-account" content="ca-pub-4470395930184452" />
