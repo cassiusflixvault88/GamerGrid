@@ -18,7 +18,11 @@ support payments.
 - Hosting: Emergent (preview + deploy)
 
 ## Implemented (✅ as of 2026-02-28)
-### Iteration 31 (this turn — catalog tripled, AC Shadows + newer titles now appear)
+### Iteration 32 (this turn — Save Trailer button stuck-state bug fix)
+- 🐛 **Bug:** Every trailer's Save button showed "Saved" without actually saving anything. Root cause: the `saved` React state in `VideoPlayer.jsx` persisted across video changes — once the user saved trailer A, opening trailer B inherited that stale `true` and the button's early-return guard `if (saved) return` blocked the save call.
+- 🛠 **Fix:** Added `useEffect` that resets `saved`/`saving` whenever the dialog opens or `video.key` changes, AND fetches the user's saved-trailers list to set `saved` to the TRUE per-trailer DB state. Now opening any new trailer correctly shows the right button state, and saves go through. Catalog disambiguation note: "4,000 raw slots ≈ ~2,000 unique titles" because cross-platform games (e.g. Elden Ring on PS5+PS4+XSX+XB1) dedupe to one card after merging.
+
+### Iteration 31 (catalog tripled, AC Shadows + newer titles now appear)
 - 🎮 **Catalog grew from ~1,137 → 4,000+ games.** PlayStation and Xbox each now load 1,500 games (was 500 / 400). PC + Switch stay at 500.
 - 🔢 **Backend `/api/games/platform/{name}` now supports `offset`** (0-4500). IGDB caps each call at 500 — added pagination so we can fetch 1500 in 3 chunks of 500. Each offset gets its own cache entry (2h TTL).
 - 🪜 **Quality threshold relaxes for paginated/large requests.** When `limit >= 200` OR `offset > 0`: `rating > 50` AND `total_rating_count > 1` (was `> 70` and `> 20`). This was the exact reason **"Assassin's Creed Shadows"** showed in `/search` but NOT in `/browse-all` — it had too few votes for the strict bar. Verified: AC Shadows now appears in PlayStation page 2 (offset=500) sorted by popularity ✅.

@@ -67,6 +67,38 @@ const VideoPlayer = ({ video, isOpen, onClose, gameId, gameTitle }) => {
   const { toast } = useToast();
   const canSave = Boolean(user && (user.is_admin || user.is_pro));
 
+  // Reset save state whenever the dialog opens or the trailer changes,
+  // and check the DB for the actual saved status of THIS specific trailer.
+  // Without this, after one successful save the button stays "Saved" for
+  // every subsequent trailer (stale React state).
+  useEffect(() => {
+    if (!isOpen || !video?.key) {
+      setSaved(false);
+      setSaving(false);
+      return;
+    }
+    setSaving(false);
+    setSaved(false);
+    if (!canSave) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        const r = await axios.get(`${API}/saved-trailers`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (cancelled) return;
+        const list = r.data?.trailers || [];
+        const already = list.some((t) => t.youtube_id === video.key);
+        setSaved(already);
+      } catch {
+        // silent — save button stays clickable
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [isOpen, video?.key, canSave]);
+
   const watchOnYouTube = () => {
     window.open(`https://www.youtube.com/watch?v=${video?.key}`, '_blank');
     onClose();
@@ -91,7 +123,7 @@ const VideoPlayer = ({ video, isOpen, onClose, gameId, gameTitle }) => {
       setSaved(true);
       toast({
         title: res.data.already_saved ? 'Already in your library' : 'Saved! ✅',
-        description: 'Find it in Settings → Saved Trailers',
+        description: 'Find it in My Library → Saved Trailers',
       });
     } catch (e) {
       toast({
