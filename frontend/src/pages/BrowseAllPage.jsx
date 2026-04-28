@@ -80,37 +80,51 @@ const BrowseAllPage = () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      // Bigger catalog per platform: bumped to give Browse All deeper inventory
+      // IGDB caps each request at 500 — for big catalogs we paginate via offset.
+      // PlayStation and Xbox get the deepest catalog (1500 each) so newer/niche
+      // titles (e.g. AC Shadows) surface alongside the all-time greats.
       const platformLimit = (key) => {
-        if (key === 'playstation') return 500;
-        if (key === 'xbox') return 400;
-        if (key === 'pc') return 400;
-        if (key === 'switch') return 350;
-        return 350;
+        if (key === 'playstation') return 1500;
+        if (key === 'xbox') return 1500;
+        if (key === 'pc') return 500;
+        if (key === 'switch') return 500;
+        return 500;
       };
       const generalLimit = '350';
       params.set('limit', generalLimit);
       if (genre) params.set('genre', genre);
       if (year && year !== 'Any') params.set('year', year);
 
+      // Helper: fetch a platform across multiple offsets if total > 500
+      const fetchPlatformPaginated = async (key, total) => {
+        const chunks = [];
+        for (let off = 0; off < total; off += 500) {
+          const p = new URLSearchParams(params);
+          p.set('limit', String(Math.min(500, total - off)));
+          p.set('offset', String(off));
+          p.set('sort', 'popular');
+          chunks.push(
+            axios.get(`${API}/games/platform/${key}?${p.toString()}`)
+              .then((x) => x.data?.results || [])
+              .catch(() => []),
+          );
+        }
+        const pages = await Promise.all(chunks);
+        return pages.flat();
+      };
+
       let url;
       if (activePlatform === 'all') {
         const mkUrl = (endpoint) => `${API}/games/${endpoint}?${params.toString()}`;
-        const platUrl = (key) => {
-          const p = new URLSearchParams(params);
-          p.set('limit', String(platformLimit(key)));
-          p.set('sort', 'popular');
-          return `${API}/games/platform/${key}?${p.toString()}`;
-        };
         const [trending, top, popular, newRel, ps, xbox, pc, switchGames] = await Promise.all([
           axios.get(mkUrl('trending')).then((x) => x.data?.results || []).catch(() => []),
           axios.get(mkUrl('top-rated')).then((x) => x.data?.results || []).catch(() => []),
           axios.get(mkUrl('most-popular')).then((x) => x.data?.results || []).catch(() => []),
           axios.get(mkUrl('new-releases')).then((x) => x.data?.results || []).catch(() => []),
-          axios.get(platUrl('playstation')).then((x) => x.data?.results || []).catch(() => []),
-          axios.get(platUrl('xbox')).then((x) => x.data?.results || []).catch(() => []),
-          axios.get(platUrl('pc')).then((x) => x.data?.results || []).catch(() => []),
-          axios.get(platUrl('switch')).then((x) => x.data?.results || []).catch(() => []),
+          fetchPlatformPaginated('playstation', platformLimit('playstation')),
+          fetchPlatformPaginated('xbox', platformLimit('xbox')),
+          fetchPlatformPaginated('pc', platformLimit('pc')),
+          fetchPlatformPaginated('switch', platformLimit('switch')),
         ]);
         const seen = new Set();
         const merged = [...popular, ...trending, ...top, ...newRel, ...ps, ...xbox, ...pc, ...switchGames].filter((g) => {
@@ -120,14 +134,40 @@ const BrowseAllPage = () => {
         });
         setGames(merged);
       } else {
-        const platParams = new URLSearchParams(params);
-        platParams.set('limit', String(platformLimit(activePlatform)));
+        // Single-platform view — use paginated fetch when limit > 500
+        const total = platformLimit(activePlatform);
         // Server understands rating/popular/release; trending+oldest are client-side
         const serverSort = sort === 'trending' || sort === 'oldest' ? 'rating' : sort;
-        platParams.set('sort', serverSort);
-        url = `${API}/games/platform/${activePlatform}?${platParams.toString()}`;
-        const res = await axios.get(url);
-        setGames(res.data?.results || []);
+        if (total <= 500) {
+          const platParams = new URLSearchParams(params);
+          platParams.set('limit', String(total));
+          platParams.set('sort', serverSort);
+          url = `${API}/games/platform/${activePlatform}?${platParams.toString()}`;
+          const res = await axios.get(url);
+          setGames(res.data?.results || []);
+        } else {
+          // Paginate
+          const chunks = [];
+          for (let off = 0; off < total; off += 500) {
+            const p = new URLSearchParams(params);
+            p.set('limit', String(Math.min(500, total - off)));
+            p.set('offset', String(off));
+            p.set('sort', serverSort);
+            chunks.push(
+              axios.get(`${API}/games/platform/${activePlatform}?${p.toString()}`)
+                .then((x) => x.data?.results || [])
+                .catch(() => []),
+            );
+          }
+          const pages = await Promise.all(chunks);
+          const seen = new Set();
+          const merged = pages.flat().filter((g) => {
+            if (!g || seen.has(g.id)) return false;
+            seen.add(g.id);
+            return true;
+          });
+          setGames(merged);
+        }
       }
     } catch (err) {
       console.error('Browse load error:', err);

@@ -602,6 +602,7 @@ async def get_new_releases(
 async def get_games_by_platform(
     platform_name: str,
     limit: int = Query(40, ge=1, le=500),
+    offset: int = Query(0, ge=0, le=4500),
     sort: str = Query("rating", pattern="^(rating|release|popular)$"),
     genre: Optional[int] = None,
     year: Optional[int] = Query(None, ge=1970, le=2100),
@@ -618,13 +619,15 @@ async def get_games_by_platform(
         "popular": "sort total_rating_count desc;",
     }[sort]
 
+    # Quality threshold scales by request depth. Surface paginated tail (offset>0)
+    # and large requests with a lower bar so newer/niche titles like
+    # "Assassin's Creed Shadows" (which can have low total_rating_count at launch)
+    # also appear in the catalog.
+    deep = limit >= 200 or offset > 0
     where_parts = [
         f"platforms = ({ids_str})",
-        # Relax the threshold when caller asks for a large catalog (>=200) so we
-        # can actually return 300+ PlayStation / 200+ Xbox titles. Smaller calls
-        # keep the higher quality bar.
-        "rating > 60" if limit >= 200 else "rating > 70",
-        "total_rating_count > 5" if limit >= 200 else "total_rating_count > 20",
+        "rating > 50" if deep else "rating > 70",
+        "total_rating_count > 1" if deep else "total_rating_count > 20",
     ]
     if genre:
         where_parts.append(f"genres = ({genre})")
@@ -637,13 +640,14 @@ async def get_games_by_platform(
         f" {_build_where(where_parts)}"
         f" {sort_clause}"
         f" limit {limit};"
+        f" offset {offset};"
     )
     try:
         games = await cached_query(
-            f"platform:{platform_name}:{sort}:{limit}:{genre}:{year}",
+            f"platform:{platform_name}:{sort}:{limit}:{offset}:{genre}:{year}",
             "games", q, ttl_seconds=60 * 60 * 2,
         )
-        return {"results": [normalize_game(g) for g in games], "total": len(games)}
+        return {"results": [normalize_game(g) for g in games], "total": len(games), "offset": offset}
     except Exception as e:
         logger.error(f"platform error: {e}")
         raise HTTPException(500, f"Failed to fetch {platform_name}: {e}")

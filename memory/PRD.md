@@ -18,7 +18,14 @@ support payments.
 - Hosting: Emergent (preview + deploy)
 
 ## Implemented (✅ as of 2026-02-28)
-### Iteration 30 (this turn — Google AdSense wired)
+### Iteration 31 (this turn — catalog tripled, AC Shadows + newer titles now appear)
+- 🎮 **Catalog grew from ~1,137 → 4,000+ games.** PlayStation and Xbox each now load 1,500 games (was 500 / 400). PC + Switch stay at 500.
+- 🔢 **Backend `/api/games/platform/{name}` now supports `offset`** (0-4500). IGDB caps each call at 500 — added pagination so we can fetch 1500 in 3 chunks of 500. Each offset gets its own cache entry (2h TTL).
+- 🪜 **Quality threshold relaxes for paginated/large requests.** When `limit >= 200` OR `offset > 0`: `rating > 50` AND `total_rating_count > 1` (was `> 70` and `> 20`). This was the exact reason **"Assassin's Creed Shadows"** showed in `/search` but NOT in `/browse-all` — it had too few votes for the strict bar. Verified: AC Shadows now appears in PlayStation page 2 (offset=500) sorted by popularity ✅.
+- ⚡ **Frontend Browse All paginates client-side too.** When platform asks for >500, it fires N parallel requests with `offset=0,500,1000,...` and dedupes the merged results before rendering. UI still uses lazy "Load 100 more" so the initial paint is fast.
+- ✅ Verified live: PlayStation page now shows "Showing 100 of 1500 games" (was 500 max). AC Shadows confirmed present at offset=500 alongside Elden Ring DLC, Shadow Warrior 3, Sekiro, Shadow of the Tomb Raider, etc.
+
+### Iteration 30 (Google AdSense wired)
 - 📺 **AdSense `<script>` snippet** added to `<head>` of `/app/frontend/public/index.html` with publisher ID `ca-pub-4470395930184452` (extracted from user's verification screenshot). This is what AdSense will look for when the user clicks "Verify".
 - 📜 **`ads.txt`** created at `/app/frontend/public/ads.txt` containing `google.com, pub-4470395930184452, DIRECT, f08c47fec0942fa0` — Google's recommended authorized-sellers file that boosts ad rates and prevents domain spoofing. Auto-served at `https://gamer-grid.com/ads.txt` after redeploy.
 - 🔧 **`REACT_APP_ADSENSE_CLIENT=ca-pub-4470395930184452`** added to `/app/frontend/.env`. The 3 pre-wired `<AdSlot />` components (Home rail, Public Profile, in-content) will now render real ads as soon as Google approves the site.
