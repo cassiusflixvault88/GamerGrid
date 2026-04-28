@@ -1,6 +1,6 @@
 /* eslint-disable no-restricted-globals */
 
-const CACHE_NAME = 'gamergrid-v3';
+const CACHE_NAME = 'gamergrid-v5';
 const urlsToCache = [
   '/',
   '/static/css/main.css',
@@ -22,9 +22,16 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
   // 🔴 Bypass SW entirely for API + auth routes — these MUST be live every request.
-  // This fixes stale profile_picture_url, watchlist, ratings, etc.
   if (url.pathname.startsWith('/api/') || event.request.method !== 'GET') {
     return; // let the browser handle it
+  }
+
+  // 🔴 Bypass SW for the JS/CSS bundles too — CRA already hashes them by content,
+  // so we WANT the browser to fetch the new ones on every deploy. Caching them
+  // was the root cause of "buddy can't sign up after redeploy" bugs because
+  // his browser kept running the old bundle.
+  if (url.pathname.startsWith('/static/')) {
+    return; // let the browser handle it (browser cache headers will still apply)
   }
 
   // Network-first for HTML navigations (so deploy updates take effect)

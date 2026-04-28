@@ -65,7 +65,12 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('user');
     setUser(null);
 
-    const response = await axios.post(`${API}/auth/login`, { email, password });
+    const cleanEmail = (email || '').trim().toLowerCase();
+    const response = await axios.post(
+      `${API}/auth/login`,
+      { email: cleanEmail, password },
+      { timeout: 20000 },
+    );
     const { access_token, user: userData } = response.data;
 
     localStorage.setItem('token', access_token);
@@ -90,7 +95,13 @@ export const AuthProvider = ({ children }) => {
   };
 
   const signup = async (email, username, password) => {
-    const response = await axios.post(`${API}/auth/signup`, { email, username, password });
+    const cleanEmail = (email || '').trim().toLowerCase();
+    const cleanUsername = (username || '').trim();
+    const response = await axios.post(
+      `${API}/auth/signup`,
+      { email: cleanEmail, username: cleanUsername, password },
+      { timeout: 20000 },
+    );
     const { access_token, user: userData } = response.data;
     localStorage.setItem('token', access_token);
     setToken(access_token);
@@ -103,7 +114,7 @@ export const AuthProvider = ({ children }) => {
         await axios.post(
           `${API}/referrals/claim`,
           { code: refCode },
-          { headers: { Authorization: `Bearer ${access_token}` } },
+          { headers: { Authorization: `Bearer ${access_token}` }, timeout: 10000 },
         );
         localStorage.removeItem('gg_ref_code');
       }

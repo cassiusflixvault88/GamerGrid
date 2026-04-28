@@ -14,6 +14,9 @@ const AuthModal = ({ isOpen, onClose }) => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  // Persistent visible error so users can SEE what went wrong and screenshot it.
+  // We keep both the toast AND this banner — toasts vanish too fast on mobile.
+  const [errorBanner, setErrorBanner] = useState(null);
 
   const { login, signup } = useAuth();
   const { toast } = useToast();
@@ -21,6 +24,7 @@ const AuthModal = ({ isOpen, onClose }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setErrorBanner(null);
 
     try {
       if (isLogin) {
@@ -36,10 +40,14 @@ const AuthModal = ({ isOpen, onClose }) => {
       onClose();
       resetForm();
     } catch (error) {
-      // FastAPI returns either a string detail (400) or an array of pydantic
-      // validation errors (422). Normalize both into a friendly toast message.
+      // Build the most useful error message we can. We surface BOTH a friendly
+      // message AND the raw HTTP status so it's debuggable from a screenshot.
+      const status = error.response?.status;
       const detail = error.response?.data?.detail;
+
       let description = 'Something went wrong. Please try again.';
+      let isNetwork = false;
+
       if (typeof detail === 'string') {
         description = detail;
       } else if (Array.isArray(detail) && detail.length > 0) {
@@ -49,14 +57,19 @@ const AuthModal = ({ isOpen, onClose }) => {
             return field ? `${field}: ${d.msg}` : d.msg;
           })
           .join(' · ');
+      } else if (error.code === 'ECONNABORTED' || error.message === 'Network Error' || !error.response) {
+        isNetwork = true;
+        description = "Can't reach our server right now. Check your internet, or try refreshing this page.";
       } else if (error.message) {
         description = error.message;
       }
-      toast({
-        title: isLogin ? 'Sign-in failed' : 'Sign-up failed',
-        description,
-        variant: 'destructive',
-      });
+
+      // Log to console so we can ask the user to screenshot the dev console too.
+      console.error('[AuthModal] error', { status, detail, message: error.message, error });
+
+      const title = isLogin ? 'Sign-in failed' : 'Sign-up failed';
+      setErrorBanner({ title, description, status, isNetwork });
+      toast({ title, description, variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -72,6 +85,7 @@ const AuthModal = ({ isOpen, onClose }) => {
     setUsername('');
     setPassword('');
     setShowPassword(false);
+    setErrorBanner(null);
   };
 
   const toggleMode = () => {
@@ -100,6 +114,33 @@ const AuthModal = ({ isOpen, onClose }) => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {errorBanner && (
+              <div
+                role="alert"
+                data-testid="auth-error-banner"
+                className="rounded-lg border border-red-500/40 bg-red-900/30 p-3 text-sm"
+              >
+                <p className="text-red-200 font-bold">
+                  ⚠️ {errorBanner.title}
+                  {errorBanner.status ? <span className="ml-2 text-red-300/80 font-mono text-xs">HTTP {errorBanner.status}</span> : null}
+                </p>
+                <p className="text-white/90 mt-1">{errorBanner.description}</p>
+                {errorBanner.isNetwork && (
+                  <button
+                    type="button"
+                    onClick={() => window.location.reload()}
+                    className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-red-200 underline"
+                    data-testid="auth-error-reload-btn"
+                  >
+                    🔄 Refresh & try again
+                  </button>
+                )}
+                <p className="text-white/40 text-[10px] mt-2">
+                  Stuck? Take a screenshot of this and message Cassius from his profile page.
+                </p>
+              </div>
+            )}
+
             <div>
               <Label htmlFor="email" className="text-white/90">Email</Label>
               <Input

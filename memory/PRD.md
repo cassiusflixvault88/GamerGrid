@@ -17,8 +17,18 @@ support payments.
 - Payments: Stripe LIVE
 - Hosting: Emergent (preview + deploy)
 
-## Implemented (✅ as of 2026-02-27)
-### Iteration 23 (this turn — make Message + Rate Creator discoverable)
+## Implemented (✅ as of 2026-02-28)
+### Iteration 24 (this turn — bulletproof signup, kill stale-cache loop)
+- 🚨 **Stale frontend bundle root cause exposed.** Buddy's "still getting an error" was caused by his browser's PWA service worker serving the OLD JS bundle from cache, even after Cassius redeployed. Old bundle = old `EmailStr` validator = 422 errors on common mobile-keyboard inputs.
+- 🛠️ **Fixed for good:**
+  - Bumped service worker `CACHE_NAME` v3 → v5 (forces full cache invalidation on next visit)
+  - Service worker now BYPASSES `/static/` entirely (CRA already content-hashes filenames; caching them was the root cause). Every deploy is now picked up immediately.
+- 👁️ **Persistent visible error banner in AuthModal.** Toasts on mobile vanish in 3s — easy to miss. Now ANY signup/signin error shows a sticky red banner with: title, exact HTTP status code (e.g. `HTTP 400`), full error message, "🔄 Refresh & try again" button for network errors, and a "Stuck? Screenshot this and message Cassius" hint. Result: every future error is now diagnosable from a single screenshot.
+- 🛡️ **20-second client timeout** on login/signup so a slow network gives a clear "Can't reach our server" error instead of hanging the spinner forever.
+- 🧹 **Client-side trim+lowercase** of email/username before submit, so even if backend defenses regress, the UI sends clean data.
+- 🧪 **Verified with 8 mobile-keyboard edge cases** on backend: trailing whitespace, smart quotes in passwords, emoji usernames, plus-addressing emails, dotted usernames, 45-char passwords, 6-char min boundary, 5-char rejected → all return correct HTTP status.
+
+### Iteration 23 (Make Message + Rate Creator discoverable)
 - 🌟 **Big "Meet the Creator" card** on the Home page (above the Pro banner) — visible to ALL visitors including guests. Shows Cassius's avatar, name, FOUNDER badge, plus three explicit action buttons: 💬 Message · ⭐ Rate · ✨ Review. One click takes anyone straight to the public profile where the Message modal + Rate-and-Review form already live.
 - 🔗 **Footer "Created by Cassius Fox"** is now a clickable link to his profile, plus a dedicated "⭐ Meet · Message · Rate the Creator" line right below it. Reachable from every page in the app.
 - 📝 **Rate-and-Review section heading** rewritten from "Reviews for Cassius Fox" → "Rate {Cassius Fox} & GamerGrid" with a friendly CTA: "What do you think of him and the work he's done? Drop a star rating and a quick review — he reads every single one." Anchor `#rate-creator` added so external links can scroll straight to it.
