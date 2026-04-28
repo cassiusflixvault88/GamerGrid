@@ -18,7 +18,14 @@ support payments.
 - Hosting: Emergent (preview + deploy)
 
 ## Implemented (✅ as of 2026-02-28)
-### Iteration 28 (this turn — payer celebration toast + confetti + chime)
+### Iteration 29 (this turn — tips-feed OR-query fix + homepage tip ping + admin diagnostic + tested 23/23)
+- 🩹 **Critical fix: legacy "completed" tips were silently missing from the admin dashboard.** User's real $1 payment showed up in the public homepage ticker but NOT the admin tips-feed table. Root cause: tips-feed only queried `{payment_status: "paid"}`, but legacy txns from before reconciliation existed only had `{status: "completed"}`. Changed query to `{$or: [{payment_status: "paid"}, {status: "completed"}], payment_type: {$in: [tip, custom_tip, pro_subscription]}}` — now catches every successful payment regardless of which field got set first. Verified with 3-variant seed test: paid-only, completed-only, and pending → returns 2 (paid+completed), excludes pending. ✅
+- 🛠 **`GET /api/payments/admin/all-transactions`** — admin-only diagnostic endpoint that returns ALL payment_transactions regardless of status (with `payment_status`, `status`, `client_ip`, `reconciled` fields exposed). For future debugging "why isn't my payment showing?" mysteries.
+- 🔥 **`HomepageTipPing.jsx`** — slide-in toast at bottom-right of EVERY homepage visit when a NEW tip arrives. Polls `/api/payments/recent-public` every 30s, first-load suppression (only fires on truly fresh tips after the visitor opened the page), shows for 8s with name + amount + location, dismissible X button. Pure CSS slide-up animation. Used `sessionStorage` (not localStorage) so it can re-show across new visits.
+- 🔒 **Security tighten:** removed `logger.warning("Using LIVE Stripe key: sk_live_xxxxxxxxx...")` log line that exposed first 20 chars of the key. Replaced with sanitized "Stripe LIVE key in use" log only.
+- 🧪 **Backend testing-agent run: 23/23 PASS** (signup, login, tips-feed OR-query, all-transactions, recent-public, tip checkout, subscription checkout, checkout status, admin notifications, all game catalog endpoints). Two minor recommendations applied (payment_type filter + log redaction). Two architectural notes deferred (admin source-of-truth dual storage, Stripe reconcile short-circuit on bad key).
+
+### Iteration 28 (payer celebration toast + confetti + chime)
 - 🎉 **Payer celebration on `/payment-success`.** The moment payment confirms (status→`paid`), the page now fires:
   - Three-note ascending chime (C6→E6→G6 major triad via Web Audio API — no asset file)
   - Sticky Radix toast: "💜 Thanks for tipping!" or "🎉 Welcome to GamerGrid Pro!" with personalized amount

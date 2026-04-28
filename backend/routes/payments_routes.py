@@ -83,10 +83,10 @@ async def create_tip_checkout(
 
         # DEBUG: Verify we're using LIVE key
         if not stripe_key or not stripe_key.startswith('sk_live_'):
-            logger.error(f"❌ CRITICAL: Using TEST key! Key prefix: {stripe_key[:15] if stripe_key else 'NONE'}")
+            logger.error("CRITICAL: Stripe key missing or not a live key")
             raise HTTPException(500, "Stripe configuration error - contact support")
 
-        logger.warning(f"✅ Using LIVE Stripe key: {stripe_key[:20]}...")
+        logger.info("Stripe LIVE key in use")
 
         webhook_url = f"{request.origin_url}/api/payments/webhook/stripe"
         stripe_checkout = StripeCheckout(api_key=stripe_key, webhook_url=webhook_url)
@@ -577,10 +577,13 @@ async def admin_tips_feed(
     limit = max(1, min(int(limit or 50), 200))
 
     txs = await db.payment_transactions.find(
-        {"$or": [
-            {"payment_status": "paid"},
-            {"status": "completed"},
-        ]},
+        {
+            "$or": [
+                {"payment_status": "paid"},
+                {"status": "completed"},
+            ],
+            "payment_type": {"$in": ["tip", "custom_tip", "pro_subscription"]},
+        },
         {"_id": 0, "session_id": 1, "user_id": 1, "amount": 1, "payment_type": 1,
          "package": 1, "client_ip": 1, "created_at": 1, "paid_at": 1, "amount_total": 1,
          "payment_status": 1, "status": 1},
