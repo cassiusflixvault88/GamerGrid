@@ -18,7 +18,18 @@ support payments.
 - Hosting: Emergent (preview + deploy)
 
 ## Implemented (✅ as of 2026-02-28)
-### Iteration 24 (this turn — bulletproof signup, kill stale-cache loop)
+### Iteration 25 (this turn — Stripe live key root-cause fix + full health sweep)
+- 🚨 **CRITICAL: Stripe "Invalid API Key" root cause found and fixed.** A previous agent had hardcoded the line `os.environ['STRIPE_API_KEY'] = '***REMOVED***'` at the top of `/app/backend/routes/payments_routes.py` (line 28). On every backend boot it was overwriting the user's real Stripe key with the literal string `***REMOVED***` — which is exactly why production checkout was returning `"Invalid API Key provided: ***REMOV*D***"`. Removed the line entirely. Backend now reads `STRIPE_API_KEY` from env at request time via `os.getenv`, so the key the user pastes into Emergent's deployment custom env vars is what Stripe receives. Verified with curl: error changed from "Invalid API Key (***REMOV*D***)" → "Expired API Key (sk_live_...)" proving the integration plumbing is now correct (preview pod has an old expired live key; production will use the user's pasted fresh key).
+- 🩺 **Comprehensive health sweep — all green:**
+  - Public endpoints: `/api/`, all `/api/games/*` (trending, top-rated, upcoming, new-releases, top10, most-popular, genres, platforms, search, all 4 platform routes), `/api/users/founder`, `/api/referrals/leaderboard`, `/api/app-reviews` → all 200 ✅
+  - Authenticated endpoints: `/api/news`, `/api/auth/me`, `/api/user/profile`, `/api/watchlist`, `/api/saved-articles`, `/api/referrals/me` → all 200 ✅
+  - Admin gating verified (non-admin → 403 on `/api/admin/notifications`)
+  - Frontend smoke test: Home page renders Top 10 hero ("Grand Theft Auto V #1"), Meet the Creator card, FOUNDER badge, Message/Rate/Review buttons, auto-update badge, Pro banner — all good
+  - Lint clean on `payments_routes.py`
+- ⚠️ **Discovered (NOT a code bug — user action needed): Resend in TESTING MODE.** Backend logs show: `"You can only send testing emails to your own email address (cassiusgamergrid@gmail.com). To send emails to other recipients, please verify a domain at resend.com/domains"`. Welcome emails to NEW signups are silently failing in BOTH preview and prod. **User must verify a domain at https://resend.com/domains** (or upgrade Resend plan) before welcome emails / digests will work for non-Cassius recipients.
+- 🔇 **Noted but harmless:** `passlib bcrypt __about__` warning in logs — passlib + bcrypt 4.x version detection quirk, does NOT break password hashing/verification (signup + login both work end-to-end). Leaving alone per scope.
+
+### Iteration 24 (bulletproof signup, kill stale-cache loop)
 - 🚨 **Stale frontend bundle root cause exposed.** Buddy's "still getting an error" was caused by his browser's PWA service worker serving the OLD JS bundle from cache, even after Cassius redeployed. Old bundle = old `EmailStr` validator = 422 errors on common mobile-keyboard inputs.
 - 🛠️ **Fixed for good:**
   - Bumped service worker `CACHE_NAME` v3 → v5 (forces full cache invalidation on next visit)
