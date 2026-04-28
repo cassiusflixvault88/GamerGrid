@@ -175,6 +175,8 @@ const AdminAnalyticsPage = () => {
   const daily = data?.daily || [];
   const topPages = data?.top_pages || [];
   const topReferrers = data?.top_referrers || [];
+  const topCountries = data?.top_countries || [];
+  const topCities = data?.top_cities || [];
   const recentVisits = data?.recent_visits || [];
 
   const formatTime = (iso) => {
@@ -415,6 +417,59 @@ const AdminAnalyticsPage = () => {
           </Card>
         </div>
 
+        {/* Top Countries + Cities — visitor geolocation */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+          <Card className="bg-white/5 border-white/10 p-6" data-testid="top-countries-card">
+            <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+              <Globe className="w-5 h-5 text-cyan-400" />
+              Top Countries
+              <span className="text-xs text-white/40 font-normal">(by unique visitors)</span>
+            </h2>
+            {topCountries.length === 0 ? (
+              <p className="text-white/50 text-sm">Geolocation data appears as new visits come in.</p>
+            ) : (
+              <div className="space-y-2">
+                {topCountries.map((c, i) => (
+                  <div key={`${c.country_code}-${c.country}`} className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-white/40 w-6">{i + 1}.</span>
+                      <span className="text-cyan-300 font-mono text-xs w-8">{c.country_code}</span>
+                      <span className="text-white truncate">{c.country}</span>
+                    </div>
+                    <div className="flex items-center gap-3 ml-2">
+                      <span className="text-cyan-400 font-semibold" title="Unique visitors">{c.visitors.toLocaleString()}</span>
+                      <span className="text-white/40 text-xs" title="Page views">{c.views.toLocaleString()} views</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+
+          <Card className="bg-white/5 border-white/10 p-6" data-testid="top-cities-card">
+            <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+              <Globe className="w-5 h-5 text-pink-400" />
+              Top Cities
+              <span className="text-xs text-white/40 font-normal">(by unique visitors)</span>
+            </h2>
+            {topCities.length === 0 ? (
+              <p className="text-white/50 text-sm">City data appears as new visits come in.</p>
+            ) : (
+              <div className="space-y-2">
+                {topCities.map((c, i) => (
+                  <div key={`${c.city}-${c.country_code}`} className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-white/40 w-6">{i + 1}.</span>
+                      <span className="text-white truncate">{c.city}, <span className="text-white/60">{c.country}</span></span>
+                    </div>
+                    <span className="text-pink-400 font-semibold ml-2">{c.visitors.toLocaleString()}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+        </div>
+
         {/* Recent Visitors Live Feed */}
         <Card className="bg-white/5 border-white/10 p-6 mt-6" data-testid="recent-visits-card">
           <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
@@ -446,6 +501,7 @@ const AdminAnalyticsPage = () => {
                     <th className="text-left py-2 pr-3">When</th>
                     <th className="text-left py-2 pr-3">Page</th>
                     <th className="text-left py-2 pr-3">Came From</th>
+                    <th className="text-left py-2 pr-3">Location</th>
                     <th className="text-left py-2 pr-3">Device</th>
                     <th className="text-left py-2">Visitor</th>
                   </tr>
@@ -456,6 +512,12 @@ const AdminAnalyticsPage = () => {
                       <td className="py-2 pr-3 text-white/80 whitespace-nowrap">{formatTime(v.ts)}</td>
                       <td className="py-2 pr-3 text-white font-mono text-xs">{v.path}</td>
                       <td className="py-2 pr-3 text-green-300 text-xs">{v.referrer}</td>
+                      <td className="py-2 pr-3 text-cyan-200 text-xs whitespace-nowrap">
+                        {v.country_code && v.country_code !== '??' ? (
+                          <span className="font-mono mr-1 text-white/50">{v.country_code}</span>
+                        ) : null}
+                        {v.location}
+                      </td>
                       <td className="py-2 pr-3 text-white/60 text-xs flex items-center gap-1">
                         <Smartphone className="w-3 h-3" />
                         {v.device}

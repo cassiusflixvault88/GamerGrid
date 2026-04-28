@@ -18,7 +18,14 @@ support payments.
 - Hosting: Emergent (preview + deploy)
 
 ## Implemented (✅ as of 2026-02-26)
-### Iteration 19 (this turn — UX expansion + monetization)
+### Iteration 20 (this turn — sign-up bug + geolocation + BackNav fix)
+- 🚨 **CRITICAL: Sign-up bug fixed.** The signup endpoint was awaiting `_send_welcome_email` and `send_verification` synchronously — when Resend was slow/rate-limited, the entire HTTP request hung and users saw a generic "Something went wrong" toast. Both email calls are now `asyncio.create_task` background fires, so signup returns sub-200ms even if email is broken. Also added: email/username trim + lowercase normalization, case-insensitive username uniqueness check, friendly validation messages ("Password must be at least 6 characters", "That username is already taken"), and proper Pydantic 422 error rendering in the AuthModal toast (was rendering `[object Object]`). Login now finds users regardless of email casing.
+- 🌍 **Visitor analytics — geolocation**: every new page_view is now enriched with `country`, `country_code`, `region`, `city` via free `ip-api.com` lookup. IP→geo mapping cached in Mongo `ip_geo_cache` (indefinite — IPs rarely change country). Real client IP extracted from `cf-connecting-ip`/`x-real-ip`/`x-forwarded-for` headers (Emergent ingress + Cloudflare). Geo enrichment runs in a background task so it never blocks tracking.
+  - Admin Analytics page: new **Top Countries** + **Top Cities** cards (sorted by unique visitors).
+  - Recent Visitors table: new **Location** column showing `US Council Bluffs, United States`-style entries.
+- 🛠️ **BackNavigation rebuilt**: replaced `<button onClick={navigate(...)}>` with `<Link to=...>` components. The previous button-based version was reportedly not navigating on the deployed app. Link components work even before JS hydration completes and are immune to overlapping pointer-event bugs. Also added `relative z-30` so nothing accidentally overlaps the buttons.
+
+### Iteration 19 (UX expansion + monetization)
 - 🛒 **GameStop affiliate link** added to every game's `buy_links` (alongside Amazon, Steam, PSN, Xbox, eShop, Epic, GOG, Itch). Set `GAMESTOP_AFFILIATE_ID` env var to enable CJ Affiliate deep-link wrapping.
 - 🔗 **New dedicated Share Hub page** (`/share` and `/share-links`): 12 one-click platforms (Facebook, Messenger, X/Twitter, Reddit, WhatsApp, Telegram, Discord, LinkedIn, Pinterest, Tumblr, Email, SMS) + Copy Link + Native Share + QR code generator.
 - 🔍 **Search bar empty-state**: focus the search box and immediately see Popular & Trending games (18 pre-loaded) before typing — courtesy of `SearchAutocomplete` upgrade.

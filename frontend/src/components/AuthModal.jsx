@@ -36,9 +36,25 @@ const AuthModal = ({ isOpen, onClose }) => {
       onClose();
       resetForm();
     } catch (error) {
+      // FastAPI returns either a string detail (400) or an array of pydantic
+      // validation errors (422). Normalize both into a friendly toast message.
+      const detail = error.response?.data?.detail;
+      let description = 'Something went wrong. Please try again.';
+      if (typeof detail === 'string') {
+        description = detail;
+      } else if (Array.isArray(detail) && detail.length > 0) {
+        description = detail
+          .map((d) => {
+            const field = Array.isArray(d.loc) ? d.loc[d.loc.length - 1] : '';
+            return field ? `${field}: ${d.msg}` : d.msg;
+          })
+          .join(' · ');
+      } else if (error.message) {
+        description = error.message;
+      }
       toast({
-        title: 'Error',
-        description: error.response?.data?.detail || 'Something went wrong',
+        title: isLogin ? 'Sign-in failed' : 'Sign-up failed',
+        description,
         variant: 'destructive',
       });
     } finally {

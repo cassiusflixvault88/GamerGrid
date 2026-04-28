@@ -13,6 +13,8 @@ from typing import Optional
 import os
 import hashlib
 import logging
+import asyncio
+import httpx
 
 from auth import verify_token
 from ceo_config import is_ceo_email
@@ -38,6 +40,71 @@ def _hash_ip(ip: str) -> str:
     if not ip:
         return ""
     return hashlib.sha256(ip.encode()).hexdigest()[:16]
+
+
+def _real_ip(request: Request) -> str:
+    """Extract the originating IP, honoring proxy headers used by Emergent's
+    Kubernetes ingress / Cloudflare. Falls back to the direct client host."""
+    for header in ("cf-connecting-ip", "x-real-ip", "x-forwarded-for"):
+        v = request.headers.get(header)
+        if v:
+            # x-forwarded-for can be a comma-separated list — first hop is the client
+            return v.split(",")[0].strip()
+    return request.client.host if request.client else ""
+
+
+async def _geo_lookup(ip: str) -> dict:
+    """Resolve an IP → {country, country_code, region, city}. Caches in Mongo
+    forever (IP→geo mapping doesn't change) and never raises."""
+    if not ip or ip.startswith("127.") or ip.startswith("10.") or ip.startswith("192.168.") or ip == "::1":
+        return {"country": "Local", "country_code": "LO", "region": "", "city": ""}
+    cached = await db.ip_geo_cache.find_one({"_id": ip}, {"_id": 0, "country": 1, "country_code": 1, "region": 1, "city": 1})
+    if cached:
+        return cached
+    try:
+        async with httpx.AsyncClient(timeout=4) as client:
+            r = await client.get(
+                f"http://ip-api.com/json/{ip}",
+                params={"fields": "status,country,countryCode,regionName,city,query"},
+            )
+            data = r.json() if r.status_code == 200 else {}
+        if data.get("status") != "success":
+            geo = {"country": "Unknown", "country_code": "??", "region": "", "city": ""}
+        else:
+            geo = {
+                "country": data.get("country") or "Unknown",
+                "country_code": (data.get("countryCode") or "??").upper(),
+                "region": data.get("regionName") or "",
+                "city": data.get("city") or "",
+            }
+        # Cache for 30 days. ip-api allows the same IP to be re-queried, but
+        # caching avoids burning quota on repeat visitors.
+        await db.ip_geo_cache.update_one(
+            {"_id": ip},
+            {"$set": {**geo, "cached_at": datetime.now(timezone.utc)}},
+            upsert=True,
+        )
+        return geo
+    except Exception as e:
+        logger.debug(f"geo lookup failed for {ip}: {e}")
+        return {"country": "Unknown", "country_code": "??", "region": "", "city": ""}
+
+
+async def _enrich_geo_async(page_view_id, ip: str):
+    """Background task — enrich a page_view with geo data."""
+    try:
+        geo = await _geo_lookup(ip)
+        await db.page_views.update_one(
+            {"_id": page_view_id},
+            {"$set": {
+                "country": geo["country"],
+                "country_code": geo["country_code"],
+                "region": geo["region"],
+                "city": geo["city"],
+            }},
+        )
+    except Exception:
+        pass
 
 
 async def _ensure_admin(token_data: dict):
@@ -78,7 +145,7 @@ async def track_page_view(
     dashboard can filter out admin/CEO traffic.
     """
     now = datetime.now(timezone.utc)
-    ip = request.client.host if request.client else ""
+    ip = _real_ip(request)
     user_id = _user_id_from_authorization(authorization)
 
     # Mark whether this visit is from an admin/CEO (excluded from public stats).
@@ -108,7 +175,21 @@ async def track_page_view(
         "user_id": user_id,
         "is_admin_visit": is_admin_visit,
     }
-    await db.page_views.insert_one(doc)
+    result = await db.page_views.insert_one(doc)
+
+    # Fire-and-forget geo enrichment so the track endpoint stays sub-50ms even
+    # if ip-api is slow. Skip when we already know the country from a previous
+    # visit by this same visitor (cheap optimization).
+    if ip and not is_admin_visit:
+        try:
+            cached = await db.ip_geo_cache.find_one({"_id": ip}, {"_id": 0, "country": 1, "country_code": 1, "region": 1, "city": 1})
+            if cached:
+                await db.page_views.update_one({"_id": result.inserted_id}, {"$set": cached})
+            else:
+                asyncio.create_task(_enrich_geo_async(result.inserted_id, ip))
+        except Exception:
+            pass
+
     return {"ok": True}
 
 
@@ -196,6 +277,47 @@ async def _top_referrers(match: dict) -> list:
     ]).to_list(10)
 
 
+async def _top_countries(match: dict) -> list:
+    return await db.page_views.aggregate([
+        {"$match": {**match, "country": {"$nin": [None, "", "Local", "Unknown"]}}},
+        {"$group": {
+            "_id": {"country": "$country", "code": "$country_code"},
+            "views": {"$sum": 1},
+            "visitors": {"$addToSet": "$visitor_id"},
+        }},
+        {"$project": {
+            "country": "$_id.country",
+            "country_code": "$_id.code",
+            "views": 1,
+            "visitors": {"$size": "$visitors"},
+            "_id": 0,
+        }},
+        {"$sort": {"visitors": -1}},
+        {"$limit": 15},
+    ]).to_list(15)
+
+
+async def _top_cities(match: dict) -> list:
+    return await db.page_views.aggregate([
+        {"$match": {**match, "city": {"$nin": [None, ""]}, "country": {"$nin": [None, "", "Local", "Unknown"]}}},
+        {"$group": {
+            "_id": {"city": "$city", "country": "$country", "code": "$country_code"},
+            "views": {"$sum": 1},
+            "visitors": {"$addToSet": "$visitor_id"},
+        }},
+        {"$project": {
+            "city": "$_id.city",
+            "country": "$_id.country",
+            "country_code": "$_id.code",
+            "views": 1,
+            "visitors": {"$size": "$visitors"},
+            "_id": 0,
+        }},
+        {"$sort": {"visitors": -1}},
+        {"$limit": 15},
+    ]).to_list(15)
+
+
 def _device_from_ua(ua: str) -> str:
     ua = (ua or "").lower()
     if "iphone" in ua or "ipad" in ua:
@@ -212,19 +334,29 @@ def _device_from_ua(ua: str) -> str:
 async def _recent_visits(base_match: dict, limit: int = 50) -> list:
     raw = await db.page_views.find(
         base_match,
-        {"_id": 0, "ts": 1, "path": 1, "referrer": 1, "visitor_id": 1, "user_agent": 1},
+        {"_id": 0, "ts": 1, "path": 1, "referrer": 1, "visitor_id": 1, "user_agent": 1,
+         "country": 1, "country_code": 1, "region": 1, "city": 1},
     ).sort("ts", -1).limit(limit).to_list(limit)
 
     out = []
     for r in raw:
         ts = r.get("ts")
         ts_iso = ts.isoformat() if isinstance(ts, datetime) else (str(ts) if ts else None)
+        country = r.get("country") or ""
+        city = r.get("city") or ""
+        location = ""
+        if country and country not in ("Local", "Unknown"):
+            location = f"{city}, {country}" if city else country
         out.append({
             "ts": ts_iso,
             "path": r.get("path"),
             "referrer": _humanize_referrer(r.get("referrer")),
             "visitor_id_short": (r.get("visitor_id") or "")[:8],
             "device": _device_from_ua(r.get("user_agent")),
+            "country": country,
+            "country_code": r.get("country_code") or "",
+            "city": city,
+            "location": location or "—",
         })
     return out
 
@@ -265,6 +397,8 @@ async def analytics_dashboard(
     daily = await _daily_breakdown(period_match, days)
     top_pages = await _top_pages(period_match)
     top_referrers = await _top_referrers(period_match)
+    top_countries = await _top_countries(period_match)
+    top_cities = await _top_cities(period_match)
     recent = await _recent_visits(base_match)
 
     # User growth
@@ -294,6 +428,8 @@ async def analytics_dashboard(
         "daily": daily,
         "top_pages": top_pages,
         "top_referrers": top_referrers,
+        "top_countries": top_countries,
+        "top_cities": top_cities,
         "recent_visits": recent,
         "note": "All numbers EXCLUDE admin/CEO traffic.",
     }

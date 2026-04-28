@@ -102,20 +102,53 @@ async def _send_welcome_email(email: str, username: str) -> None:
 @router.post("/signup", response_model=Token)
 async def signup(user_data: UserCreate):
     """Register a new user"""
+    # Normalize email + username so duplicate detection works case-insensitively
+    # and trailing whitespace from mobile keyboards doesn't create accounts that
+    # cannot log back in.
+    email_clean = (user_data.email or "").strip().lower()
+    username_clean = (user_data.username or "").strip()
+
+    if not email_clean or "@" not in email_clean:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Please enter a valid email address.",
+        )
+    if not username_clean or len(username_clean) < 2:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Username must be at least 2 characters.",
+        )
+    if not user_data.password or len(user_data.password) < 6:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Password must be at least 6 characters.",
+        )
+
     existing_user = await db.users.find_one(
-        {"email": user_data.email},
+        {"email": email_clean},
         {"_id": 1}
     )
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
+            detail="That email is already registered. Try signing in instead.",
+        )
+
+    # Soft username uniqueness: case-insensitive
+    existing_username = await db.users.find_one(
+        {"username": {"$regex": f"^{username_clean}$", "$options": "i"}},
+        {"_id": 1},
+    )
+    if existing_username:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="That username is already taken. Please pick another one.",
         )
 
     hashed_password = get_password_hash(user_data.password)
     user = User(
-        email=user_data.email,
-        username=user_data.username,
+        email=email_clean,
+        username=username_clean,
         hashed_password=hashed_password
     )
 
@@ -123,7 +156,7 @@ async def signup(user_data: UserCreate):
 
     # Auto-promote CEO email to admin (CEO is auto-verified, no email gate)
     ceo_emails = ["cassius@flixvault.com", "cassiusflixvault@gmail.com", "cassiusgamergrid@gmail.com"]
-    is_ceo = user_data.email.lower() in ceo_emails
+    is_ceo = email_clean in ceo_emails
     if is_ceo:
         admin_config = {
             "user_id": user.id,
@@ -134,18 +167,29 @@ async def signup(user_data: UserCreate):
         }
         await db.admins.insert_one(admin_config)
         await db.users.update_one({"id": user.id}, {"$set": {"email_verified": True}})
-        logger.info(f"🎉 Auto-promoted CEO: {user_data.email} to admin!")
+        logger.info(f"🎉 Auto-promoted CEO: {email_clean} to admin!")
 
     access_token = create_access_token(data={"sub": user.id})
 
-    # Send welcome email + verification email (best effort)
-    await _send_welcome_email(user.email, user.username)
-    if not is_ceo:
+    # Send welcome email + verification email in BACKGROUND so the response
+    # never blocks on Resend latency or transient failures. Without this,
+    # a slow email provider can cause the signup HTTP request to hang and
+    # users see a generic error in the UI.
+    import asyncio as _asyncio
+
+    async def _bg_emails():
         try:
-            from routes.auth_extras_routes import send_verification, ResendVerifyPayload
-            await send_verification(ResendVerifyPayload(email=user_data.email))
+            await _send_welcome_email(user.email, user.username)
         except Exception as e:
-            logger.warning(f"Verification email failed: {e}")
+            logger.warning(f"bg welcome email failed: {e}")
+        if not is_ceo:
+            try:
+                from routes.auth_extras_routes import send_verification, ResendVerifyPayload
+                await send_verification(ResendVerifyPayload(email=email_clean))
+            except Exception as e:
+                logger.warning(f"bg verification email failed: {e}")
+
+    _asyncio.create_task(_bg_emails())
 
     user_dict = await _enrich_with_roles(user.model_dump())
     return Token(
@@ -158,12 +202,21 @@ async def signup(user_data: UserCreate):
 @router.post("/login", response_model=Token)
 async def login(credentials: UserLogin):
     """Login with email and password"""
+    email_clean = (credentials.email or "").strip().lower()
+
+    # First try the normalized (lowercase) email; fall back to the raw value for
+    # legacy users who signed up before email normalization existed.
     user = await db.users.find_one(
-        {"email": credentials.email},
+        {"email": email_clean},
         {"_id": 0, "email": 1, "id": 1, "username": 1, "hashed_password": 1, "created_at": 1, "watchlist": 1, "favorites": 1, "profile_picture_url": 1, "is_pro": 1}
     )
+    if not user and email_clean != credentials.email:
+        user = await db.users.find_one(
+            {"email": credentials.email},
+            {"_id": 0, "email": 1, "id": 1, "username": 1, "hashed_password": 1, "created_at": 1, "watchlist": 1, "favorites": 1, "profile_picture_url": 1, "is_pro": 1}
+        )
 
-    logger.info(f"Login attempt for {credentials.email}: user_found={user is not None}")
+    logger.info(f"Login attempt for {email_clean}: user_found={user is not None}")
 
     if not user:
         raise HTTPException(
@@ -172,7 +225,7 @@ async def login(credentials: UserLogin):
         )
 
     password_valid = verify_password(credentials.password, user["hashed_password"])
-    logger.info(f"Password verification for {credentials.email}: {password_valid}")
+    logger.info(f"Password verification for {email_clean}: {password_valid}")
 
     if not password_valid:
         raise HTTPException(
@@ -182,7 +235,7 @@ async def login(credentials: UserLogin):
 
     # Auto-promote CEO email to admin if not already
     ceo_emails = ["cassius@flixvault.com", "cassiusflixvault@gmail.com", "cassiusgamergrid@gmail.com"]
-    if credentials.email.lower() in ceo_emails:
+    if email_clean in ceo_emails:
         existing_admin = await db.admins.find_one({"user_id": user["id"]})
         if not existing_admin:
             admin_config = {
@@ -193,7 +246,7 @@ async def login(credentials: UserLogin):
                 "created_at": datetime.now(timezone.utc).isoformat()
             }
             await db.admins.insert_one(admin_config)
-            logger.info(f"🎉 Auto-promoted CEO on login: {credentials.email}")
+            logger.info(f"🎉 Auto-promoted CEO on login: {email_clean}")
 
     access_token = create_access_token(data={"sub": user["id"]})
 
