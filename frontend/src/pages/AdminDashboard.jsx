@@ -6,6 +6,7 @@ import Navbar from '../components/Navbar';
 import BackNavigation from '../components/BackNavigation';
 import Footer from '../components/Footer';
 import AdminNotifications from '../components/AdminNotifications';
+import AdminTipsFeed from '../components/AdminTipsFeed';
 import { useAuth } from '../context/AuthContext';
 import { Button } from '../components/ui/button';
 import { Textarea } from '../components/ui/textarea';
@@ -244,6 +245,11 @@ const AdminDashboard = () => {
         {/* Notifications card */}
         <div className="mb-8">
           <AdminNotifications />
+        </div>
+
+        {/* Live Tips & Subs Feed (with sound + browser alerts) */}
+        <div className="mb-8">
+          <AdminTipsFeed />
         </div>
 
         {/* Tab Navigation */}

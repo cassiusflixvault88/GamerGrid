@@ -18,7 +18,21 @@ support payments.
 - Hosting: Emergent (preview + deploy)
 
 ## Implemented (✅ as of 2026-02-28)
-### Iteration 25 (this turn — Stripe live key root-cause fix + full health sweep)
+### Iteration 26 (this turn — payment success page fix + real-time tip alerts + tips feed + public ticker)
+- 🐛 **`/payment-success` blank-page bug fixed.** Previous version had a `useEffect → useCallback → setAttempts` infinite-loop dependency cycle PLUS `(amount_total/100).toFixed(2)` would crash if `amount_total` was null/undefined → React error → blank black page. Rewrote with `useRef`-based attempt counter, defensive `formatAmount()` helper that handles nulls, separate `cancelled` flag for unmount safety, retry up to 8 polls @ 2s each, and a friendly "Payment Status Unknown" fallback card with **Go Home** + **Try Again** buttons. Added `data-testid` selectors throughout.
+- 🔔 **Live Admin Tips Feed (`AdminTipsFeed.jsx`)** mounted on Admin Dashboard right above the tabs. Polls `/api/payments/admin/tips-feed` every 15s, shows: total earned / tips / subs / count summary cards + a 5-column table (**Amount · Type · From · Where · When**). When a NEW payment lands (session_id not seen before):
+  - 🎵 Plays a synthesized two-note bell (Web Audio API — no asset file needed) — toggle Sound on/off button persists in localStorage
+  - 📱 Fires a browser/desktop notification (Notification API) with title, amount, name, and city — "Enable phone alerts" button requests permission on click
+  - First-load suppression: alerts only fire on truly NEW tips, not when the dashboard first opens
+  - Seen-IDs cap at 500 in localStorage to prevent unbounded growth
+- 📡 **New backend endpoints in `payments_routes.py`:**
+  - `GET /api/payments/admin/tips-feed?limit=50` — admin only. Returns last 50 paid transactions with bulk-fetched user info (username, display_name, avatar) + IP→geo enrichment (city, country, country_code) using the existing `_geo_lookup` helper from `analytics_routes.py`. Plus aggregate totals.
+  - `GET /api/payments/recent-public?limit=5` — public, anonymized (first-name token only). Powers the homepage social-proof ticker.
+- 🌐 **Live "Recent Tippers" ticker (`RecentTippersTicker.jsx`)** on the Home page, between Meet the Creator and the Pro banner. Marquee-style horizontal scroll loop ("Mike tipped $5 · Ashburn, US · 2m ago"), 60s polling, gradient edge fades, animated heart pulse, hidden gracefully when no tips exist yet.
+- 📍 **Client IP captured on every checkout creation.** Added `http_request: Request` parameter and `client_ip = _real_ip(http_request)` line to `/payments/tip/checkout`, `/tip/custom`, and `/subscription/checkout`. Stored on the `payment_transactions` doc so the tips-feed can geolocate every payment without a separate tracking call.
+- ✅ **Verified end-to-end** with curl: inserted a fake $1 tip from IP `8.8.8.8` → admin endpoint returned `Ashburn, US` enrichment with display name + amount + relative time. Public endpoint correctly anonymized. Cleaned up test data after verification. Both endpoints return correct shape, 403 properly enforced for non-admins, lint clean.
+
+### Iteration 25 (Stripe live key root-cause fix + full health sweep)
 - 🚨 **CRITICAL: Stripe "Invalid API Key" root cause found and fixed.** A previous agent had hardcoded the line `os.environ['STRIPE_API_KEY'] = '***REMOVED***'` at the top of `/app/backend/routes/payments_routes.py` (line 28). On every backend boot it was overwriting the user's real Stripe key with the literal string `***REMOVED***` — which is exactly why production checkout was returning `"Invalid API Key provided: ***REMOV*D***"`. Removed the line entirely. Backend now reads `STRIPE_API_KEY` from env at request time via `os.getenv`, so the key the user pastes into Emergent's deployment custom env vars is what Stripe receives. Verified with curl: error changed from "Invalid API Key (***REMOV*D***)" → "Expired API Key (sk_live_...)" proving the integration plumbing is now correct (preview pod has an old expired live key; production will use the user's pasted fresh key).
 - 🩺 **Comprehensive health sweep — all green:**
   - Public endpoints: `/api/`, all `/api/games/*` (trending, top-rated, upcoming, new-releases, top10, most-popular, genres, platforms, search, all 4 platform routes), `/api/users/founder`, `/api/referrals/leaderboard`, `/api/app-reviews` → all 200 ✅

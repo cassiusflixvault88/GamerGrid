@@ -4,7 +4,7 @@ Handles tips, subscriptions, and payment webhooks
 """
 from fastapi import APIRouter, Depends, HTTPException, Request
 from motor.motor_asyncio import AsyncIOMotorClient
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from dotenv import load_dotenv
 from pathlib import Path
 import logging
@@ -19,6 +19,7 @@ from emergentintegrations.payments.stripe.checkout import (
 )
 
 from auth import verify_token
+from routes.analytics_routes import _real_ip, _geo_lookup
 
 # Load environment variables
 ROOT_DIR = Path(__file__).parent.parent
@@ -58,6 +59,7 @@ class CustomTipRequest(BaseModel):
 @router.post("/tip/checkout")
 async def create_tip_checkout(
     request: CheckoutRequest,
+    http_request: Request,
     current_user: dict = Depends(verify_token)
 ):
     """Create Stripe checkout session for tipping"""
@@ -68,6 +70,9 @@ async def create_tip_checkout(
 
         # Get amount from server-side definition (security)
         amount = TIP_PACKAGES[request.package_id]
+
+        # Capture client IP for geolocation enrichment
+        client_ip = _real_ip(http_request)
 
         # Build dynamic URLs from frontend origin
         success_url = f"{request.origin_url}/payment-success?session_id={{CHECKOUT_SESSION_ID}}"
@@ -111,6 +116,7 @@ async def create_tip_checkout(
             "package": request.package_id,
             "payment_status": "pending",
             "status": "initiated",
+            "client_ip": client_ip,
             "created_at": datetime.now(timezone.utc).isoformat()
         }
 
@@ -127,6 +133,7 @@ async def create_tip_checkout(
 @router.post("/tip/custom")
 async def create_custom_tip_checkout(
     request: CustomTipRequest,
+    http_request: Request,
     current_user: dict = Depends(verify_token)
 ):
     """Create Stripe checkout session for custom tip amount"""
@@ -134,6 +141,9 @@ async def create_custom_tip_checkout(
         # Validate amount
         if request.amount < 1.00 or request.amount > 1000.00:
             raise HTTPException(400, "Tip amount must be between $1 and $1000")
+
+        # Capture client IP for geolocation enrichment
+        client_ip = _real_ip(http_request)
 
         # Build dynamic URLs
         success_url = f"{request.origin_url}/payment-success?session_id={{CHECKOUT_SESSION_ID}}"
@@ -167,6 +177,7 @@ async def create_custom_tip_checkout(
             "payment_type": "custom_tip",
             "payment_status": "pending",
             "status": "initiated",
+            "client_ip": client_ip,
             "created_at": datetime.now(timezone.utc).isoformat()
         }
 
@@ -185,6 +196,7 @@ async def create_custom_tip_checkout(
 @router.post("/subscription/checkout")
 async def create_subscription_checkout(
     request: CheckoutRequest,
+    http_request: Request,
     current_user: dict = Depends(verify_token)
 ):
     """Create Stripe checkout session for Pro subscription"""
@@ -193,6 +205,9 @@ async def create_subscription_checkout(
         user = await db.users.find_one({"id": current_user['user_id']}, {"_id": 0, "is_pro": 1})
         if user and user.get('is_pro'):
             raise HTTPException(400, "You already have a Pro subscription")
+
+        # Capture client IP for geolocation enrichment
+        client_ip = _real_ip(http_request)
 
         # Build dynamic URLs
         success_url = f"{request.origin_url}/payment-success?session_id={{CHECKOUT_SESSION_ID}}"
@@ -226,6 +241,7 @@ async def create_subscription_checkout(
             "payment_type": "pro_subscription",
             "payment_status": "pending",
             "status": "initiated",
+            "client_ip": client_ip,
             "created_at": datetime.now(timezone.utc).isoformat()
         }
 
@@ -453,3 +469,131 @@ async def check_recent_payments():
         "total_found": len(transactions),
         "recent_payments": transactions
     }
+
+
+
+# ============= TIPS FEED (Admin + Public) =============
+
+async def _enrich_tip_with_geo(tx: dict) -> dict:
+    """Resolve client_ip → city/country (uses ip_geo_cache; never raises)."""
+    ip = tx.get("client_ip") or ""
+    if not ip:
+        return {**tx, "country": "", "country_code": "", "city": ""}
+    try:
+        geo = await _geo_lookup(ip)
+        return {
+            **tx,
+            "country": geo.get("country") or "",
+            "country_code": geo.get("country_code") or "",
+            "city": geo.get("city") or "",
+        }
+    except Exception:
+        return {**tx, "country": "", "country_code": "", "city": ""}
+
+
+@router.get("/admin/tips-feed")
+async def admin_tips_feed(
+    limit: int = 50,
+    current_user: dict = Depends(verify_token),
+):
+    """Admin: live feed of completed tips/subs with user + location + amount + when."""
+    user = await db.users.find_one({"id": current_user['user_id']}, {"_id": 0, "is_admin": 1})
+    if not user or not user.get('is_admin'):
+        raise HTTPException(403, "Admin access required")
+
+    limit = max(1, min(int(limit or 50), 200))
+
+    txs = await db.payment_transactions.find(
+        {"payment_status": "paid"},
+        {"_id": 0, "session_id": 1, "user_id": 1, "amount": 1, "payment_type": 1,
+         "package": 1, "client_ip": 1, "created_at": 1, "paid_at": 1, "amount_total": 1},
+    ).sort("created_at", -1).limit(limit).to_list(limit)
+
+    # Bulk-fetch users for display name lookup
+    user_ids = list({t["user_id"] for t in txs if t.get("user_id")})
+    users_by_id = {}
+    if user_ids:
+        async for u in db.users.find(
+            {"id": {"$in": user_ids}},
+            {"_id": 0, "id": 1, "username": 1, "display_name": 1, "profile_picture_url": 1},
+        ):
+            users_by_id[u["id"]] = u
+
+    feed = []
+    totals = {"tips": 0.0, "subs": 0.0, "count": 0}
+    for t in txs:
+        amt = float(t.get("amount") or t.get("amount_total") or 0)
+        ptype = t.get("payment_type", "tip")
+        u = users_by_id.get(t.get("user_id"), {})
+        enriched = await _enrich_tip_with_geo(t)
+        feed.append({
+            "session_id": t.get("session_id"),
+            "amount": round(amt, 2),
+            "payment_type": ptype,
+            "package": t.get("package"),
+            "user_id": t.get("user_id"),
+            "username": u.get("username") or "Anonymous",
+            "display_name": u.get("display_name") or u.get("username") or "Anonymous",
+            "avatar": u.get("profile_picture_url"),
+            "country": enriched.get("country", ""),
+            "country_code": enriched.get("country_code", ""),
+            "city": enriched.get("city", ""),
+            "created_at": t.get("paid_at") or t.get("created_at"),
+        })
+        totals["count"] += 1
+        if "tip" in ptype:
+            totals["tips"] += amt
+        elif ptype == "pro_subscription":
+            totals["subs"] += amt
+
+    return {
+        "tips": feed,
+        "totals": {
+            "tips": round(totals["tips"], 2),
+            "subs": round(totals["subs"], 2),
+            "all": round(totals["tips"] + totals["subs"], 2),
+            "count": totals["count"],
+        },
+    }
+
+
+@router.get("/recent-public")
+async def recent_public_tips(limit: int = 5):
+    """Public anonymized recent tips for the homepage social-proof ticker.
+    Returns first letter of username + city + amount + relative time."""
+    limit = max(1, min(int(limit or 5), 15))
+    txs = await db.payment_transactions.find(
+        {"payment_status": "paid", "payment_type": {"$in": ["tip", "custom_tip", "pro_subscription"]}},
+        {"_id": 0, "user_id": 1, "amount": 1, "payment_type": 1, "client_ip": 1, "created_at": 1, "paid_at": 1},
+    ).sort("created_at", -1).limit(limit).to_list(limit)
+
+    # Bulk-fetch users for display name initial
+    user_ids = list({t["user_id"] for t in txs if t.get("user_id")})
+    users_by_id = {}
+    if user_ids:
+        async for u in db.users.find(
+            {"id": {"$in": user_ids}},
+            {"_id": 0, "id": 1, "username": 1, "display_name": 1},
+        ):
+            users_by_id[u["id"]] = u
+
+    items = []
+    for t in txs:
+        u = users_by_id.get(t.get("user_id"), {})
+        name = u.get("display_name") or u.get("username") or "A gamer"
+        # Anonymize: first name token only
+        first_token = name.split()[0] if name else "A gamer"
+        enriched = await _enrich_tip_with_geo(t)
+        location = ""
+        if enriched.get("city") and enriched.get("country_code"):
+            location = f"{enriched['city']}, {enriched['country_code']}"
+        elif enriched.get("country"):
+            location = enriched["country"]
+        items.append({
+            "name": first_token,
+            "amount": round(float(t.get("amount") or 0), 2),
+            "payment_type": t.get("payment_type", "tip"),
+            "location": location,
+            "created_at": t.get("paid_at") or t.get("created_at"),
+        })
+    return {"items": items}

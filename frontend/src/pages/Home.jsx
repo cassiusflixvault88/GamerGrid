@@ -12,6 +12,7 @@ import ShareButton from '../components/ShareButton';
 import GuestMarketingHero from '../components/GuestMarketingHero';
 import AutoFetchBadge from '../components/AutoFetchBadge';
 import MeetCreatorCard from '../components/MeetCreatorCard';
+import RecentTippersTicker from '../components/RecentTippersTicker';
 import { useAuth } from '../context/AuthContext';
 import Footer from '../components/Footer';
 import AdSlot from '../components/AdSlot';
@@ -280,6 +281,11 @@ const Home = () => {
         {/* MEET THE CREATOR — message Cassius, rate the app, leave a review */}
         <div className="px-6 lg:px-12 max-w-[1920px] mx-auto">
           <MeetCreatorCard />
+        </div>
+
+        {/* LIVE TIPS TICKER — social proof */}
+        <div className="px-6 lg:px-12 max-w-[1920px] mx-auto">
+          <RecentTippersTicker />
         </div>
 
         {/* GO PRO PINK BANNER (hidden for Pro/admin) */}
