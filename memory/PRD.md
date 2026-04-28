@@ -17,8 +17,14 @@ support payments.
 - Payments: Stripe LIVE
 - Hosting: Emergent (preview + deploy)
 
-## Implemented (✅ as of 2026-02-26)
-### Iteration 21 (this turn — CEO hub + theme + bookmarks + funnel)
+## Implemented (✅ as of 2026-02-27)
+### Iteration 22 (this turn — sign-up bulletproofing + theme + badge removal + referrals)
+- 🚨 **CRITICAL: Sign-up failure root cause fixed (round 2).** `UserCreate.email` was `EmailStr` from Pydantic — it ran validation BEFORE my custom normalization. If a friend's mobile keyboard added a trailing space or any unusual char, Pydantic returned a confusing 422 error array and the AuthModal showed "Sign-up failed." Switched to plain `str` with my own regex validation, AND wrapped the entire signup endpoint in a top-level try/except so any unexpected failure now returns a friendly 500 with a useful message instead of an unhandled exception. Also made every post-creation step (CEO promotion, role enrichment, bg-task scheduling) wrapped in its own try/except so signup ALWAYS succeeds once the user doc is in Mongo.
+- 🚫 **"Made with Emergent" badge removed.** The `<a id="emergent-badge">` element is now `display:none` permanently, plus a global CSS safety net AND a MutationObserver that nukes the badge if any external script tries to re-inject it. Verified via DOM check: `found: false`.
+- 🎨 **Theme system actually paints the page now.** Previously CSS variables were set but no component actually used them. Added an `index.css` accent-repaint layer that overrides Tailwind's `bg-purple-600`, `from-purple-600 to-blue-600`, `text-purple-300`, and 30+ other utility classes to use `var(--gg-accent)`. Light mode flips the entire `bg-black`/`bg-gray-900` page wrappers to a clean light surface with proper text colors. All 7 accents (Royal Purple, Cyber Pink, Neon Green, Sunset Orange, Ocean Blue, Gold Rush, Crimson Red) now visibly change buttons, gradients, borders, and badges across the entire app on click.
+- 🎁 **Refer-a-Friend system live.** Every user gets a unique 8-char code (`/api/referrals/me`). When invitee signs up via `?ref=CODE` (auto-captured by `ReferralCapture` component → localStorage → claimed post-signup), referral is recorded in `referral_signups`. When invitee upgrades to Pro, `award_referral_pro_credit()` fires from the payments handler and grants 1 month of free Pro to BOTH parties. New `/refer` page shows: stats, share link, copy button, social shortcuts (FB, X, WhatsApp, Telegram), how-it-works steps, and public top-10 leaderboard. Redeem button converts earned credits to Pro time.
+
+### Iteration 21 (CEO hub + theme + bookmarks + funnel)
 - 👑 **Founder verified badge** on Cassius's public profile (auto-detected from CEO email allowlist) + "Creator of GamerGrid · Official Profile" tagline.
 - 💬 **"Message Creator" button** on the founder's profile → opens a modal that lets ANY visitor (signed-in or guest) send Cassius a private message. Stored in `ceo_messages` collection. Admin-only endpoints to list, reply, and delete.
 - ⭐ **Profile reviews system**: visitors can leave 1–5 star reviews directly ON a user's profile (`/api/profile-reviews/:username`). The profile owner can reply to each review. Reviewers can edit/delete their own. Backend collection: `profile_reviews`.

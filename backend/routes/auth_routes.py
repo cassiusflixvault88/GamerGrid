@@ -99,104 +99,150 @@ async def _send_welcome_email(email: str, username: str) -> None:
         logger.warning(f"Welcome email failed for {email}: {e}")
 
 
+import re
+
+_EMAIL_RE = re.compile(r"^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$")
+
+
 @router.post("/signup", response_model=Token)
 async def signup(user_data: UserCreate):
-    """Register a new user"""
-    # Normalize email + username so duplicate detection works case-insensitively
-    # and trailing whitespace from mobile keyboards doesn't create accounts that
-    # cannot log back in.
-    email_clean = (user_data.email or "").strip().lower()
-    username_clean = (user_data.username or "").strip()
+    """Register a new user.
 
-    if not email_clean or "@" not in email_clean:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Please enter a valid email address.",
+    BULLETPROOF: any unexpected failure is caught and returned as a friendly
+    400 error, never an unhandled 500 — so the AuthModal toast always shows
+    something the user can act on (and never just "error").
+    """
+    try:
+        # Normalize email + username so duplicate detection works case-insensitively
+        # and trailing whitespace from mobile keyboards doesn't create accounts that
+        # cannot log back in.
+        email_clean = (user_data.email or "").strip().lower()
+        username_clean = (user_data.username or "").strip()
+
+        if not email_clean or not _EMAIL_RE.match(email_clean):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Please enter a valid email address (e.g. you@example.com).",
+            )
+        if not username_clean or len(username_clean) < 2:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Username must be at least 2 characters.",
+            )
+        if len(username_clean) > 40:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Username must be 40 characters or fewer.",
+            )
+        if not user_data.password or len(user_data.password) < 6:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Password must be at least 6 characters.",
+            )
+
+        existing_user = await db.users.find_one(
+            {"email": email_clean},
+            {"_id": 1}
         )
-    if not username_clean or len(username_clean) < 2:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Username must be at least 2 characters.",
+        if existing_user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="That email is already registered. Try signing in instead.",
+            )
+
+        # Soft username uniqueness: case-insensitive
+        existing_username = await db.users.find_one(
+            {"username": {"$regex": f"^{re.escape(username_clean)}$", "$options": "i"}},
+            {"_id": 1},
         )
-    if not user_data.password or len(user_data.password) < 6:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Password must be at least 6 characters.",
-        )
+        if existing_username:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="That username is already taken. Please pick another one.",
+            )
 
-    existing_user = await db.users.find_one(
-        {"email": email_clean},
-        {"_id": 1}
-    )
-    if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="That email is already registered. Try signing in instead.",
-        )
-
-    # Soft username uniqueness: case-insensitive
-    existing_username = await db.users.find_one(
-        {"username": {"$regex": f"^{username_clean}$", "$options": "i"}},
-        {"_id": 1},
-    )
-    if existing_username:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="That username is already taken. Please pick another one.",
-        )
-
-    hashed_password = get_password_hash(user_data.password)
-    user = User(
-        email=email_clean,
-        username=username_clean,
-        hashed_password=hashed_password
-    )
-
-    await db.users.insert_one(user.model_dump())
-
-    # Auto-promote CEO email to admin (CEO is auto-verified, no email gate)
-    ceo_emails = ["cassius@flixvault.com", "cassiusflixvault@gmail.com", "cassiusgamergrid@gmail.com"]
-    is_ceo = email_clean in ceo_emails
-    if is_ceo:
-        admin_config = {
-            "user_id": user.id,
-            "is_admin": True,
-            "permissions": ["moderate_reviews", "manage_content", "manage_users"],
-            "role": "CEO & Founder",
-            "created_at": datetime.now(timezone.utc).isoformat()
-        }
-        await db.admins.insert_one(admin_config)
-        await db.users.update_one({"id": user.id}, {"$set": {"email_verified": True}})
-        logger.info(f"🎉 Auto-promoted CEO: {email_clean} to admin!")
-
-    access_token = create_access_token(data={"sub": user.id})
-
-    # Send welcome email + verification email in BACKGROUND so the response
-    # never blocks on Resend latency or transient failures. Without this,
-    # a slow email provider can cause the signup HTTP request to hang and
-    # users see a generic error in the UI.
-    import asyncio as _asyncio
-
-    async def _bg_emails():
         try:
-            await _send_welcome_email(user.email, user.username)
+            hashed_password = get_password_hash(user_data.password)
         except Exception as e:
-            logger.warning(f"bg welcome email failed: {e}")
-        if not is_ceo:
+            logger.error(f"Password hashing failed: {e}", exc_info=True)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Could not secure your password. Please try again.",
+            )
+
+        user = User(
+            email=email_clean,
+            username=username_clean,
+            hashed_password=hashed_password
+        )
+
+        await db.users.insert_one(user.model_dump())
+
+        # Auto-promote CEO email to admin (CEO is auto-verified, no email gate)
+        ceo_emails_list = ["cassius@flixvault.com", "cassiusflixvault@gmail.com", "cassiusgamergrid@gmail.com"]
+        is_ceo = email_clean in ceo_emails_list
+        if is_ceo:
             try:
-                from routes.auth_extras_routes import send_verification, ResendVerifyPayload
-                await send_verification(ResendVerifyPayload(email=email_clean))
+                admin_config = {
+                    "user_id": user.id,
+                    "is_admin": True,
+                    "permissions": ["moderate_reviews", "manage_content", "manage_users"],
+                    "role": "CEO & Founder",
+                    "created_at": datetime.now(timezone.utc).isoformat()
+                }
+                await db.admins.insert_one(admin_config)
+                await db.users.update_one({"id": user.id}, {"$set": {"email_verified": True}})
+                logger.info(f"🎉 Auto-promoted CEO: {email_clean} to admin!")
             except Exception as e:
-                logger.warning(f"bg verification email failed: {e}")
+                logger.warning(f"CEO promotion failed (signup still continues): {e}")
 
-    _asyncio.create_task(_bg_emails())
+        access_token = create_access_token(data={"sub": user.id})
 
-    user_dict = await _enrich_with_roles(user.model_dump())
-    return Token(
-        access_token=access_token,
-        token_type="bearer",
-        user=UserResponse(**user_dict)
-    )
+        # Send welcome email + verification email in BACKGROUND so the response
+        # never blocks on Resend latency or transient failures.
+        import asyncio as _asyncio
+
+        async def _bg_emails():
+            try:
+                await _send_welcome_email(user.email, user.username)
+            except Exception as e:
+                logger.warning(f"bg welcome email failed: {e}")
+            if not is_ceo:
+                try:
+                    from routes.auth_extras_routes import send_verification, ResendVerifyPayload
+                    await send_verification(ResendVerifyPayload(email=email_clean))
+                except Exception as e:
+                    logger.warning(f"bg verification email failed: {e}")
+
+        try:
+            _asyncio.create_task(_bg_emails())
+        except Exception as e:
+            logger.warning(f"Could not schedule bg emails (signup still succeeds): {e}")
+
+        try:
+            user_dict = await _enrich_with_roles(user.model_dump())
+        except Exception as e:
+            logger.warning(f"Role enrichment failed (using defaults): {e}")
+            user_dict = user.model_dump()
+            user_dict["is_admin"] = False
+            user_dict["is_pro"] = False
+
+        return Token(
+            access_token=access_token,
+            token_type="bearer",
+            user=UserResponse(**user_dict)
+        )
+    except HTTPException:
+        # Friendly errors raised above — let them through unmodified
+        raise
+    except Exception as e:
+        # Anything else: log the full traceback so we can see it in supervisor
+        # logs, then return a friendly 500 the AuthModal can render.
+        logger.error(f"Unexpected signup failure: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="We hit an unexpected error creating your account. Please try again — if it keeps failing, message Cassius from his profile.",
+        )
 
 
 @router.post("/login", response_model=Token)

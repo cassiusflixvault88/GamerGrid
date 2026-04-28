@@ -95,6 +95,22 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('token', access_token);
     setToken(access_token);
     setUser(userData);
+
+    // If a referral code was captured at landing, claim it (best-effort).
+    try {
+      const refCode = localStorage.getItem('gg_ref_code');
+      if (refCode) {
+        await axios.post(
+          `${API}/referrals/claim`,
+          { code: refCode },
+          { headers: { Authorization: `Bearer ${access_token}` } },
+        );
+        localStorage.removeItem('gg_ref_code');
+      }
+    } catch {
+      // silent — referral failures should never block signup UX
+    }
+
     return userData;
   };
 

@@ -24,13 +24,17 @@ class User(BaseModel):
 
 
 class UserCreate(BaseModel):
-    email: EmailStr
+    # NOTE: We deliberately use `str` (not `EmailStr`) so the route handler can
+    # do its own normalization (lowercase, trim, custom validation) and return
+    # friendly 400 errors instead of opaque Pydantic 422 errors for things like
+    # trailing whitespace from mobile keyboards.
+    email: str
     username: str
     password: str
 
 
 class UserLogin(BaseModel):
-    email: EmailStr
+    email: str
     password: str
 
 

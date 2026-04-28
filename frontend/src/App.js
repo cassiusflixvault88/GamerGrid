@@ -29,6 +29,8 @@ import VerifyEmailPage from "./pages/VerifyEmailPage";
 import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 import TermsOfServicePage from "./pages/TermsOfServicePage";
 import ShareLinksPage from "./pages/ShareLinksPage";
+import ReferAFriendPage from "./pages/ReferAFriendPage";
+import ReferralCapture from "./components/ReferralCapture";
 import PageTracker from "./components/PageTracker";
 
 function App() {
@@ -38,6 +40,7 @@ function App() {
         <AuthProvider>
           <BrowserRouter>
             <PageTracker />
+            <ReferralCapture />
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/search" element={<SearchPage />} />
@@ -66,6 +69,8 @@ function App() {
               <Route path="/terms" element={<TermsOfServicePage />} />
               <Route path="/share" element={<ShareLinksPage />} />
               <Route path="/share-links" element={<ShareLinksPage />} />
+              <Route path="/refer" element={<ReferAFriendPage />} />
+              <Route path="/refer-a-friend" element={<ReferAFriendPage />} />
             </Routes>
             <InstallPWA />
             <Toaster />

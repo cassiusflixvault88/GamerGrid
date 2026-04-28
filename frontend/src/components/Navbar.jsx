@@ -261,6 +261,15 @@ const Navbar = () => {
                       <span>🚀</span>
                       <span>Share GamerGrid</span>
                     </Link>
+                    <Link
+                      to="/refer"
+                      className="flex items-center space-x-2 px-4 py-2 text-emerald-300 hover:bg-white/10 transition-colors font-semibold"
+                      onClick={() => setShowUserMenu(false)}
+                      data-testid="nav-menu-refer"
+                    >
+                      <span>🎁</span>
+                      <span>Refer &amp; get free Pro</span>
+                    </Link>
                     {founderUsername && user?.username !== founderUsername && (
                       <Link
                         to={`/u/${founderUsername}`}

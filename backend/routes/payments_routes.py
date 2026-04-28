@@ -301,6 +301,12 @@ async def get_checkout_status(
                     }}
                 )
                 logger.info(f"User {transaction['user_id']} upgraded to Pro")
+                # Award referral credit if this user was referred (best-effort)
+                try:
+                    from routes.referrals_routes import award_referral_pro_credit
+                    await award_referral_pro_credit(transaction['user_id'])
+                except Exception as e:
+                    logger.warning(f"Referral credit award failed: {e}")
 
             logger.info(f"Payment completed: {session_id}")
 
@@ -373,6 +379,12 @@ async def stripe_webhook(request: Request):
                             "pro_since": datetime.now(timezone.utc).isoformat()
                         }}
                     )
+                    # Award referral credit if this user was referred
+                    try:
+                        from routes.referrals_routes import award_referral_pro_credit
+                        await award_referral_pro_credit(transaction['user_id'])
+                    except Exception as e:
+                        logger.warning(f"Referral credit award failed (webhook): {e}")
 
                 # 🔔 LOG PAYMENT NOTIFICATION
                 payment_type = transaction.get('payment_type', 'unknown')
