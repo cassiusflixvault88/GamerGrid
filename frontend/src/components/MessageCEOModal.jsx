@@ -59,7 +59,7 @@ const MessageCEOModal = ({ open, onClose, founderName = 'the Creator' }) => {
       data-testid="message-ceo-modal"
     >
       <div
-        className="bg-gradient-to-br from-gray-900 to-black border border-purple-500/30 rounded-2xl shadow-2xl max-w-lg w-full p-6 relative"
+        className="bg-gradient-to-br from-gray-900 to-black border border-purple-500/30 rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto p-6 relative"
         onClick={(e) => e.stopPropagation()}
       >
         <button

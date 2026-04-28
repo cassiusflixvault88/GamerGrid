@@ -360,16 +360,16 @@ const UserDetailPage = () => {
 
       {/* Send Message Dialog */}
       <Dialog open={messageOpen} onOpenChange={setMessageOpen}>
-        <DialogContent className="bg-zinc-900 border-white/10 text-white max-w-lg" data-testid="send-message-dialog">
+        <DialogContent className="bg-zinc-900 border-white/10 text-white max-w-lg w-[calc(100vw-2rem)] max-h-[85vh] overflow-y-auto p-4 sm:p-6" data-testid="send-message-dialog">
           <DialogHeader>
-            <DialogTitle className="text-white">
+            <DialogTitle className="text-white pr-8 break-words">
               Send message to {userDetails?.user?.username}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div>
               <Label className="text-white/80 text-sm">Severity</Label>
-              <div className="flex gap-2 mt-1">
+              <div className="flex gap-2 mt-1 flex-wrap">
                 {[
                   { v: 'info', label: 'Info', cls: 'bg-blue-600' },
                   { v: 'warning', label: 'Warning', cls: 'bg-yellow-600' },

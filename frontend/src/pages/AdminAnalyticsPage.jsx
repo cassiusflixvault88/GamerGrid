@@ -527,34 +527,26 @@ const AdminAnalyticsPage = () => {
                 );
               })}
               {funnel.length >= 2 && funnel[0].count > 0 && (
-                <div className="mt-4 pt-4 border-t border-white/10 grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+                <div className="mt-4 pt-4 border-t border-white/10 grid grid-cols-2 sm:grid-cols-3 gap-3 text-center">
                   <div>
                     <p className="text-2xl font-bold text-cyan-300">
-                      {((funnel[2]?.count || 0) / funnel[0].count * 100).toFixed(2)}%
+                      {((funnel[1]?.count || 0) / funnel[0].count * 100).toFixed(2)}%
                     </p>
                     <p className="text-white/50 text-[11px] uppercase tracking-wider">Visitor → Sign-up</p>
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-pink-300">
-                      {(funnel[3]?.count || 0) > 0 && (funnel[2]?.count || 0) > 0
-                        ? ((funnel[3].count / funnel[2].count) * 100).toFixed(2) + '%'
+                      {(funnel[2]?.count || 0) > 0 && (funnel[1]?.count || 0) > 0
+                        ? ((funnel[2].count / funnel[1].count) * 100).toFixed(2) + '%'
                         : '0%'}
                     </p>
                     <p className="text-white/50 text-[11px] uppercase tracking-wider">Sign-up → Pro</p>
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-yellow-300">
-                      {((funnel[3]?.count || 0) / funnel[0].count * 100).toFixed(3)}%
+                      {((funnel[2]?.count || 0) / funnel[0].count * 100).toFixed(3)}%
                     </p>
                     <p className="text-white/50 text-[11px] uppercase tracking-wider">Visitor → Pro</p>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-purple-300">
-                      {(funnel[1]?.count || 0) > 0
-                        ? ((funnel[2]?.count || 0) / funnel[1].count * 100).toFixed(2) + '%'
-                        : '0%'}
-                    </p>
-                    <p className="text-white/50 text-[11px] uppercase tracking-wider">Intent → Sign-up</p>
                   </div>
                 </div>
               )}

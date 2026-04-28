@@ -87,6 +87,23 @@ const ReferAFriendPage = () => {
 
   if (!user) return null;
 
+  // Frontend safety net — even if backend somehow returns a preview URL, we
+  // rewrite it to the public domain so referral links users copy+share always
+  // point to gamer-grid.com.
+  const forcePublicDomain = (raw) => {
+    try {
+      const u = new URL(raw);
+      if (/(preview|emergent\.host|emergentagent\.com)/i.test(u.host)) {
+        u.protocol = 'https:';
+        u.host = 'gamer-grid.com';
+        return u.toString();
+      }
+      return raw;
+    } catch {
+      return raw;
+    }
+  };
+
   if (loading || !info) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -95,7 +112,7 @@ const ReferAFriendPage = () => {
     );
   }
 
-  const url = info.share_url;
+  const url = forcePublicDomain(info.share_url);
   const text = encodeURIComponent(`🎮 Join me on GamerGrid — discover, watch trailers and buy games on PS5/Xbox/PC/Switch. Sign up with my link and we BOTH get 1 free month of Pro! ${url}`);
   const u = encodeURIComponent(url);
 
