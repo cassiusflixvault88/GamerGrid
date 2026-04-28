@@ -18,7 +18,12 @@ support payments.
 - Hosting: Emergent (preview + deploy)
 
 ## Implemented (✅ as of 2026-02-28)
-### Iteration 26 (this turn — payment success page fix + real-time tip alerts + tips feed + public ticker)
+### Iteration 27 (this turn — payment reconciliation + recovered alerts)
+- 🚑 **Missed-payment reconciliation.** User's real $1 Stripe payment succeeded but never showed in the dashboard because the OLD deployed `PaymentSuccessPage` crashed (blank page) before the status-check endpoint could mark it paid, AND Stripe webhooks weren't configured. Added `_reconcile_pending_payments()` in `payments_routes.py` that runs every time admin opens the tips feed: finds `pending` transactions from the last 14 days, queries Stripe's `get_checkout_status` for each, and auto-updates to `paid` if Stripe says succeeded (grants Pro + fires referral credit if subscription). Returns `recovered` count in the feed response.
+- 🔔 **Recovered-payment alert.** When the admin opens the Tips Feed and reconciliation found missed payments, the UI now fires the ding AND a browser notification titled "Recovered N missed payment(s)!" even on first load. This solves the exact scenario the user hit.
+- 📝 **test_credentials.md rewritten** with a table of ALL required production env vars (STRIPE_API_KEY, RESEND_API_KEY, **SENDER_EMAIL=noreply@gamer-grid.com** for the newly verified domain, IGDB, affiliate tags) plus step-by-step instructions for configuring the Stripe Webhook endpoint in the Stripe Dashboard (prevents this missed-payment problem recurring).
+
+### Iteration 26 (payment success page fix + real-time tip alerts + tips feed + public ticker)
 - 🐛 **`/payment-success` blank-page bug fixed.** Previous version had a `useEffect → useCallback → setAttempts` infinite-loop dependency cycle PLUS `(amount_total/100).toFixed(2)` would crash if `amount_total` was null/undefined → React error → blank black page. Rewrote with `useRef`-based attempt counter, defensive `formatAmount()` helper that handles nulls, separate `cancelled` flag for unmount safety, retry up to 8 polls @ 2s each, and a friendly "Payment Status Unknown" fallback card with **Go Home** + **Try Again** buttons. Added `data-testid` selectors throughout.
 - 🔔 **Live Admin Tips Feed (`AdminTipsFeed.jsx`)** mounted on Admin Dashboard right above the tabs. Polls `/api/payments/admin/tips-feed` every 15s, shows: total earned / tips / subs / count summary cards + a 5-column table (**Amount · Type · From · Where · When**). When a NEW payment lands (session_id not seen before):
   - 🎵 Plays a synthesized two-note bell (Web Audio API — no asset file needed) — toggle Sound on/off button persists in localStorage

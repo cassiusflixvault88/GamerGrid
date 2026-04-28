@@ -102,6 +102,7 @@ const AdminTipsFeed = () => {
       });
       const newTips = r.data?.tips || [];
       const newTotals = r.data?.totals || { tips: 0, subs: 0, all: 0, count: 0 };
+      const recovered = r.data?.recovered || 0;
 
       // Detect newly arrived tips (not seen before)
       const fresh = newTips.filter((t) => t.session_id && !seenIdsRef.current.has(t.session_id));
@@ -118,6 +119,18 @@ const AdminTipsFeed = () => {
         if (localStorage.getItem(SOUND_KEY) !== 'off') playDing();
         // Notify on the newest one
         showBrowserNotification(fresh[0]);
+      }
+      // If reconciliation recovered any missed payments, show an alert even on first load
+      if (recovered > 0) {
+        if (localStorage.getItem(SOUND_KEY) !== 'off') playDing();
+        try {
+          if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+            new Notification(`✅ Recovered ${recovered} missed payment${recovered > 1 ? 's' : ''}!`, {
+              body: 'Payment succeeded on Stripe but never got marked as paid. Fixed now.',
+              icon: '/gamergrid-icon.svg',
+            });
+          }
+        } catch { /* ignore */ }
       }
       firstLoadRef.current = false;
     } catch (e) {

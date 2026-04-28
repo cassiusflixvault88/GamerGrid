@@ -491,6 +491,75 @@ async def _enrich_tip_with_geo(tx: dict) -> dict:
         return {**tx, "country": "", "country_code": "", "city": ""}
 
 
+async def _reconcile_pending_payments() -> int:
+    """Query Stripe for any pending transactions and update them if paid.
+    Catches payments where the user closed the browser before PaymentSuccessPage
+    finished polling, OR where Stripe webhooks aren't configured. Runs every
+    time an admin opens the tips feed. Returns count of recovered payments."""
+    stripe_key = os.getenv('STRIPE_API_KEY')
+    if not stripe_key:
+        return 0
+
+    cutoff = (datetime.now(timezone.utc) - timedelta(days=14)).isoformat()
+    pendings = await db.payment_transactions.find(
+        {"payment_status": "pending", "created_at": {"$gte": cutoff}},
+        {"_id": 0, "session_id": 1, "user_id": 1, "payment_type": 1, "amount": 1},
+    ).limit(50).to_list(50)
+
+    if not pendings:
+        return 0
+
+    recovered = 0
+    try:
+        sc = StripeCheckout(api_key=stripe_key, webhook_url="")
+    except Exception as e:
+        logger.warning(f"Reconcile: cannot init StripeCheckout: {e}")
+        return 0
+
+    for tx in pendings:
+        sid = tx.get("session_id")
+        if not sid:
+            continue
+        try:
+            status = await sc.get_checkout_status(sid)
+            if status.payment_status == "paid":
+                await db.payment_transactions.update_one(
+                    {"session_id": sid},
+                    {"$set": {
+                        "payment_status": "paid",
+                        "status": "completed",
+                        "paid_at": datetime.now(timezone.utc).isoformat(),
+                        "amount_total": (status.amount_total or 0) / 100,
+                        "reconciled": True,
+                    }},
+                )
+                # Grant Pro if subscription payment
+                if tx.get("payment_type") == "pro_subscription":
+                    await db.users.update_one(
+                        {"id": tx.get("user_id")},
+                        {"$set": {
+                            "is_pro": True,
+                            "pro_since": datetime.now(timezone.utc).isoformat(),
+                        }},
+                    )
+                    try:
+                        from routes.referrals_routes import award_referral_pro_credit
+                        await award_referral_pro_credit(tx.get("user_id"))
+                    except Exception:
+                        pass
+                recovered += 1
+                logger.info(f"💰 Reconciled payment: {sid} (${tx.get('amount')})")
+            elif getattr(status, "status", "") == "expired":
+                await db.payment_transactions.update_one(
+                    {"session_id": sid},
+                    {"$set": {"payment_status": "expired", "status": "expired"}},
+                )
+        except Exception as e:
+            logger.debug(f"Reconcile skip for {sid}: {e}")
+
+    return recovered
+
+
 @router.get("/admin/tips-feed")
 async def admin_tips_feed(
     limit: int = 50,
@@ -500,6 +569,11 @@ async def admin_tips_feed(
     user = await db.users.find_one({"id": current_user['user_id']}, {"_id": 0, "is_admin": 1})
     if not user or not user.get('is_admin'):
         raise HTTPException(403, "Admin access required")
+
+    # First: reconcile any pending payments that actually succeeded on Stripe.
+    # This catches payments where the user's browser closed before the success
+    # page could poll, OR where Stripe webhooks aren't configured in the dashboard.
+    recovered = await _reconcile_pending_payments()
 
     limit = max(1, min(int(limit or 50), 200))
 
@@ -554,6 +628,7 @@ async def admin_tips_feed(
             "all": round(totals["tips"] + totals["subs"], 2),
             "count": totals["count"],
         },
+        "recovered": recovered,
     }
 
 
