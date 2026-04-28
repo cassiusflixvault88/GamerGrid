@@ -33,6 +33,13 @@ function registerValidSW(swUrl, config) {
   navigator.serviceWorker
     .register(swUrl)
     .then((registration) => {
+      // Force an update check EVERY time the app is opened. This is what
+      // rescues users whose browsers (especially desktops that stay open for
+      // days) are still running a months-old service worker. Without this,
+      // a stuck SW can intercept API calls with a stale JS bundle pointing at
+      // a now-defunct backend URL → "Can't reach our server" errors.
+      try { registration.update(); } catch (_) { /* noop */ }
+
       registration.onupdatefound = () => {
         const installingWorker = registration.installing;
         if (installingWorker == null) {
@@ -41,12 +48,19 @@ function registerValidSW(swUrl, config) {
         installingWorker.onstatechange = () => {
           if (installingWorker.state === 'installed') {
             if (navigator.serviceWorker.controller) {
-              console.log('New content is available; please refresh.');
+              // A newer SW is ready. Tell it to take control IMMEDIATELY
+              // (skipWaiting) and then reload so the user gets fresh JS.
+              try {
+                installingWorker.postMessage({ type: 'SKIP_WAITING' });
+              } catch (_) { /* noop */ }
               if (config && config.onUpdate) {
                 config.onUpdate(registration);
               }
+              // Soft reload after a beat so the new SW can claim clients.
+              setTimeout(() => {
+                try { window.location.reload(); } catch (_) {}
+              }, 600);
             } else {
-              console.log('Content is cached for offline use.');
               if (config && config.onSuccess) {
                 config.onSuccess(registration);
               }
@@ -54,6 +68,15 @@ function registerValidSW(swUrl, config) {
           }
         };
       };
+
+      // When a new SW takes control mid-session, immediately reload so stale
+      // cached HTML gets replaced with fresh content from the new SW.
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (refreshing) return;
+        refreshing = true;
+        try { window.location.reload(); } catch (_) {}
+      });
     })
     .catch((error) => {
       console.error('Error during service worker registration:', error);

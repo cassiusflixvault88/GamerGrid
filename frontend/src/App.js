@@ -31,6 +31,7 @@ import TermsOfServicePage from "./pages/TermsOfServicePage";
 import ShareLinksPage from "./pages/ShareLinksPage";
 import ReferAFriendPage from "./pages/ReferAFriendPage";
 import ReferralCapture from "./components/ReferralCapture";
+import ScrollToTopButton from "./components/ScrollToTopButton";
 import PageTracker from "./components/PageTracker";
 
 function App() {
@@ -41,6 +42,7 @@ function App() {
           <BrowserRouter>
             <PageTracker />
             <ReferralCapture />
+            <ScrollToTopButton />
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/search" element={<SearchPage />} />
