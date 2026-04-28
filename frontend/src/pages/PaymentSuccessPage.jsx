@@ -7,6 +7,7 @@ import Footer from '../components/Footer';
 import BackNavigation from '../components/BackNavigation';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
+import { useToast } from '../hooks/use-toast';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const MAX_ATTEMPTS = 8;
@@ -16,15 +17,84 @@ const formatAmount = (totalCents) => {
   return `$${(Number(totalCents) / 100).toFixed(2)}`;
 };
 
+// Celebratory chime (two-note bell) using Web Audio API — no asset file.
+const playCelebrationChime = () => {
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    const ctx = new Ctx();
+    const now = ctx.currentTime;
+    // C6 → E6 → G6 (major triad arpeggio)
+    [
+      { freq: 1046.5, start: 0.0, dur: 0.35 },
+      { freq: 1318.5, start: 0.16, dur: 0.35 },
+      { freq: 1568.0, start: 0.32, dur: 0.55 },
+    ].forEach(({ freq, start, dur }) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.0001, now + start);
+      gain.gain.exponentialRampToValueAtTime(0.3, now + start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + start + dur);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now + start);
+      osc.stop(now + start + dur + 0.05);
+    });
+    setTimeout(() => ctx.close && ctx.close(), 1500);
+  } catch {
+    // Autoplay may block until first gesture — silently ignore.
+  }
+};
+
 const PaymentSuccessPage = () => {
   const [searchParams] = useSearchParams();
   const [status, setStatus] = useState('checking'); // checking | success | error
   const [paymentInfo, setPaymentInfo] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
+  const [showConfetti, setShowConfetti] = useState(false);
   const navigate = useNavigate();
+  const { toast } = useToast();
   const sessionId = searchParams.get('session_id');
   const attemptsRef = useRef(0);
   const cancelledRef = useRef(false);
+  const celebratedRef = useRef(false);
+
+  // Fire the celebration exactly once, when payment confirms.
+  useEffect(() => {
+    if (status !== 'success' || !paymentInfo || celebratedRef.current) return;
+    celebratedRef.current = true;
+    const meta = paymentInfo?.metadata || {};
+    const isPro = meta.payment_type === 'pro_subscription';
+    const amt = formatAmount(paymentInfo?.amount_total);
+
+    // 1) Chime
+    playCelebrationChime();
+
+    // 2) Toast
+    toast({
+      title: isPro ? '🎉 Welcome to GamerGrid Pro!' : '💜 Thanks for tipping!',
+      description: isPro
+        ? `You're now Pro — ad-free, unlimited library, early access. Enjoy!`
+        : `Your ${amt} tip just made Cassius smile. You're awesome.`,
+      duration: 6000,
+    });
+
+    // 3) Browser notification (if user previously granted permission for the app)
+    try {
+      if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+        new Notification(isPro ? '🎉 Pro activated!' : '💜 Tip received!', {
+          body: isPro ? 'Enjoy your ad-free GamerGrid experience.' : `Thanks for your ${amt} tip!`,
+          icon: '/gamergrid-icon.svg',
+        });
+      }
+    } catch { /* ignore */ }
+
+    // 4) Emoji confetti burst (2.5s)
+    setShowConfetti(true);
+    const t = setTimeout(() => setShowConfetti(false), 2500);
+    return () => clearTimeout(t);
+  }, [status, paymentInfo, toast]);
 
   useEffect(() => {
     cancelledRef.current = false;
@@ -123,7 +193,42 @@ const PaymentSuccessPage = () => {
   const amount = formatAmount(paymentInfo?.amount_total);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-purple-900 to-gray-900">
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-purple-900 to-gray-900 relative overflow-hidden">
+      {showConfetti && (
+        <div className="pointer-events-none fixed inset-0 z-50" data-testid="payment-confetti">
+          {Array.from({ length: 36 }).map((_, i) => {
+            const emoji = ['🎉', '💜', '✨', '🎊', '⭐', '🎮'][i % 6];
+            const left = Math.random() * 100;
+            const delay = Math.random() * 0.6;
+            const dur = 1.8 + Math.random() * 1.2;
+            const drift = (Math.random() - 0.5) * 200;
+            const size = 18 + Math.floor(Math.random() * 18);
+            return (
+              <span
+                key={i}
+                aria-hidden="true"
+                style={{
+                  position: 'absolute',
+                  left: `${left}%`,
+                  top: '-40px',
+                  fontSize: `${size}px`,
+                  animation: `gg-confetti-fall ${dur}s ease-in ${delay}s forwards`,
+                  ['--drift']: `${drift}px`,
+                }}
+              >
+                {emoji}
+              </span>
+            );
+          })}
+          <style>{`
+            @keyframes gg-confetti-fall {
+              0%   { transform: translate(0, 0) rotate(0deg); opacity: 0; }
+              10%  { opacity: 1; }
+              100% { transform: translate(var(--drift), 100vh) rotate(720deg); opacity: 0.2; }
+            }
+          `}</style>
+        </div>
+      )}
       <Navbar />
       <BackNavigation />
       <div className="flex items-center justify-center min-h-[80vh] px-4 py-8">

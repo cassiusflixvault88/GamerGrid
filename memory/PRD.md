@@ -18,7 +18,15 @@ support payments.
 - Hosting: Emergent (preview + deploy)
 
 ## Implemented (✅ as of 2026-02-28)
-### Iteration 27 (this turn — payment reconciliation + recovered alerts)
+### Iteration 28 (this turn — payer celebration toast + confetti + chime)
+- 🎉 **Payer celebration on `/payment-success`.** The moment payment confirms (status→`paid`), the page now fires:
+  - Three-note ascending chime (C6→E6→G6 major triad via Web Audio API — no asset file)
+  - Sticky Radix toast: "💜 Thanks for tipping!" or "🎉 Welcome to GamerGrid Pro!" with personalized amount
+  - Browser notification (if the user has granted permission previously) so the celebration reaches their OS even if the tab isn't focused
+  - Emoji confetti burst: 36 🎉💜✨🎊⭐🎮 particles falling with random horizontal drift, rotation, delay, and size (pure CSS keyframes — zero new dependencies). Cleans up after 2.5s.
+- 🛡️ **Celebration fires exactly once** via `celebratedRef` — no duplicate chimes if the polling cycle re-enters.
+
+### Iteration 27 (payment reconciliation + recovered alerts)
 - 🚑 **Missed-payment reconciliation.** User's real $1 Stripe payment succeeded but never showed in the dashboard because the OLD deployed `PaymentSuccessPage` crashed (blank page) before the status-check endpoint could mark it paid, AND Stripe webhooks weren't configured. Added `_reconcile_pending_payments()` in `payments_routes.py` that runs every time admin opens the tips feed: finds `pending` transactions from the last 14 days, queries Stripe's `get_checkout_status` for each, and auto-updates to `paid` if Stripe says succeeded (grants Pro + fires referral credit if subscription). Returns `recovered` count in the feed response.
 - 🔔 **Recovered-payment alert.** When the admin opens the Tips Feed and reconciliation found missed payments, the UI now fires the ding AND a browser notification titled "Recovered N missed payment(s)!" even on first load. This solves the exact scenario the user hit.
 - 📝 **test_credentials.md rewritten** with a table of ALL required production env vars (STRIPE_API_KEY, RESEND_API_KEY, **SENDER_EMAIL=noreply@gamer-grid.com** for the newly verified domain, IGDB, affiliate tags) plus step-by-step instructions for configuring the Stripe Webhook endpoint in the Stripe Dashboard (prevents this missed-payment problem recurring).
