@@ -18,7 +18,17 @@ support payments.
 - Hosting: Emergent (preview + deploy)
 
 ## Implemented (✅ as of 2026-02-26)
-### Iteration 20 (this turn — sign-up bug + geolocation + BackNav fix)
+### Iteration 21 (this turn — CEO hub + theme + bookmarks + funnel)
+- 👑 **Founder verified badge** on Cassius's public profile (auto-detected from CEO email allowlist) + "Creator of GamerGrid · Official Profile" tagline.
+- 💬 **"Message Creator" button** on the founder's profile → opens a modal that lets ANY visitor (signed-in or guest) send Cassius a private message. Stored in `ceo_messages` collection. Admin-only endpoints to list, reply, and delete.
+- ⭐ **Profile reviews system**: visitors can leave 1–5 star reviews directly ON a user's profile (`/api/profile-reviews/:username`). The profile owner can reply to each review. Reviewers can edit/delete their own. Backend collection: `profile_reviews`.
+- 🔗 **"Meet the Creator"** link in the Profile dropdown — auto-discovers the founder's username via `GET /api/users/founder` so visitors can find Cassius in one click.
+- 🔖 **Bookmark articles**: every News article card now has a `Save` button. Saved articles appear in **My Library → Saved Articles** (with image, source badge, summary, open & remove). Backend: `saved_articles` collection.
+- 💬 **Reply + Like on content requests**: every "Request a game" admin response now has thumbs-up Like and Reply buttons. Replies thread under the admin response. Endpoints: `POST /api/content-requests/:id/reply` and `POST /api/content-requests/:id/like`.
+- 🎨 **Working Theme system**: Light / Dark / **System** modes with proper `prefers-color-scheme` listening. Plus 7 dark-mode accent palettes (Royal Purple, Cyber Pink, Neon Green, Sunset Orange, Ocean Blue, Gold Rush, Crimson Red) with live preview. Persists via localStorage.
+- 📊 **Conversion Funnel** card on Admin Analytics: Visitors → Sign-up Intent → Created Account → Upgraded to Pro, with percent-of-top, drop-off counts, and four conversion ratio cards (Visitor → Sign-up, Sign-up → Pro, Visitor → Pro, Intent → Sign-up).
+
+### Iteration 20 (sign-up bug + geolocation + BackNav fix)
 - 🚨 **CRITICAL: Sign-up bug fixed.** The signup endpoint was awaiting `_send_welcome_email` and `send_verification` synchronously — when Resend was slow/rate-limited, the entire HTTP request hung and users saw a generic "Something went wrong" toast. Both email calls are now `asyncio.create_task` background fires, so signup returns sub-200ms even if email is broken. Also added: email/username trim + lowercase normalization, case-insensitive username uniqueness check, friendly validation messages ("Password must be at least 6 characters", "That username is already taken"), and proper Pydantic 422 error rendering in the AuthModal toast (was rendering `[object Object]`). Login now finds users regardless of email casing.
 - 🌍 **Visitor analytics — geolocation**: every new page_view is now enriched with `country`, `country_code`, `region`, `city` via free `ip-api.com` lookup. IP→geo mapping cached in Mongo `ip_geo_cache` (indefinite — IPs rarely change country). Real client IP extracted from `cf-connecting-ip`/`x-real-ip`/`x-forwarded-for` headers (Emergent ingress + Cloudflare). Geo enrichment runs in a background task so it never blocks tracking.
   - Admin Analytics page: new **Top Countries** + **Top Cities** cards (sorted by unique visitors).

@@ -10,7 +10,7 @@ import Footer from '../components/Footer';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../hooks/use-toast';
 import { Button } from '../components/ui/button';
-import { Bookmark, Play, Trash2, Film } from 'lucide-react';
+import { Bookmark, Play, Trash2, Film, Newspaper, ExternalLink } from 'lucide-react';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -24,6 +24,8 @@ const WatchlistPage = () => {
   const [currentVideo, setCurrentVideo] = useState(null);
   const [savedTrailers, setSavedTrailers] = useState([]);
   const [loadingTrailers, setLoadingTrailers] = useState(false);
+  const [savedArticles, setSavedArticles] = useState([]);
+  const [loadingArticles, setLoadingArticles] = useState(false);
 
   const loadSavedTrailers = useCallback(async () => {
     if (!user) return;
@@ -39,7 +41,34 @@ const WatchlistPage = () => {
     }
   }, [user]);
 
-  useEffect(() => { loadSavedTrailers(); }, [loadSavedTrailers]);
+  const loadSavedArticles = useCallback(async () => {
+    if (!user) return;
+    setLoadingArticles(true);
+    try {
+      const token = localStorage.getItem('token');
+      const r = await axios.get(`${API}/saved-articles`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setSavedArticles(r.data.articles || []);
+    } catch { /* silent */ } finally {
+      setLoadingArticles(false);
+    }
+  }, [user]);
+
+  useEffect(() => { loadSavedTrailers(); loadSavedArticles(); }, [loadSavedTrailers, loadSavedArticles]);
+
+  const removeSavedArticle = async (id) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.delete(`${API}/saved-articles/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setSavedArticles(prev => prev.filter(a => a.id !== id));
+      toast({ title: 'Removed from your library' });
+    } catch (e) {
+      toast({ title: 'Could not remove', description: e.response?.data?.detail || 'Try again', variant: 'destructive' });
+    }
+  };
 
   const removeSavedTrailer = async (trailerId) => {
     try {
@@ -210,6 +239,94 @@ const WatchlistPage = () => {
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* SAVED ARTICLES */}
+        <section className="mt-12" data-testid="library-articles-section">
+          <div className="flex items-center gap-2 mb-4">
+            <Newspaper className="w-5 h-5 text-yellow-300" />
+            <h2 className="text-2xl font-bold text-white">Saved Articles</h2>
+            <span className="text-white/50 text-sm">({savedArticles.length})</span>
+          </div>
+
+          {loadingArticles ? (
+            <p className="text-white/40 text-sm">Loading…</p>
+          ) : savedArticles.length === 0 ? (
+            <div className="text-center py-12 border border-dashed border-white/10 rounded-lg">
+              <Newspaper className="w-10 h-10 text-white/20 mx-auto mb-3" />
+              <p className="text-white/50 text-sm">No saved articles yet</p>
+              <p className="text-white/30 text-xs mt-1">
+                Open the <Button variant="link" className="px-1 h-auto text-purple-300" onClick={() => navigate('/news')}>News page</Button>
+                and tap the <span className="text-yellow-300 font-semibold">Save</span> button on any story.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {savedArticles.map(a => (
+                <div
+                  key={a.id}
+                  className="group bg-black/40 rounded-lg overflow-hidden border border-white/10 hover:border-yellow-500/50 transition-colors"
+                  data-testid={`saved-article-${a.id}`}
+                >
+                  <a href={a.article_url} target="_blank" rel="noopener noreferrer" className="block">
+                    <div className="aspect-video bg-white/5 overflow-hidden relative">
+                      {a.image ? (
+                        <img
+                          src={a.image}
+                          alt={a.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          loading="lazy"
+                          onError={(e) => { e.target.style.display = 'none'; }}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-white/20 text-4xl">📰</div>
+                      )}
+                      {a.source && (
+                        <span
+                          className="absolute top-2 left-2 px-2 py-0.5 rounded text-[10px] font-bold tracking-wider uppercase"
+                          style={{ backgroundColor: a.source_color || '#fbbf24', color: '#000' }}
+                        >
+                          {a.source}
+                        </span>
+                      )}
+                    </div>
+                  </a>
+                  <div className="p-3">
+                    <a href={a.article_url} target="_blank" rel="noopener noreferrer">
+                      <p className="text-white text-sm font-medium line-clamp-2 hover:text-yellow-300 transition-colors" title={a.title}>{a.title}</p>
+                    </a>
+                    {a.summary && (
+                      <p className="text-white/50 text-xs mt-1 line-clamp-2">{a.summary}</p>
+                    )}
+                    <div className="flex items-center justify-between mt-2">
+                      <span className="text-white/30 text-xs">
+                        {new Date(a.saved_at).toLocaleDateString()}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <a
+                          href={a.article_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-white/40 hover:text-yellow-300 transition-colors p-1"
+                          title="Open article"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </a>
+                        <button
+                          onClick={() => removeSavedArticle(a.id)}
+                          className="text-white/40 hover:text-red-400 transition-colors p-1"
+                          title="Remove"
+                          data-testid={`remove-article-${a.id}`}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>

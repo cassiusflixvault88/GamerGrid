@@ -407,6 +407,59 @@ async def submit_content_request(request: ContentRequestCreate, current_user: di
     return {"message": "Your request has been submitted! We'll review it soon.", "request_id": request_obj.id}
 
 
+# ===== User replies + likes on their own content requests =====
+
+class UserReplyPayload(BaseModel):
+    reply: str = Field(..., min_length=1, max_length=2000)
+
+
+@router.post("/content-requests/{request_id}/reply")
+async def reply_to_content_request(
+    request_id: str,
+    payload: UserReplyPayload,
+    current_user: dict = Depends(verify_token),
+):
+    """User can reply to the admin's response on their own request.
+    The full thread is appended to a `user_replies` array."""
+    req = await db.content_requests.find_one(
+        {"id": request_id, "user_id": current_user["user_id"]},
+        {"_id": 0, "id": 1},
+    )
+    if not req:
+        raise HTTPException(status_code=404, detail="Request not found")
+    reply_doc = {
+        "id": str(uuid.uuid4()),
+        "user_id": current_user["user_id"],
+        "reply": payload.reply.strip(),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.content_requests.update_one(
+        {"id": request_id},
+        {"$push": {"user_replies": reply_doc}},
+    )
+    return {"ok": True, "reply": reply_doc}
+
+
+@router.post("/content-requests/{request_id}/like")
+async def toggle_like_admin_response(
+    request_id: str,
+    current_user: dict = Depends(verify_token),
+):
+    """User can like/unlike the admin's response on their own request."""
+    req = await db.content_requests.find_one(
+        {"id": request_id, "user_id": current_user["user_id"]},
+        {"_id": 0, "id": 1, "liked_response": 1},
+    )
+    if not req:
+        raise HTTPException(status_code=404, detail="Request not found")
+    new_liked = not bool(req.get("liked_response"))
+    await db.content_requests.update_one(
+        {"id": request_id},
+        {"$set": {"liked_response": new_liked}},
+    )
+    return {"ok": True, "liked": new_liked}
+
+
 @router.get("/content-requests/my-requests")
 async def get_my_content_requests(current_user: dict = Depends(verify_token)):
     requests = await db.content_requests.find(

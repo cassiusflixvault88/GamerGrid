@@ -5,6 +5,7 @@ import BackNavigation from '../components/BackNavigation';
 import Footer from '../components/Footer';
 import AdSlot from '../components/AdSlot';
 import NewsArticleSocial from '../components/NewsArticleSocial';
+import ArticleBookmarkButton from '../components/ArticleBookmarkButton';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -174,6 +175,9 @@ const NewsPage = () => {
                   >
                     🛒 Discover &amp; buy games on GamerGrid →
                   </a>
+                  <div className="mt-2 flex items-center justify-end">
+                    <ArticleBookmarkButton article={a} />
+                  </div>
                   <NewsArticleSocial article={a} />
                 </div>
               </div>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Gamepad2, Calendar, Sparkles, Send, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { Gamepad2, Calendar, Sparkles, Send, Clock, CheckCircle, XCircle, Heart, Reply as ReplyIcon, MessageSquare } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import BackNavigation from '../components/BackNavigation';
 import Footer from '../components/Footer';
@@ -24,6 +24,9 @@ const RequestContentPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [myRequests, setMyRequests] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [replyOpenId, setReplyOpenId] = useState(null);
+  const [replyText, setReplyText] = useState('');
+  const [replyPosting, setReplyPosting] = useState(false);
   
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
@@ -55,6 +58,47 @@ const RequestContentPage = () => {
       console.error('Failed to load requests:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const submitReply = async (requestId) => {
+    if (replyText.trim().length < 1) return;
+    setReplyPosting(true);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(
+        `${API}/content-requests/${requestId}/reply`,
+        { reply: replyText.trim() },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      setReplyText('');
+      setReplyOpenId(null);
+      toast({ title: 'Reply posted' });
+      loadMyRequests();
+    } catch (err) {
+      toast({
+        title: 'Could not post reply',
+        description: err.response?.data?.detail || 'Try again',
+        variant: 'destructive',
+      });
+    } finally {
+      setReplyPosting(false);
+    }
+  };
+
+  const toggleLike = async (requestId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const r = await axios.post(
+        `${API}/content-requests/${requestId}/like`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      setMyRequests((prev) =>
+        prev.map((req) => (req.id === requestId ? { ...req, liked_response: r.data?.liked } : req)),
+      );
+    } catch {
+      // silent
     }
   };
 
@@ -314,8 +358,72 @@ const RequestContentPage = () => {
 
                   {request.admin_response && (
                     <div className="mt-4 p-4 bg-purple-900/20 border-l-4 border-purple-500 rounded">
-                      <p className="text-purple-300 font-semibold text-sm mb-1">Admin Response:</p>
+                      <div className="flex items-center justify-between mb-1 flex-wrap gap-2">
+                        <p className="text-purple-300 font-semibold text-sm">Admin Response:</p>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => toggleLike(request.id)}
+                            data-testid={`like-response-${request.id}`}
+                            className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold transition-all ${
+                              request.liked_response
+                                ? 'bg-pink-600/30 text-pink-200 border border-pink-500/40'
+                                : 'bg-white/5 text-white/70 border border-white/10 hover:bg-white/10'
+                            }`}
+                          >
+                            <Heart className={`w-3.5 h-3.5 ${request.liked_response ? 'fill-pink-400 text-pink-400' : ''}`} />
+                            {request.liked_response ? 'Liked' : 'Like'}
+                          </button>
+                          <button
+                            onClick={() => setReplyOpenId(replyOpenId === request.id ? null : request.id)}
+                            data-testid={`reply-toggle-${request.id}`}
+                            className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-semibold bg-white/5 text-white/70 border border-white/10 hover:bg-white/10"
+                          >
+                            <ReplyIcon className="w-3.5 h-3.5" />
+                            Reply
+                          </button>
+                        </div>
+                      </div>
                       <p className="text-white">{request.admin_response}</p>
+
+                      {/* User replies thread */}
+                      {(request.user_replies || []).length > 0 && (
+                        <div className="mt-3 space-y-2">
+                          {request.user_replies.map((rep) => (
+                            <div key={rep.id} className="ml-4 pl-3 border-l-2 border-white/10">
+                              <div className="flex items-center gap-2 text-xs text-white/40 mb-0.5">
+                                <MessageSquare className="w-3 h-3" />
+                                <span>You · {rep.created_at ? new Date(rep.created_at).toLocaleString() : ''}</span>
+                              </div>
+                              <p className="text-white/90 text-sm whitespace-pre-line">{rep.reply}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Reply composer */}
+                      {replyOpenId === request.id && (
+                        <div className="mt-3 ml-4">
+                          <Textarea
+                            value={replyText}
+                            onChange={(e) => setReplyText(e.target.value)}
+                            placeholder="Write a reply…"
+                            className="bg-white/10 border-white/20 text-white placeholder:text-white/40"
+                            rows={2}
+                            maxLength={2000}
+                            data-testid={`reply-input-${request.id}`}
+                          />
+                          <div className="flex justify-end mt-2">
+                            <Button
+                              onClick={() => submitReply(request.id)}
+                              disabled={replyPosting || replyText.trim().length < 1}
+                              data-testid={`submit-user-reply-${request.id}`}
+                              className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white text-xs"
+                            >
+                              {replyPosting ? 'Posting…' : 'Post reply'}
+                            </Button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </Card>

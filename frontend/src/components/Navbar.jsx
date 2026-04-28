@@ -6,6 +6,7 @@ import AuthModal from './AuthModal';
 import SearchAutocomplete from './SearchAutocomplete';
 import WhatsNewButton from './WhatsNewButton';
 import AutoFetchBadge from './AutoFetchBadge';
+import axios from 'axios';
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -49,6 +50,19 @@ const Navbar = () => {
     navigate('/settings');
     setShowUserMenu(false);
   };
+
+  // Fetch the founder's username so we can show a "Meet the Creator" link.
+  const [founderUsername, setFounderUsername] = useState(null);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/users/founder`);
+        if (!cancelled) setFounderUsername(r.data?.username || null);
+      } catch { /* silent */ }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   return (
     <>
@@ -247,6 +261,17 @@ const Navbar = () => {
                       <span>🚀</span>
                       <span>Share GamerGrid</span>
                     </Link>
+                    {founderUsername && user?.username !== founderUsername && (
+                      <Link
+                        to={`/u/${founderUsername}`}
+                        className="flex items-center space-x-2 px-4 py-2 text-yellow-300 hover:bg-white/10 transition-colors font-semibold"
+                        onClick={() => setShowUserMenu(false)}
+                        data-testid="nav-menu-meet-creator"
+                      >
+                        <span>⭐</span>
+                        <span>Meet the Creator</span>
+                      </Link>
+                    )}
                     <a
                       href="mailto:cassiusgamergrid@gmail.com"
                       className="flex items-center space-x-2 px-4 py-2 text-white/90 hover:bg-white/10 transition-colors"

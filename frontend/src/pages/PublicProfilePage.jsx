@@ -2,12 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
+import { BadgeCheck, Mail } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import BackNavigation from '../components/BackNavigation';
 import Footer from '../components/Footer';
 import ShareButton from '../components/ShareButton';
 import AdSlot from '../components/AdSlot';
 import AdminVisitorWidget from '../components/AdminVisitorWidget';
+import MessageCEOModal from '../components/MessageCEOModal';
+import ProfileReviews from '../components/ProfileReviews';
 import { useAuth } from '../context/AuthContext';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -30,6 +33,7 @@ const PublicProfilePage = () => {
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showCeoModal, setShowCeoModal] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -99,8 +103,23 @@ const PublicProfilePage = () => {
             onError={(e) => { e.target.src = '/gamergrid-icon.svg'; }}
           />
           <div className="flex-1 text-center md:text-left">
-            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">{displayName}</h1>
+            <div className="flex items-center justify-center md:justify-start gap-2 flex-wrap">
+              <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">{displayName}</h1>
+              {profile.is_founder && (
+                <span
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border border-yellow-500/40 text-yellow-200 text-xs font-bold uppercase tracking-wider"
+                  data-testid="founder-badge"
+                  title="Verified Founder of GamerGrid"
+                >
+                  <BadgeCheck className="w-4 h-4" />
+                  Founder
+                </span>
+              )}
+            </div>
             <p className="text-purple-300 text-sm mt-1">@{profile.username}</p>
+            {profile.is_founder && (
+              <p className="text-yellow-200/90 text-xs mt-1 font-semibold">Creator of GamerGrid · Official Profile</p>
+            )}
             {memberSince && <p className="text-white/50 text-xs mt-1">Gamer since {memberSince}</p>}
 
             <div className="flex items-center justify-center md:justify-start gap-6 mt-4 text-sm">
@@ -121,6 +140,16 @@ const PublicProfilePage = () => {
             </div>
           </div>
           <div className="flex flex-col gap-2">
+            {profile.is_founder && (!viewer || viewer.username !== profile.username) && (
+              <button
+                onClick={() => setShowCeoModal(true)}
+                data-testid="message-ceo-btn"
+                className="flex items-center justify-center gap-2 px-4 py-2 rounded-md bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-sm font-bold shadow-lg"
+              >
+                <Mail className="w-4 h-4" />
+                Message Creator
+              </button>
+            )}
             <button
               onClick={copyShareUrl}
               data-testid="copy-profile-link"
@@ -204,6 +233,19 @@ const PublicProfilePage = () => {
           )}
         </section>
       </div>
+
+      {/* Reviews left ON this profile (different from r.ratings — those are reviews this user wrote) */}
+      <ProfileReviews
+        username={profile.username}
+        displayName={displayName}
+        isOwner={Boolean(viewer && viewer.username === profile.username)}
+      />
+
+      <MessageCEOModal
+        open={showCeoModal}
+        onClose={() => setShowCeoModal(false)}
+        founderName={displayName}
+      />
 
       <Footer />
     </div>

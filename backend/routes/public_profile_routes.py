@@ -4,6 +4,8 @@ from typing import Dict, Any
 import os
 from motor.motor_asyncio import AsyncIOMotorClient
 
+from ceo_config import is_ceo_email
+
 router = APIRouter(prefix="/users", tags=["public-profile"])
 
 _mongo_client = AsyncIOMotorClient(os.environ["MONGO_URL"])
@@ -12,12 +14,36 @@ _db = _mongo_client[os.environ["DB_NAME"]]
 
 def _public_user(user: dict) -> Dict[str, Any]:
     """Strip private fields from a user document for public viewing."""
+    email = user.get("email") or ""
     return {
         "id": user.get("id"),
         "username": user.get("username"),
         "display_name": user.get("display_name") or user.get("username"),
         "profile_picture_url": user.get("profile_picture_url"),
         "created_at": user.get("created_at"),
+        # Founder/Verified badge — exposed publicly so visitors can find Cassius's official profile.
+        "is_founder": is_ceo_email(email),
+    }
+
+
+@router.get("/founder")
+async def get_founder():
+    """Return the founder's public username so any visitor can find Cassius's profile.
+    Defined BEFORE `/{username}` so route matching picks this first."""
+    from ceo_config import ceo_emails as _ceo_emails
+    emails = list(_ceo_emails())
+    if not emails:
+        return {"username": None}
+    user = await _db.users.find_one(
+        {"email": {"$in": emails}},
+        {"_id": 0, "username": 1, "display_name": 1, "profile_picture_url": 1},
+    )
+    if not user:
+        return {"username": None}
+    return {
+        "username": user.get("username"),
+        "display_name": user.get("display_name") or user.get("username"),
+        "profile_picture_url": user.get("profile_picture_url"),
     }
 
 

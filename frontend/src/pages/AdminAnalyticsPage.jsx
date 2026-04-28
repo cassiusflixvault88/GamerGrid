@@ -177,6 +177,7 @@ const AdminAnalyticsPage = () => {
   const topReferrers = data?.top_referrers || [];
   const topCountries = data?.top_countries || [];
   const topCities = data?.top_cities || [];
+  const funnel = data?.funnel || [];
   const recentVisits = data?.recent_visits || [];
 
   const formatTime = (iso) => {
@@ -469,6 +470,97 @@ const AdminAnalyticsPage = () => {
             )}
           </Card>
         </div>
+
+        {/* CONVERSION FUNNEL */}
+        <Card className="bg-gradient-to-br from-purple-900/20 to-pink-900/15 border-purple-500/30 p-6 mt-6" data-testid="funnel-card">
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+            <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+              <TrendingUp className="w-5 h-5 text-pink-400" />
+              Conversion Funnel
+              <span className="text-xs text-white/40 font-normal">(last {data?.days_back ?? 30} days)</span>
+            </h2>
+            <div className="text-xs text-white/60">
+              💡 Use this to spot drop-off points in your sign-up flow.
+            </div>
+          </div>
+
+          {funnel.length === 0 ? (
+            <p className="text-white/50 text-sm">Not enough data yet.</p>
+          ) : (
+            <div className="space-y-3">
+              {funnel.map((step, i) => {
+                const colors = [
+                  'from-blue-500 to-cyan-500',
+                  'from-purple-500 to-fuchsia-500',
+                  'from-pink-500 to-rose-500',
+                  'from-amber-500 to-yellow-500',
+                ];
+                const color = colors[i % colors.length];
+                const widthPct = Math.max(2, Math.min(100, step.pct_of_top));
+                const dropOff = i > 0 ? (funnel[i - 1].count - step.count) : null;
+                return (
+                  <div key={step.step} data-testid={`funnel-step-${i}`}>
+                    <div className="flex items-center justify-between mb-1.5 flex-wrap gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold text-white">
+                          {i + 1}
+                        </span>
+                        <span className="text-white text-sm font-semibold">{step.step}</span>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs">
+                        <span className="text-white text-base font-bold">{step.count.toLocaleString()}</span>
+                        <span className="text-white/50 font-mono">{step.pct_of_top}%</span>
+                        {dropOff !== null && dropOff > 0 && (
+                          <span className="text-red-300/80" title="Drop-off from previous step">
+                            −{dropOff.toLocaleString()}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="h-3 bg-white/5 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full bg-gradient-to-r ${color} transition-all duration-500`}
+                        style={{ width: `${widthPct}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+              {funnel.length >= 2 && funnel[0].count > 0 && (
+                <div className="mt-4 pt-4 border-t border-white/10 grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+                  <div>
+                    <p className="text-2xl font-bold text-cyan-300">
+                      {((funnel[2]?.count || 0) / funnel[0].count * 100).toFixed(2)}%
+                    </p>
+                    <p className="text-white/50 text-[11px] uppercase tracking-wider">Visitor → Sign-up</p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-pink-300">
+                      {(funnel[3]?.count || 0) > 0 && (funnel[2]?.count || 0) > 0
+                        ? ((funnel[3].count / funnel[2].count) * 100).toFixed(2) + '%'
+                        : '0%'}
+                    </p>
+                    <p className="text-white/50 text-[11px] uppercase tracking-wider">Sign-up → Pro</p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-yellow-300">
+                      {((funnel[3]?.count || 0) / funnel[0].count * 100).toFixed(3)}%
+                    </p>
+                    <p className="text-white/50 text-[11px] uppercase tracking-wider">Visitor → Pro</p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold text-purple-300">
+                      {(funnel[1]?.count || 0) > 0
+                        ? ((funnel[2]?.count || 0) / funnel[1].count * 100).toFixed(2) + '%'
+                        : '0%'}
+                    </p>
+                    <p className="text-white/50 text-[11px] uppercase tracking-wider">Intent → Sign-up</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </Card>
 
         {/* Recent Visitors Live Feed */}
         <Card className="bg-white/5 border-white/10 p-6 mt-6" data-testid="recent-visits-card">

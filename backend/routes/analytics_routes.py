@@ -318,6 +318,55 @@ async def _top_cities(match: dict) -> list:
     ]).to_list(15)
 
 
+async def _conversion_funnel(match: dict, since_iso: str) -> list:
+    """Build a funnel from existing data — no extra tracking required:
+    1. Unique visitors in period
+    2. Visitors who landed on /signup or /sign-in pages (intent)
+    3. New users who actually signed up
+    4. New Pro subscribers (paid)
+    """
+    # Step 1: Unique visitors (already excludes admin via match)
+    pipeline = [
+        {"$match": match},
+        {"$group": {"_id": "$visitor_id"}},
+        {"$count": "n"},
+    ]
+    res = await db.page_views.aggregate(pipeline).to_list(1)
+    visitors = res[0]["n"] if res else 0
+
+    # Step 2: Visitors who hit auth-related paths (proxy for "intent to sign up")
+    pipeline = [
+        {"$match": {**match, "$or": [
+            {"path": {"$regex": "signup|sign-in|signin|register|login", "$options": "i"}},
+            {"referrer": {"$regex": "signup|sign-in|signin", "$options": "i"}},
+        ]}},
+        {"$group": {"_id": "$visitor_id"}},
+        {"$count": "n"},
+    ]
+    res = await db.page_views.aggregate(pipeline).to_list(1)
+    intent = res[0]["n"] if res else 0
+
+    # Step 3: Actual new signups in period
+    new_users = await db.users.count_documents({"created_at": {"$gt": since_iso}})
+
+    # Step 4: New Pro subscribers in period
+    new_pro = await db.payment_transactions.count_documents({
+        "status": "completed",
+        "payment_type": "pro_subscription",
+        "created_at": {"$gt": since_iso},
+    })
+
+    def pct(n, base):
+        return round((n / base) * 100, 1) if base else 0.0
+
+    return [
+        {"step": "Visited site", "count": visitors, "pct_of_top": 100.0},
+        {"step": "Considered sign-up (visited auth pages)", "count": intent, "pct_of_top": pct(intent, visitors)},
+        {"step": "Created an account", "count": new_users, "pct_of_top": pct(new_users, visitors)},
+        {"step": "Upgraded to Pro 👑", "count": new_pro, "pct_of_top": pct(new_pro, visitors)},
+    ]
+
+
 def _device_from_ua(ua: str) -> str:
     ua = (ua or "").lower()
     if "iphone" in ua or "ipad" in ua:
@@ -399,6 +448,7 @@ async def analytics_dashboard(
     top_referrers = await _top_referrers(period_match)
     top_countries = await _top_countries(period_match)
     top_cities = await _top_cities(period_match)
+    funnel = await _conversion_funnel(period_match, start.isoformat())
     recent = await _recent_visits(base_match)
 
     # User growth
@@ -430,6 +480,7 @@ async def analytics_dashboard(
         "top_referrers": top_referrers,
         "top_countries": top_countries,
         "top_cities": top_cities,
+        "funnel": funnel,
         "recent_visits": recent,
         "note": "All numbers EXCLUDE admin/CEO traffic.",
     }
