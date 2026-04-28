@@ -18,7 +18,14 @@ support payments.
 - Hosting: Emergent (preview + deploy)
 
 ## Implemented (✅ as of 2026-02-28)
-### Iteration 29 (this turn — tips-feed OR-query fix + homepage tip ping + admin diagnostic + tested 23/23)
+### Iteration 30 (this turn — Google AdSense wired)
+- 📺 **AdSense `<script>` snippet** added to `<head>` of `/app/frontend/public/index.html` with publisher ID `ca-pub-4470395930184452` (extracted from user's verification screenshot). This is what AdSense will look for when the user clicks "Verify".
+- 📜 **`ads.txt`** created at `/app/frontend/public/ads.txt` containing `google.com, pub-4470395930184452, DIRECT, f08c47fec0942fa0` — Google's recommended authorized-sellers file that boosts ad rates and prevents domain spoofing. Auto-served at `https://gamer-grid.com/ads.txt` after redeploy.
+- 🔧 **`REACT_APP_ADSENSE_CLIENT=ca-pub-4470395930184452`** added to `/app/frontend/.env`. The 3 pre-wired `<AdSlot />` components (Home rail, Public Profile, in-content) will now render real ads as soon as Google approves the site.
+- ✅ Verified live in preview: snippet appears in `<head>` (curl grep returned 1 match), `ads.txt` returns the publisher line.
+- 🚨 **User must paste `REACT_APP_ADSENSE_CLIENT=ca-pub-4470395930184452`** into Emergent → Deployment → Custom Environment Variables before redeploying so production picks it up.
+
+### Iteration 29 (tips-feed OR-query fix + homepage tip ping + admin diagnostic + tested 23/23)
 - 🩹 **Critical fix: legacy "completed" tips were silently missing from the admin dashboard.** User's real $1 payment showed up in the public homepage ticker but NOT the admin tips-feed table. Root cause: tips-feed only queried `{payment_status: "paid"}`, but legacy txns from before reconciliation existed only had `{status: "completed"}`. Changed query to `{$or: [{payment_status: "paid"}, {status: "completed"}], payment_type: {$in: [tip, custom_tip, pro_subscription]}}` — now catches every successful payment regardless of which field got set first. Verified with 3-variant seed test: paid-only, completed-only, and pending → returns 2 (paid+completed), excludes pending. ✅
 - 🛠 **`GET /api/payments/admin/all-transactions`** — admin-only diagnostic endpoint that returns ALL payment_transactions regardless of status (with `payment_status`, `status`, `client_ip`, `reconciled` fields exposed). For future debugging "why isn't my payment showing?" mysteries.
 - 🔥 **`HomepageTipPing.jsx`** — slide-in toast at bottom-right of EVERY homepage visit when a NEW tip arrives. Polls `/api/payments/recent-public` every 30s, first-load suppression (only fires on truly fresh tips after the visitor opened the page), shows for 8s with name + amount + location, dismissible X button. Pure CSS slide-up animation. Used `sessionStorage` (not localStorage) so it can re-show across new visits.
