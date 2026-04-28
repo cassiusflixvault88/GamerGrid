@@ -10,6 +10,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../hooks/use-toast';
 import RatingsReviews from './RatingsReviews';
 import ShareButtons from './ShareButtons';
+import PriceCompare from './PriceCompare';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -396,53 +397,12 @@ const ContentModal = ({ content, isOpen, onClose, onPlayTrailer, onSelectContent
               </div>
             )}
 
-            {/* Real-time PC deals from CheapShark */}
-            {(dealsLoading || deals.length > 0) && (
-              <div className="pt-4" data-testid="deals-section">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-white/50 text-sm flex items-center gap-2">
-                    💰 Live PC deals
-                    {dealsLoading && <span className="w-3 h-3 border-2 border-white/20 border-t-white/60 rounded-full animate-spin" />}
-                  </p>
-                  <span className="text-[10px] text-white/30">Powered by CheapShark</span>
-                </div>
-                {deals.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {deals.slice(0, 6).map((d, idx) => (
-                      <a
-                        key={`${d.store_id}-${idx}`}
-                        href={d.deal_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        data-testid={`deal-${d.store_id}`}
-                        className="flex items-center justify-between p-2 rounded-md bg-white/5 hover:bg-white/10 border border-white/10 transition-all group"
-                      >
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className="text-xs font-semibold text-white/90 truncate">
-                            {d.store_name}
-                          </span>
-                          {d.is_on_sale && (
-                            <span className="px-1.5 py-0.5 rounded bg-red-600/30 border border-red-500/40 text-red-200 text-[10px] font-bold">
-                              -{Math.round(d.savings_pct)}%
-                            </span>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-1 text-sm font-bold text-green-300 flex-shrink-0">
-                          ${d.sale_price.toFixed(2)}
-                          {d.is_on_sale && (
-                            <span className="text-white/40 text-xs line-through ml-1">
-                              ${d.normal_price.toFixed(2)}
-                            </span>
-                          )}
-                        </div>
-                      </a>
-                    ))}
-                  </div>
-                ) : !dealsLoading ? (
-                  <p className="text-white/40 text-xs italic">No PC deals found.</p>
-                ) : null}
-              </div>
-            )}
+            {/* Real-time PC deals + console retailers — sorted by lowest price */}
+            <PriceCompare
+              deals={deals}
+              buyLinks={details?.buy_links || []}
+              loading={dealsLoading}
+            />
 
             {details?.credits?.cast && details.credits.cast.length > 0 && (
               <div className="flex items-start space-x-2">

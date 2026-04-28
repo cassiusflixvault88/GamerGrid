@@ -18,7 +18,18 @@ support payments.
 - Hosting: Emergent (preview + deploy)
 
 ## Implemented (✅ as of 2026-02-28)
-### Iteration 33 (this turn — full SEO upgrade for Google search rich preview)
+### Iteration 34 (this turn — affiliate price-compare widget on every game)
+- 💰 **`PriceCompare.jsx`** replaces the basic "Live PC deals" grid in `ContentModal`. Combines:
+  - Live PC store prices from CheapShark (Steam, GOG, Epic, Humble, GreenManGaming, Fanatical, etc.) — already fetched, just better presentation
+  - Console retailer affiliate links from `buy_links` (Amazon, GameStop, PSN, Xbox Store, Nintendo eShop)
+  - Auto-sorts cheapest → most expensive
+  - 🏆 **"BEST DEAL" badge** with green-gradient row for the lowest-priced offer
+  - Sale-savings pill (`-80%` style) on discounted PC titles
+  - Compliance footer: "We may earn a small commission — costs you nothing extra" + `rel="sponsored"` on affiliate links per FTC + Amazon Associates rules
+- 📈 **Conversion impact:** Every game page is now a price-comparison tool. Users who'd have bounced to Google for deals now click through GamerGrid's affiliate links — Amazon Associates ~3-4% commission, GameStop CJ Affiliate ~3-5%, PC affiliates 1-5%.
+- ✅ Verified: deals endpoint returns 5+ live stores per game (Steam $7.99 -80%, GOG, Humble), lint clean on both files.
+
+### Iteration 33 (full SEO upgrade for Google search rich preview)
 - 🔍 **Google search now shows a rich preview** instead of a blank result. Why it was blank: title was generic, description was 1 line, og:image was SVG (Google ignores SVG previews), no canonical URL, no structured data.
 - 📝 **Rewrote `<head>` SEO block** with keyword-rich title, 160-char description ("4,000+ games" social proof), canonical URL, OpenGraph + Twitter Card with 1200×630 PNG, JSON-LD `WebSite` + `Organization` schemas (unlocks Google sitelinks search box + brand panel).
 - 🎨 **Generated `og-cover.png` (1200×630, 206KB)** via cairosvg — branded gradient hero with controller icon, "4,000+ Games · HD Trailers" headline, platform pills, watermark.
