@@ -90,8 +90,13 @@ async def my_referral_info(token_data: dict = Depends(verify_token)):
     )
     pro_months_credit = (credits_doc or {}).get("pro_months_credit", 0)
 
-    base_url = os.environ.get("FRONTEND_URL") or "https://gamer-grid.com"
+    base_url = os.environ.get("PUBLIC_SITE_URL") or "https://gamer-grid.com"
     base_url = base_url.rstrip("/")
+    # Safety net: if someone misconfigures the env to a preview/staging host,
+    # always fall back to the public marketing domain so referral links shared
+    # by users remain stable and never expire.
+    if "preview" in base_url or "emergent.host" in base_url or "emergentagent.com" in base_url:
+        base_url = "https://gamer-grid.com"
 
     return {
         "code": code,

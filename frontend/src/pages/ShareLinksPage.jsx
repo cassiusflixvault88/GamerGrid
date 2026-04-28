@@ -18,7 +18,15 @@ const ShareLinksPage = () => {
   const [showQR, setShowQR] = useState(false);
 
   const shareUrl = useMemo(
-    () => process.env.REACT_APP_PUBLIC_URL || (typeof window !== 'undefined' ? window.location.origin : 'https://gamer-grid.com'),
+    () => {
+      const PUBLIC_DOMAIN = 'https://gamer-grid.com';
+      const detected = typeof window !== 'undefined' ? window.location.origin : '';
+      return (
+        process.env.REACT_APP_PUBLIC_URL ||
+        (detected && !/(preview|emergent\.host|emergentagent\.com)/i.test(detected) ? detected : '') ||
+        PUBLIC_DOMAIN
+      );
+    },
     []
   );
   const shareTitle = 'GamerGrid — Ultimate Gaming Discovery Hub';

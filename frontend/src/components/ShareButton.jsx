@@ -10,7 +10,14 @@ const ShareButton = ({ variant = 'default', size = 'default', showText = true })
   const [showPWAInstructions, setShowPWAInstructions] = useState(false);
   const { toast } = useToast();
   // Use the production URL when available, fall back to current origin (works on preview too)
-  const shareUrl = process.env.REACT_APP_PUBLIC_URL || (typeof window !== 'undefined' ? window.location.origin : 'https://gamer-grid.com');
+  // Always share the public marketing domain — never the preview/emergent.host URL.
+  const PUBLIC_DOMAIN = 'https://gamer-grid.com';
+  const detected = (typeof window !== 'undefined' ? window.location.origin : '');
+  const shareUrl = (
+    process.env.REACT_APP_PUBLIC_URL ||
+    (detected && !/(preview|emergent\.host|emergentagent\.com)/i.test(detected) ? detected : '') ||
+    PUBLIC_DOMAIN
+  );
 
   const shareMessage = `🎮 Check out GamerGrid — Ultimate Gaming Discovery Hub!
 
