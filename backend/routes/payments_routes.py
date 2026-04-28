@@ -565,7 +565,6 @@ async def admin_tips_feed(
     limit: int = 50,
     current_user: dict = Depends(verify_token),
 ):
-    """Admin: live feed of completed tips/subs with user + location + amount + when."""
     user = await db.users.find_one({"id": current_user['user_id']}, {"_id": 0, "is_admin": 1})
     if not user or not user.get('is_admin'):
         raise HTTPException(403, "Admin access required")
@@ -578,9 +577,13 @@ async def admin_tips_feed(
     limit = max(1, min(int(limit or 50), 200))
 
     txs = await db.payment_transactions.find(
-        {"payment_status": "paid"},
+        {"$or": [
+            {"payment_status": "paid"},
+            {"status": "completed"},
+        ]},
         {"_id": 0, "session_id": 1, "user_id": 1, "amount": 1, "payment_type": 1,
-         "package": 1, "client_ip": 1, "created_at": 1, "paid_at": 1, "amount_total": 1},
+         "package": 1, "client_ip": 1, "created_at": 1, "paid_at": 1, "amount_total": 1,
+         "payment_status": 1, "status": 1},
     ).sort("created_at", -1).limit(limit).to_list(limit)
 
     # Bulk-fetch users for display name lookup
@@ -638,7 +641,10 @@ async def recent_public_tips(limit: int = 5):
     Returns first letter of username + city + amount + relative time."""
     limit = max(1, min(int(limit or 5), 15))
     txs = await db.payment_transactions.find(
-        {"payment_status": "paid", "payment_type": {"$in": ["tip", "custom_tip", "pro_subscription"]}},
+        {"$or": [
+            {"payment_status": "paid"},
+            {"status": "completed"},
+        ], "payment_type": {"$in": ["tip", "custom_tip", "pro_subscription"]}},
         {"_id": 0, "user_id": 1, "amount": 1, "payment_type": 1, "client_ip": 1, "created_at": 1, "paid_at": 1},
     ).sort("created_at", -1).limit(limit).to_list(limit)
 
@@ -672,3 +678,24 @@ async def recent_public_tips(limit: int = 5):
             "created_at": t.get("paid_at") or t.get("created_at"),
         })
     return {"items": items}
+
+
+
+# Admin diagnostic: see EVERY transaction regardless of status.
+# Useful for debugging cases like "Stripe says paid but dashboard says nothing".
+@router.get("/admin/all-transactions")
+async def admin_all_transactions(
+    limit: int = 50,
+    current_user: dict = Depends(verify_token),
+):
+    user = await db.users.find_one({"id": current_user['user_id']}, {"_id": 0, "is_admin": 1})
+    if not user or not user.get('is_admin'):
+        raise HTTPException(403, "Admin access required")
+    limit = max(1, min(int(limit or 50), 200))
+    txs = await db.payment_transactions.find(
+        {},
+        {"_id": 0, "session_id": 1, "user_id": 1, "amount": 1, "payment_type": 1,
+         "payment_status": 1, "status": 1, "client_ip": 1, "created_at": 1, "paid_at": 1,
+         "reconciled": 1},
+    ).sort("created_at", -1).limit(limit).to_list(limit)
+    return {"count": len(txs), "transactions": txs}

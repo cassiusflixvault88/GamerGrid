@@ -13,6 +13,7 @@ import GuestMarketingHero from '../components/GuestMarketingHero';
 import AutoFetchBadge from '../components/AutoFetchBadge';
 import MeetCreatorCard from '../components/MeetCreatorCard';
 import RecentTippersTicker from '../components/RecentTippersTicker';
+import HomepageTipPing from '../components/HomepageTipPing';
 import { useAuth } from '../context/AuthContext';
 import Footer from '../components/Footer';
 import AdSlot from '../components/AdSlot';
@@ -254,6 +255,7 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-black" data-testid="home-page">
+      <HomepageTipPing />
       <Navbar />
       <TopNavBar />
       <Onboarding forceOpen={tourForceOpen} onForceClose={() => setTourForceOpen(false)} />

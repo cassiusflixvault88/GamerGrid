@@ -1,0 +1,36 @@
+{
+  "summary": "Backend-only regression for payments + admin tips-feed OR-query bug fix. 23/23 pytest tests passed against the preview backend. The OR-query fix is verified end-to-end: legacy transactions where only status='completed' (payment_status still 'pending') now appear in /api/payments/admin/tips-feed, while truly pending+initiated rows are excluded. /admin/all-transactions returns ALL rows. /recent-public anonymizes correctly. Auth, game catalog, admin notifications, and Stripe-checkout error handling all green.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/payments/tip/checkout", "issue": "Stripe LIVE key in /app/backend/.env is EXPIRED in this preview env. Endpoint returns graceful 500 with detail 'Expired API Key provided: sk_live_***...rymY' — no crash/hang (acceptable per spec). Production env must override STRIPE_API_KEY with a fresh key."},
+      {"endpoint": "/api/payments/subscription/checkout", "issue": "Same expired-key 500 on Stripe call; behaves gracefully."},
+      {"endpoint": "/api/payments/admin/tips-feed", "issue": "Per agent-to-agent context the new filter was supposed to ALSO restrict payment_type to [tip, custom_tip, pro_subscription]. The actual query (payments_routes.py L579-587) has NO payment_type filter — it relies on every {status:completed} row already being a payment. If any other writer inserts a doc with status='completed' and an unrelated payment_type, it will leak into the admin tips-feed (and into totals.count with $0 attribution since the if/elif only credits 'tip*' and 'pro_subscription'). recent-public DOES have the filter. Recommend adding the same payment_type $in filter to admin_tips_feed for symmetry/safety."}
+    ]
+  },
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_iter12_payments_feed.py",
+    "/app/test_reports/pytest/iter12_results.xml"
+  ],
+  "action_items": [
+    "Optional hardening: add `\"payment_type\": {\"$in\": [\"tip\", \"custom_tip\", \"pro_subscription\"]}` to the admin_tips_feed Mongo filter to match recent_public and the spec note.",
+    "Two-source-of-truth admin check: payments_routes.py reads users.is_admin while admin_routes.py reads a separate `db.admins` collection via verify_admin. A user marked is_admin=true on the users collection still gets 403 from /api/admin/* unless an admins doc is also created. Tests had to seed both collections. Recommend consolidating into a single admin check (e.g. users.is_admin) to avoid drift.",
+    "STRIPE_API_KEY in /app/backend/.env is expired (sk_live_...rymY). Production deploy must inject a fresh sk_live_ key as documented in /app/memory/test_credentials.md."
+  ],
+  "critical_code_review_comments": [
+    "payments_routes.py L579-587 — admin_tips_feed query is missing the payment_type $in filter that the spec/recent-public uses; can leak non-payment txns with status='completed'.",
+    "Two parallel admin-membership stores: users.is_admin (used by payments) vs admins collection (used by admin_routes.verify_admin). Promotion via one path is invisible to the other — fragile.",
+    "_reconcile_pending_payments swallows individual Stripe errors per-tx with logger.debug (good), but does NOT degrade gracefully when the entire Stripe key is invalid — currently every tx hits Stripe individually and fails, fine for correctness but wasteful (50 sequential roundtrips per admin dashboard load on expired key). Consider checking the first failure and short-circuiting.",
+    "payments_routes.py L86 — error log leaks first 15 chars of the Stripe key into logs ('Key prefix: ...'); for sk_test_/sk_live_ this includes the prefix only, but tighten to never log key fragments at WARNING/INFO levels.",
+    "admin_tips_feed performs N geo lookups in a loop (await per row). For 200 rows that is up to 200 sequential ip_geo_cache hits. Cache likely fast but consider a single bulk lookup."
+  ],
+  "updated_files": ["/app/backend/tests/test_iter12_payments_feed.py"],
+  "success_rate": {"backend": "100% (23/23)", "frontend": "n/a"},
+  "test_credentials": "Tests dynamically sign up TEST_admin_<hex> via /api/auth/signup and promote via direct Mongo write to BOTH users.is_admin=true and an admins doc. CEO seeded credential cassiusflixvault@gmail.com / JGotti.8890 was NOT used. All TEST_-prefixed users + payment_transactions are deleted in teardown.",
+  "seed_data_creation": "Inserted 4 payment_transactions per test run (sids prefixed TEST_sid_*) covering all 4 status combinations: paid+completed, paid+initiated, pending+completed (legacy bug case), pending+initiated. Cleaned up automatically.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Pytest file at /app/backend/tests/test_iter12_payments_feed.py is a clean regression suite for payments + auth + games. It auto-creates+cleans test admins/users and payment txns. Reuse for any future payments work. Note: test fixture seeds BOTH users.is_admin and the admins collection — if main agent unifies the admin check, simplify the admin_token fixture accordingly. Stripe checkout tests assert 'graceful 200/400/500 with JSON body' — they will start returning 200 once a fresh sk_live_ key is plugged in.",
+  "rca of the issue": "Bug fix verification confirmed. Mock data showed: a transaction with payment_status='pending' AND status='completed' (the exact production failure mode the user reported, where their real $1 hit the public ticker but not the admin feed) is now included by the OR query in admin_tips_feed (test_or_query_includes_legacy_completed_only PASSED). Bug is fixed. Mitigation already in place: $or clause + reconcile loop. Recommend also adding payment_type $in filter for safety."
+}
