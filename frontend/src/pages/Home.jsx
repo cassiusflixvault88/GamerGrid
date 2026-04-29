@@ -68,9 +68,41 @@ const Home = () => {
   const [currentVideo, setCurrentVideo] = useState(null);
   const [tourForceOpen, setTourForceOpen] = useState(false);
 
+  // Personalized recommendations (signed-in users only)
+  const [forYou, setForYou] = useState([]);
+  const [forYouReason, setForYouReason] = useState('');
+
   useEffect(() => {
     loadContent();
   }, []);
+
+  // Fetch personalized rail whenever user or their watchlist changes
+  useEffect(() => {
+    if (!user) {
+      setForYou([]);
+      setForYouReason('');
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+        const r = await fetch(`${API}/games/for-you`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!r.ok) return;
+        const d = await r.json();
+        if (cancelled) return;
+        setForYou(d?.results || []);
+        setForYouReason(d?.reason || '');
+      } catch {
+        // silent — rail just won't render
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user, user?.watchlist?.length]);
 
   useEffect(() => {
     if (heroItems.length > 1) {
@@ -413,6 +445,18 @@ const Home = () => {
             </div>
           </div>
         </div>
+
+        {forYou.length > 0 && (
+          <div data-testid="for-you-rail">
+            <div className="px-6 lg:px-12 max-w-[1920px] mx-auto flex items-baseline justify-between pt-4">
+              <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                🎯 Just For You
+                <span className="text-xs font-normal text-white/50">· {forYouReason}</span>
+              </h2>
+            </div>
+            <ContentRow title="" items={forYou} onCardClick={handleCardClick} viewAllLink="/games/all" />
+          </div>
+        )}
 
         {trending.length > 0 && (
           <ContentRow title="🔥 Trending Now" items={trending} onCardClick={handleCardClick} viewAllLink="/games/all" />

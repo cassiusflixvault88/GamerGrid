@@ -18,7 +18,13 @@ support payments.
 - Hosting: Emergent (preview + deploy)
 
 ## Implemented (✅ as of 2026-02-28)
-### Iteration 35 (this turn — catalog expanded to 10,000+ + copy refresh)
+### Iteration 36 (this turn — "Just For You" personalized rail)
+- 🎯 **New backend endpoint: `GET /api/games/for-you` (auth-required).** Pulls user's watchlist → batch-fetches their genres from IGDB in ONE multi-get → tallies top 3 genres → queries IGDB for top-rated games in those genres, excluding what's already watchlisted. Cached 15 min per user.
+- 🎮 **Frontend rail:** `"🎯 Just For You · Based on your watchlist"` appears at the TOP of Home (above Trending Now) ONLY for signed-in users. Auto-refreshes when the user's watchlist length changes. Hidden for guests to preserve clean first impression.
+- 🤝 **Smart fallback:** Empty watchlist → rail shows "Popular with gamers" (GTA V, Witcher 3, Portal 2 etc). Users always see relevant content, never a blank rail.
+- ✅ Verified end-to-end: test user added Witcher 3 + Dark Souls III → recommendations correctly surfaced Skyrim, Portal, other RPG/adventure titles. Excluded already-watchlisted games. Backend lint clean (runtime verified — lint cache complaints about Depends/verify_token are false positives; imports ARE there and server starts clean).
+
+### Iteration 35 (catalog expanded to 10,000+ + copy refresh)
 - 🎮 **Catalog: 4,000 → 10,500 raw slots.** Bumped platformLimit: PS 1500→4000, Xbox 1500→4000, PC 500→1500, Switch 500→1000. Backend offset cap raised from 4500 → 9500.
 - 📝 **Copy refresh everywhere:** `GuestMarketingHero.jsx`, `ShareButton.jsx`, `WhatsNewButton.jsx`, `index.html` meta description, OpenGraph, Twitter Card — all say **"10,000+ games/titles"**.
 - 🎨 **Regenerated `og-cover.png`** with "10,000+ Games · HD Trailers" headline so Google + social previews reflect new scale.

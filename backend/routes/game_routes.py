@@ -7,7 +7,7 @@ components work with minimal changes. Adds:
   - genre + year filters on list endpoints
   - Store/buy links on game details (Steam, GOG, Epic, Itch, PSN, Xbox, Nintendo, Amazon)
 """
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timezone, timedelta
 from urllib.parse import quote_plus
@@ -18,6 +18,8 @@ import httpx
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+
+from auth import verify_token
 from motor.motor_asyncio import AsyncIOMotorClient
 
 ROOT_DIR = Path(__file__).parent.parent
@@ -651,6 +653,99 @@ async def get_games_by_platform(
     except Exception as e:
         logger.error(f"platform error: {e}")
         raise HTTPException(500, f"Failed to fetch {platform_name}: {e}")
+
+
+@router.get("/for-you")
+async def get_for_you(current_user: dict = Depends(verify_token)):
+    """Personalized 'Just For You' rail.
+
+    Strategy: pull user's watchlist → fetch those games' genres in ONE IGDB
+    batch query → tally top 3 genres → query IGDB for highly-rated games in
+    those genres that the user HASN'T watchlisted yet. Cached 15 min per user.
+    Falls back to 'most popular' if the user has an empty watchlist.
+    """
+    user_id = current_user["user_id"]
+    cache_key = f"foryou:{user_id}"
+    await _maybe_init_ttl()
+    cached = await _cache_col.find_one({"_id": cache_key}, {"_id": 0, "data": 1, "expires_at": 1})
+    if cached and cached.get("data") and cached.get("expires_at"):
+        try:
+            exp = cached["expires_at"]
+            if isinstance(exp, str):
+                exp = datetime.fromisoformat(exp)
+            if exp.tzinfo is None:
+                exp = exp.replace(tzinfo=timezone.utc)
+            if exp > datetime.now(timezone.utc):
+                return cached["data"]
+        except Exception:
+            pass
+
+    # Fetch user doc for watchlist
+    user = await _db.users.find_one(
+        {"id": user_id},
+        {"_id": 0, "watchlist": 1},
+    )
+    watchlist = (user or {}).get("watchlist") or []
+    wl_ids = [int(w["content_id"]) for w in watchlist if w.get("content_id")]
+
+    from collections import Counter
+    top_genres: List[int] = []
+
+    if wl_ids:
+        # Batch-fetch genres for all watchlist items in a single IGDB call.
+        ids_str = ",".join(str(i) for i in wl_ids[:100])
+        try:
+            gq = f"fields genres; where id = ({ids_str}); limit {min(len(wl_ids), 100)};"
+            gres = await igdb_query("games", gq)
+            counter: Counter = Counter()
+            for g in gres:
+                for gid in (g.get("genres") or []):
+                    counter[gid] += 1
+            top_genres = [gid for gid, _ in counter.most_common(3)]
+        except Exception as e:
+            logger.warning(f"for-you genre fetch failed: {e}")
+
+    # Build query: recommend top-rated games in the user's favorite genres,
+    # excluding what they've already watchlisted.
+    where_parts = [
+        "rating > 75",
+        "total_rating_count > 50",
+    ]
+    if top_genres:
+        where_parts.append(f"genres = ({','.join(str(x) for x in top_genres)})")
+    else:
+        # Empty watchlist → fall back to universally loved games.
+        where_parts.append("total_rating_count > 500")
+    if wl_ids:
+        ids_excl = ",".join(str(i) for i in wl_ids[:200])
+        where_parts.append(f"id != ({ids_excl})")
+
+    q = (
+        f"fields {LIST_FIELDS};"
+        f" {_build_where(where_parts)}"
+        f" sort total_rating_count desc;"
+        f" limit 30;"
+    )
+    try:
+        games = await igdb_query("games", q)
+        result = {
+            "results": [normalize_game(g) for g in games],
+            "reason": "Based on your watchlist" if top_genres else "Popular with gamers",
+            "top_genres": top_genres,
+        }
+        await _cache_col.update_one(
+            {"_id": cache_key},
+            {"$set": {
+                "data": result,
+                "expires_at": datetime.now(timezone.utc) + timedelta(minutes=15),
+            }},
+            upsert=True,
+        )
+        return result
+    except Exception as e:
+        logger.error(f"for-you error: {e}")
+        return {"results": [], "reason": "", "top_genres": []}
+
 
 
 @router.get("/category")
