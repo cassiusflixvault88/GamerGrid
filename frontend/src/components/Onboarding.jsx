@@ -52,7 +52,7 @@ const Onboarding = ({ forceOpen = false, onForceClose = null }) => {
     },
     {
       title: 'Discover Games 🔥',
-      description: 'Browse thousands of games across PS5, Xbox, PC, and Nintendo Switch with gameplay trailers.',
+      description: 'Browse 5,000+ games across PS5, Xbox, PC, and Nintendo Switch with gameplay trailers.',
       icon: <Star className="w-16 h-16 text-yellow-400" />,
       features: [
         'HD gameplay trailers',
