@@ -18,7 +18,13 @@ support payments.
 - Hosting: Emergent (preview + deploy)
 
 ## Implemented (✅ as of 2026-02-28)
-### Iteration 34 (this turn — affiliate price-compare widget on every game)
+### Iteration 35 (this turn — catalog expanded to 10,000+ + copy refresh)
+- 🎮 **Catalog: 4,000 → 10,500 raw slots.** Bumped platformLimit: PS 1500→4000, Xbox 1500→4000, PC 500→1500, Switch 500→1000. Backend offset cap raised from 4500 → 9500.
+- 📝 **Copy refresh everywhere:** `GuestMarketingHero.jsx`, `ShareButton.jsx`, `WhatsNewButton.jsx`, `index.html` meta description, OpenGraph, Twitter Card — all say **"10,000+ games/titles"**.
+- 🎨 **Regenerated `og-cover.png`** with "10,000+ Games · HD Trailers" headline so Google + social previews reflect new scale.
+- ✅ Verified offset=3500 returns 500 results for both PS and Xbox. Lint clean.
+
+### Iteration 34 (affiliate price-compare widget on every game)
 - 💰 **`PriceCompare.jsx`** replaces the basic "Live PC deals" grid in `ContentModal`. Combines:
   - Live PC store prices from CheapShark (Steam, GOG, Epic, Humble, GreenManGaming, Fanatical, etc.) — already fetched, just better presentation
   - Console retailer affiliate links from `buy_links` (Amazon, GameStop, PSN, Xbox Store, Nintendo eShop)

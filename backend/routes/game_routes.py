@@ -602,7 +602,7 @@ async def get_new_releases(
 async def get_games_by_platform(
     platform_name: str,
     limit: int = Query(40, ge=1, le=500),
-    offset: int = Query(0, ge=0, le=4500),
+    offset: int = Query(0, ge=0, le=9500),
     sort: str = Query("rating", pattern="^(rating|release|popular)$"),
     genre: Optional[int] = None,
     year: Optional[int] = Query(None, ge=1970, le=2100),

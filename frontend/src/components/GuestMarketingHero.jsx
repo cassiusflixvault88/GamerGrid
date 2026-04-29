@@ -37,7 +37,7 @@ const GuestMarketingHero = ({ onTakeTour, onSignUp }) => {
             </h1>
 
             <p className="text-white/75 text-base sm:text-lg mb-5 leading-relaxed">
-              1,000+ titles for PS5, Xbox, PC and Switch. HD trailers, screenshots, live deals,
+              10,000+ titles for PS5, Xbox, PC and Switch. HD trailers, screenshots, live deals,
               community reviews — all free, no install required.
             </p>
 

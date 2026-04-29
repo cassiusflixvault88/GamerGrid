@@ -84,10 +84,10 @@ const BrowseAllPage = () => {
       // PlayStation and Xbox get the deepest catalog (1500 each) so newer/niche
       // titles (e.g. AC Shadows) surface alongside the all-time greats.
       const platformLimit = (key) => {
-        if (key === 'playstation') return 1500;
-        if (key === 'xbox') return 1500;
-        if (key === 'pc') return 500;
-        if (key === 'switch') return 500;
+        if (key === 'playstation') return 4000;
+        if (key === 'xbox') return 4000;
+        if (key === 'pc') return 1500;
+        if (key === 'switch') return 1000;
         return 500;
       };
       const generalLimit = '350';
