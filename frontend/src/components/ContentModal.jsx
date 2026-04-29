@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { X, Play, Plus, ThumbsUp, Check } from 'lucide-react';
+import { X, Play, Plus, ThumbsUp, ThumbsDown, Check } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from './ui/dialog';
 import { Button } from './ui/button';
 import { Separator } from './ui/separator';
@@ -18,7 +18,9 @@ const ContentModal = ({ content, isOpen, onClose, onPlayTrailer, onSelectContent
   const [details, setDetails] = useState(null);
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [liked, setLiked] = useState(false);
+  const [reaction, setReaction] = useState('none'); // 'like' | 'dislike' | 'none'
+  const [reactionBusy, setReactionBusy] = useState(false);
+  const [reactionCounts, setReactionCounts] = useState({ likes: 0, dislikes: 0 });
   const [showFullOverview, setShowFullOverview] = useState(false);
   const [localInWatchlist, setLocalInWatchlist] = useState(false);
   const [deals, setDeals] = useState([]);
@@ -32,10 +34,39 @@ const ContentModal = ({ content, isOpen, onClose, onPlayTrailer, onSelectContent
       setShowFullOverview(false); // Reset when opening new content
       setLocalInWatchlist(user && isInWatchlist(content.id)); // Update local state
       setDeals([]);
+      setReaction('none');
+      setReactionCounts({ likes: 0, dislikes: 0 });
       loadDetails();
+      loadReaction();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [content, isOpen, user, user?.watchlist]);
+
+  const loadReaction = async () => {
+    if (!content?.id) return;
+    try {
+      const token = localStorage.getItem('token');
+      if (token) {
+        const r = await axios.get(`${API}/games/${content.id}/reaction`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setReaction(r.data?.my_reaction || 'none');
+        setReactionCounts({
+          likes: r.data?.likes || 0,
+          dislikes: r.data?.dislikes || 0,
+        });
+      } else {
+        // Guest — fetch public counts only
+        const r = await axios.get(`${API}/games/${content.id}/reaction-counts`);
+        setReactionCounts({
+          likes: r.data?.likes || 0,
+          dislikes: r.data?.dislikes || 0,
+        });
+      }
+    } catch {
+      // silent — buttons remain clickable
+    }
+  };
 
   const loadDetails = async () => {
     if (!content) return;
@@ -271,16 +302,31 @@ const ContentModal = ({ content, isOpen, onClose, onPlayTrailer, onSelectContent
                     <Plus className="w-6 h-6" />
                   )}
                 </button>
-                <button 
-                  onClick={handleLike}
+                <button
+                  onClick={() => handleReaction('like')}
+                  data-testid="game-like-btn"
+                  disabled={reactionBusy}
                   className={`backdrop-blur-sm rounded-full p-2 border transition-all ${
-                    liked 
-                      ? 'bg-white text-black border-white' 
+                    reaction === 'like'
+                      ? 'bg-green-500 text-white border-green-400'
                       : 'bg-white/20 hover:bg-white/30 text-white border-white/40'
                   }`}
-                  title={liked ? 'Unlike' : 'Like'}
+                  title={reaction === 'like' ? 'Unlike' : 'Like'}
                 >
-                  <ThumbsUp className={`w-6 h-6 ${liked ? 'fill-current' : ''}`} />
+                  <ThumbsUp className={`w-6 h-6 ${reaction === 'like' ? 'fill-current' : ''}`} />
+                </button>
+                <button
+                  onClick={() => handleReaction('dislike')}
+                  data-testid="game-dislike-btn"
+                  disabled={reactionBusy}
+                  className={`backdrop-blur-sm rounded-full p-2 border transition-all ${
+                    reaction === 'dislike'
+                      ? 'bg-red-500 text-white border-red-400'
+                      : 'bg-white/20 hover:bg-white/30 text-white border-white/40'
+                  }`}
+                  title={reaction === 'dislike' ? 'Remove dislike' : 'Dislike'}
+                >
+                  <ThumbsDown className={`w-6 h-6 ${reaction === 'dislike' ? 'fill-current' : ''}`} />
                 </button>
               </div>
             </div>

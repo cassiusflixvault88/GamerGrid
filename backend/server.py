@@ -19,7 +19,7 @@ from auth import (
 )
 
 # Import route modules
-from routes import auth_routes, watchlist_routes, payments_routes, game_routes, public_profile_routes, news_routes, analytics_routes, email_routes, trailer_routes, saved_trailers_routes, admin_messages_routes, auth_extras_routes, news_social_routes, app_review_social_routes, account_routes, ratings_routes, admin_routes, ceo_messages_routes, saved_articles_routes, referrals_routes
+from routes import auth_routes, watchlist_routes, payments_routes, game_routes, game_reactions_routes, public_profile_routes, news_routes, analytics_routes, email_routes, trailer_routes, saved_trailers_routes, admin_messages_routes, auth_extras_routes, news_social_routes, app_review_social_routes, account_routes, ratings_routes, admin_routes, ceo_messages_routes, saved_articles_routes, referrals_routes
 
 
 ROOT_DIR = Path(__file__).parent
@@ -58,6 +58,7 @@ api_router.include_router(auth_routes.profile_router)
 api_router.include_router(watchlist_routes.router)
 api_router.include_router(payments_routes.router)
 api_router.include_router(game_routes.router)
+api_router.include_router(game_reactions_routes.router)
 api_router.include_router(public_profile_routes.router)
 api_router.include_router(news_routes.router)
 api_router.include_router(analytics_routes.router)
