@@ -22,7 +22,7 @@ const ShareButton = ({ variant = 'default', size = 'default', showText = true })
   const shareMessage = `🎮 Check out GamerGrid — Ultimate Gaming Discovery Hub!
 
 ✨ Features:
-• Discover 10,000+ games across PS5, Xbox, PC & Switch
+• Discover 5,000+ games across PS5, Xbox, PC & Switch
 • Watch HD trailers & gameplay
 • Build your game library
 • Live PC deals & price tracking

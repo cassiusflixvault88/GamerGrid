@@ -8,7 +8,7 @@ const CURRENT_VERSION = '2026.02.26';
 
 const ENTRIES = [
   {
-    title: '10,000+ games — fresh categories',
+    title: '5,000+ games — fresh categories',
     body: '350 PlayStation, 250 Xbox, 250 PC and 200 Switch titles. Plus new homepage rails for RPG, Shooters, Open World, Sci-Fi, Horror, Racing and Indie Gems.',
     emoji: '🎮',
   },
