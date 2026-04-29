@@ -138,21 +138,53 @@ const ContentModal = ({ content, isOpen, onClose, onPlayTrailer, onSelectContent
     }
   };
 
-  const handleLike = () => {
+  const handleReaction = async (next) => {
     if (!user) {
       toast({
         title: 'Sign in required',
-        description: 'Please sign in to like content',
+        description: 'Please sign in to react to games',
         variant: 'destructive',
       });
       return;
     }
-
-    setLiked(!liked);
-    toast({
-      title: liked ? 'Removed like' : 'Liked!',
-      description: liked ? `You unliked ${title}` : `You liked ${title}`,
-    });
+    if (reactionBusy || !content?.id) return;
+    setReactionBusy(true);
+    const newReaction = reaction === next ? 'none' : next;
+    const prev = reaction;
+    setReaction(newReaction);
+    try {
+      const token = localStorage.getItem('token');
+      const r = await axios.post(
+        `${API}/games/${content.id}/reaction`,
+        { reaction: newReaction },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setReaction(r.data?.my_reaction || newReaction);
+      setReactionCounts({
+        likes: r.data?.likes || 0,
+        dislikes: r.data?.dislikes || 0,
+      });
+      if (newReaction !== 'none') {
+        toast({
+          title: newReaction === 'like' ? '👍 Liked!' : '👎 Disliked',
+          description: newReaction === 'like' ? `You liked ${title}` : `You disliked ${title}`,
+        });
+      } else {
+        toast({
+          title: 'Reaction cleared',
+          description: `Removed your reaction from ${title}`,
+        });
+      }
+    } catch (e) {
+      setReaction(prev);
+      toast({
+        title: 'Could not save reaction',
+        description: e?.response?.data?.detail || 'Try again in a moment',
+        variant: 'destructive',
+      });
+    } finally {
+      setReactionBusy(false);
+    }
   };
 
   if (!content) return null;
