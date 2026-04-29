@@ -47,36 +47,29 @@ function registerValidSW(swUrl, config) {
         }
         installingWorker.onstatechange = () => {
           if (installingWorker.state === 'installed') {
+            // Tell the new SW to activate immediately. Because the SW is now
+            // passthrough (no caching), there is nothing stale to evict and
+            // no need to reload the page — the user keeps their session,
+            // form state, scroll position, everything. Updates simply flow
+            // in naturally on the next navigation/reload they trigger.
+            try {
+              installingWorker.postMessage({ type: 'SKIP_WAITING' });
+            } catch (_) { /* noop */ }
             if (navigator.serviceWorker.controller) {
-              // A newer SW is ready. Tell it to take control IMMEDIATELY
-              // (skipWaiting) and then reload so the user gets fresh JS.
-              try {
-                installingWorker.postMessage({ type: 'SKIP_WAITING' });
-              } catch (_) { /* noop */ }
               if (config && config.onUpdate) {
                 config.onUpdate(registration);
               }
-              // Soft reload after a beat so the new SW can claim clients.
-              setTimeout(() => {
-                try { window.location.reload(); } catch (_) {}
-              }, 600);
-            } else {
-              if (config && config.onSuccess) {
-                config.onSuccess(registration);
-              }
+            } else if (config && config.onSuccess) {
+              config.onSuccess(registration);
             }
           }
         };
       };
 
-      // When a new SW takes control mid-session, immediately reload so stale
-      // cached HTML gets replaced with fresh content from the new SW.
-      let refreshing = false;
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (refreshing) return;
-        refreshing = true;
-        try { window.location.reload(); } catch (_) {}
-      });
+      // Intentionally NO auto-reload on controllerchange. The previous version
+      // hard-reloaded the page whenever a new SW took over, which kicked
+      // users out of forms (signup/login/checkout) mid-action. Since the SW
+      // no longer caches anything, there's no stale content to flush.
     })
     .catch((error) => {
       console.error('Error during service worker registration:', error);

@@ -1,77 +1,47 @@
 /* eslint-disable no-restricted-globals */
+/**
+ * GamerGrid Service Worker — PASSTHROUGH MODE
+ *
+ * History: previous versions cached static assets and HTML, which caused
+ * "users must clear cache after every redeploy" hell. New strategy: do
+ * NOTHING for fetches. Browser handles all caching natively via the
+ * standard HTTP cache-control headers Cloudflare/Emergent already serve.
+ *
+ * Why keep the SW at all?
+ *   - It still enables PWA installability ("Add to Home Screen").
+ *   - The install/activate handlers wipe ALL legacy caches from previous
+ *     versions, healing every existing user automatically on next visit.
+ */
 
-const CACHE_NAME = 'gamergrid-v5';
+const CACHE_NAME = 'gamergrid-passthrough-v1';
 
-// Install + immediately skip waiting so a new SW takes control ASAP
+// Install: take over immediately so no old SW lingers serving stale assets.
 self.addEventListener('install', (event) => {
   self.skipWaiting();
-  event.waitUntil(caches.open(CACHE_NAME));
+  event.waitUntil(Promise.resolve());
 });
 
-// Activate — clean up ALL old caches (any version name) + claim all clients
-// so the new SW starts handling requests from existing tabs immediately.
+// Activate: nuke EVERY cache (including any from previous SW versions),
+// then claim all open tabs so they're controlled by THIS SW from now on.
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     Promise.all([
       self.clients.claim(),
       caches.keys().then((names) =>
-        Promise.all(
-          names.filter((n) => n !== CACHE_NAME).map((n) => caches.delete(n))
-        )
+        Promise.all(names.map((n) => caches.delete(n)))
       ),
     ])
   );
 });
-const urlsToCache = [
-  '/',
-  '/static/css/main.css',
-  '/static/js/main.js',
-];
 
-// Fetch event - NEVER intercept API requests; cache static assets only
-self.addEventListener('fetch', (event) => {
-  const url = new URL(event.request.url);
+// Fetch: do nothing. Letting the browser handle the request natively means
+// users always get fresh HTML/JS/CSS on every reload — no cache, no stale
+// bundles, no "buddy can't sign up after redeploy" errors. The hashed CRA
+// bundle filenames (main.[hash].js) are already cache-safe by design.
+// We intentionally do NOT call event.respondWith() so the request bypasses
+// the SW entirely.
 
-  // 🔴 Bypass SW entirely for API + auth routes — these MUST be live every request.
-  if (url.pathname.startsWith('/api/') || event.request.method !== 'GET') {
-    return; // let the browser handle it
-  }
-
-  // 🔴 Bypass SW for the JS/CSS bundles too — CRA already hashes them by content,
-  // so we WANT the browser to fetch the new ones on every deploy. Caching them
-  // was the root cause of "buddy can't sign up after redeploy" bugs because
-  // his browser kept running the old bundle.
-  if (url.pathname.startsWith('/static/')) {
-    return; // let the browser handle it (browser cache headers will still apply)
-  }
-
-  // Network-first for HTML navigations (so deploy updates take effect)
-  if (event.request.mode === 'navigate') {
-    event.respondWith(
-      fetch(event.request).catch(() => caches.match('/'))
-    );
-    return;
-  }
-
-  // Cache-first for static assets only
-  event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) return cachedResponse;
-      return fetch(event.request).then((response) => {
-        if (!response || response.status !== 200 || response.type !== 'basic') {
-          return response;
-        }
-        const responseToCache = response.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache);
-        });
-        return response;
-      });
-    })
-  );
-});
-
-// Allow page to ask SW to skip waiting (used by InstallPWA + force-update)
+// Allow page-side code to ask SW to skip waiting (legacy compat).
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
