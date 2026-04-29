@@ -91,11 +91,31 @@ async def _run_weekly_digest():
         _last_run.update({"ts": datetime.now(timezone.utc).isoformat(), "error": str(e)})
 
 
+async def _refresh_homepage_caches():
+    """Prewarms the homepage rails so users always hit warm cache.
+    Fires every 30 minutes — clears cached entries for trending/top-rated/etc.
+    so the very next request to those endpoints triggers a fresh IGDB fetch.
+    Result: visitors at any minute see games that are at most 30 min stale.
+    """
+    try:
+        # Clear stale cache entries for the rails users see most.
+        # The endpoints will rebuild them on the next request automatically.
+        prefixes = [
+            "trending:", "toprated:", "top10:", "popular:", "newreleases:",
+            "upcoming:", "platform:", "category:", "goty:",
+        ]
+        regex = "^(" + "|".join(prefixes) + ")"
+        r = await db.response_cache.delete_many({"_id": {"$regex": regex}})
+        logger.info(f"🔄 Auto-refresh: cleared {r.deleted_count} cache entries — rails will rebuild on next visit")
+    except Exception as e:
+        logger.warning(f"Auto-refresh failed: {e}")
+
+
 def start_scheduler():
     """Called once at app startup."""
     if scheduler.running:
         return
-    # Every Monday at 9am UTC (4am EST / 1am PST — overnight in US, perfect timing)
+    # Weekly digest — every Monday at 9am UTC (4am EST / 1am PST)
     scheduler.add_job(
         _run_weekly_digest,
         trigger=CronTrigger(day_of_week="mon", hour=9, minute=0),
@@ -103,8 +123,16 @@ def start_scheduler():
         replace_existing=True,
         misfire_grace_time=3600,
     )
+    # Homepage cache refresh — every 30 minutes around the clock
+    scheduler.add_job(
+        _refresh_homepage_caches,
+        trigger=CronTrigger(minute="*/30"),
+        id="cache_refresh",
+        replace_existing=True,
+        misfire_grace_time=600,
+    )
     scheduler.start()
-    logger.info("📅 Scheduler started — weekly digest fires every Monday 9am UTC")
+    logger.info("📅 Scheduler started — weekly digest Mon 9am UTC + cache refresh every 30 min")
 
 
 def get_scheduler_status():
