@@ -18,6 +18,10 @@ support payments.
 - Hosting: Emergent (preview + deploy)
 
 ## Implemented (✅ as of 2026-02-28)
+### Iteration 37 (this turn — no more purple-cover placeholders)
+- 🎨 **Added `cover != null` filter to `/api/games/platform/{name}`.** IGDB has entries with no box art (especially in deep-catalog tail); these used to render as "purple cover" placeholder cards. Now only games with real artwork come through. Verified: 100/100 covers present at PS offset=3000.
+- 📊 **Documented 10,000 vs 5,786 behavior:** 10,500 raw platform-listings dedupe to ~5,800 unique cards (cross-platform titles collapse). Expected + correct. The "1,000+" copy the user still sees is stale service-worker cache from pre-redeploy.
+
 ### Iteration 36 (this turn — "Just For You" personalized rail)
 - 🎯 **New backend endpoint: `GET /api/games/for-you` (auth-required).** Pulls user's watchlist → batch-fetches their genres from IGDB in ONE multi-get → tallies top 3 genres → queries IGDB for top-rated games in those genres, excluding what's already watchlisted. Cached 15 min per user.
 - 🎮 **Frontend rail:** `"🎯 Just For You · Based on your watchlist"` appears at the TOP of Home (above Trending Now) ONLY for signed-in users. Auto-refreshes when the user's watchlist length changes. Hidden for guests to preserve clean first impression.

@@ -628,6 +628,9 @@ async def get_games_by_platform(
     deep = limit >= 200 or offset > 0
     where_parts = [
         f"platforms = ({ids_str})",
+        # Require a cover image — filters out the "purple placeholder" games
+        # that IGDB has in its DB but with no art (no one wants to see those).
+        "cover != null",
         "rating > 50" if deep else "rating > 70",
         "total_rating_count > 1" if deep else "total_rating_count > 20",
     ]
