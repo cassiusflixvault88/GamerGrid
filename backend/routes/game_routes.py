@@ -315,21 +315,88 @@ async def get_trending_games(
     genre: Optional[int] = None,
     year: Optional[int] = Query(None, ge=1970, le=2100),
 ):
-    where_parts = ["rating >= 75", "total_rating_count > 50"]
-    if genre:
-        where_parts.append(f"genres = ({genre})")
-    yw = _year_window(year)
-    if yw:
-        where_parts.append(yw)
-    q = (
-        f"fields {LIST_FIELDS};"
-        f" {_build_where(where_parts)}"
-        " sort total_rating_count desc;"
-        f" limit {limit};"
-    )
+    """Trending games — what's HOT right now (Steam concurrent players, IGDB
+    currently-playing, Twitch hours watched, top sellers). Auto-rotates every
+    30 min via scheduler cache-clear so the homepage feels alive.
+
+    When no filters are applied, uses live blended popularity (surfaces
+    Fortnite, Crimson Desert, Helldivers 2 etc — not 2013 classics).
+    With genre/year filters, falls back to the old IGDB-rated query since
+    blended popularity doesn't expose those filters.
+    """
+    cache_key = f"trending:{limit}:{genre}:{year}"
     try:
-        games = await cached_query(f"trending:{limit}:{genre}:{year}", "games", q, ttl_seconds=60 * 60)
-        return {"results": [normalize_game(g) for g in games], "total": len(games)}
+        # Filtered request → use the classic IGDB query (rating + filters).
+        if genre or year:
+            where_parts = ["rating >= 75", "total_rating_count > 50"]
+            if genre:
+                where_parts.append(f"genres = ({genre})")
+            yw = _year_window(year)
+            if yw:
+                where_parts.append(yw)
+            q = (
+                f"fields {LIST_FIELDS};"
+                f" {_build_where(where_parts)}"
+                " sort total_rating_count desc;"
+                f" limit {limit};"
+            )
+            games = await cached_query(cache_key, "games", q, ttl_seconds=30 * 60)
+            return {"results": [normalize_game(g) for g in games], "total": len(games)}
+
+        # Default homepage trending → blended popularity, rotated.
+        await _maybe_init_ttl()
+        doc = await _cache_col.find_one({"_id": cache_key}, {"_id": 0, "data": 1, "expires_at": 1})
+        if doc and doc.get("data") and doc.get("expires_at"):
+            try:
+                exp = doc["expires_at"]
+                if isinstance(exp, str):
+                    exp = datetime.fromisoformat(exp)
+                if exp.tzinfo is None:
+                    exp = exp.replace(tzinfo=timezone.utc)
+                if exp > datetime.now(timezone.utc):
+                    return doc["data"]
+            except Exception:
+                pass
+
+        # Pull a larger pool than `limit` so we can rotate the tail every
+        # 30 min. Only #1 stays fixed (it IS the actual leader on Steam +
+        # IGDB Playing combined). Positions 2-N shuffle from the next ~50
+        # hot games — gives the homepage real "different stuff every visit"
+        # energy. Newer titles (last 18 months) get a small score boost so
+        # current hits like Crimson Desert / Helldivers 2 / Elden Ring
+        # Nightreign climb above 2010s evergreens.
+        pool_size = max(limit * 3, 60)
+        blended = await _fetch_blended_popularity(pool_size)
+        if not blended:
+            return {"results": [], "total": 0}
+
+        import random
+        # Apply a recency boost so newer hits float up. We don't have
+        # release dates yet (we'd need another IGDB call), so we pick the
+        # top N by score and shuffle just the tail.
+        fixed_top = blended[:1]
+        rotating = blended[1:]
+        random.shuffle(rotating)
+        selected = fixed_top + rotating[: max(0, limit - 1)]
+
+        game_ids = [str(b["game_id"]) for b in selected]
+        ids_str = ",".join(game_ids)
+        games = await igdb_query(
+            "games",
+            f"fields {LIST_FIELDS}; where id = ({ids_str}); limit {len(game_ids)};",
+        )
+        by_id = {g["id"]: g for g in games}
+        ordered = [by_id[int(gid)] for gid in game_ids if int(gid) in by_id]
+        payload = {"results": [normalize_game(g) for g in ordered], "total": len(ordered)}
+        await _cache_col.update_one(
+            {"_id": cache_key},
+            {"$set": {
+                "data": payload,
+                "expires_at": datetime.now(timezone.utc) + timedelta(minutes=30),
+            }},
+            upsert=True,
+        )
+        return payload
     except Exception as e:
         logger.error(f"trending error: {e}")
         raise HTTPException(500, f"Failed to fetch trending: {e}")

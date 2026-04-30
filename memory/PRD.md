@@ -18,6 +18,12 @@ support payments.
 - Hosting: Emergent (preview + deploy)
 
 ## Implemented (✅ as of 2026-02-28)
+### Iteration 41 (2026-04-30 — Trending shows REAL hits, rotates every 30 min)
+- 🔥 **Rewired `GET /api/games/trending`** to use `_fetch_blended_popularity` (Steam concurrent players + IGDB Playing + Twitch hours watched + Top Sellers) instead of all-time `total_rating_count`. Stops crowning 2013 GTA V over Apex/Helldivers/Crimson Desert.
+- 🔄 **Auto-rotation**: only #1 stays fixed (genuine leader); positions 2-N shuffled from a pool of 60 hot games, refreshed every 30 min via existing scheduler cache-clear. Verified 3 distinct lineups across 3 different requests — Apex/Valorant/Helldivers/Diablo, Dead by Daylight/Marvel Rivals/R.E.P.O./Rust, Hollow Knight Silksong/Elden Ring Nightreign/Deltarune/Wuthering Waves.
+- 🎯 **Filtered requests** (genre/year) still use the IGDB-rated query so Cassius's BrowseAllPage filters keep working.
+- ✅ Lint clean. Crimson Desert verified at #40 in pool (will rotate up on different visits).
+
 ### Iteration 40 (2026-04-30 — JSON-LD VideoGame structured data)
 - 🆕 **`/app/frontend/src/components/SeoSchema.jsx`** — generic JSON-LD injector. Builds schema.org `ItemList` of `VideoGame` nodes with full metadata (cover image, 5-star aggregateRating from vote_average, ratingCount, gamePlatform, genre, datePublished).
 - 🏠 **Home page**: emits two ItemLists — Top 10 (10 games) + Trending (25 games) — eligible for Google "Top games" carousel rich results in mobile search.
