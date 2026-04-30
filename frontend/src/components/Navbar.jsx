@@ -76,8 +76,8 @@ const Navbar = () => {
           scrolled ? 'bg-black/95 backdrop-blur-sm' : 'bg-gradient-to-b from-black/80 to-transparent'
         }`}
       >
-        <div className="max-w-[1920px] mx-auto px-6 lg:px-12 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-8">
+        <div className="max-w-[1920px] mx-auto px-3 sm:px-6 lg:px-12 py-4 flex items-center justify-between gap-2">
+          <div className="flex items-center space-x-3 sm:space-x-6 lg:space-x-8 min-w-0">
             <Link to="/" className="flex items-center gap-2">
               <img 
                 src="/gamergrid-icon.svg" 
@@ -88,7 +88,7 @@ const Navbar = () => {
                 GamerGrid
               </div>
             </Link>
-            <div className="hidden md:flex items-center space-x-6">
+            <div className="hidden lg:flex items-center space-x-6">
               <Link
                 to="/"
                 className="text-white/90 hover:text-white transition-colors text-sm font-medium"
@@ -135,9 +135,9 @@ const Navbar = () => {
             </div>
           </div>
 
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
             {/* Desktop Search */}
-            <div className="hidden md:block">
+            <div className="hidden lg:block">
               <SearchAutocomplete />
             </div>
 
@@ -147,7 +147,7 @@ const Navbar = () => {
             {/* Mobile Search Button */}
             <button
               onClick={() => setSearchOpen(!searchOpen)}
-              className="md:hidden p-2 text-white/90 hover:text-white transition-colors"
+              className="lg:hidden p-2 text-white/90 hover:text-white transition-colors"
             >
               <Search className="w-5 h-5" />
             </button>
@@ -313,24 +313,21 @@ const Navbar = () => {
                 )}
               </div>
             ) : (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
                 <button
                   onClick={() => openAuth('login')}
-                  className="px-3 py-2 text-white/80 hover:text-white text-sm font-semibold transition-colors"
+                  className="px-2 sm:px-3 py-2 text-white/80 hover:text-white text-xs sm:text-sm font-semibold transition-colors whitespace-nowrap"
                   data-testid="navbar-sign-in"
                 >
                   Sign In
                 </button>
                 <button
                   onClick={() => openAuth('signup')}
-                  className="relative px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-md text-sm font-bold transition-all shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 hover:scale-105"
+                  className="px-3 sm:px-4 py-2 bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-white rounded-md text-xs sm:text-sm font-extrabold transition-all shadow-lg shadow-emerald-500/40 hover:shadow-emerald-500/60 hover:scale-105 whitespace-nowrap"
                   data-testid="navbar-sign-up"
                 >
-                  <span className="hidden sm:inline">Sign Up Free</span>
+                  <span className="hidden sm:inline">Sign Up — Free</span>
                   <span className="sm:hidden">Sign Up</span>
-                  <span className="absolute -top-2 -right-2 bg-emerald-500 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full uppercase tracking-wide shadow-md hidden sm:block">
-                    Free
-                  </span>
                 </button>
               </div>
             )}
@@ -340,7 +337,7 @@ const Navbar = () => {
 
       {/* Mobile Search Overlay */}
       {searchOpen && (
-        <div className="md:hidden fixed inset-0 bg-black z-50 pt-20 px-4">
+        <div className="lg:hidden fixed inset-0 bg-black z-50 pt-20 px-4">
           <div className="mb-4">
             <SearchAutocomplete />
           </div>

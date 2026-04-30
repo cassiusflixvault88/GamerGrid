@@ -18,6 +18,13 @@ support payments.
 - Hosting: Emergent (preview + deploy)
 
 ## Implemented (✅ as of 2026-02-28)
+### Iteration 46 (2026-04-30 — Sign Up button: green + mobile-safe)
+- 🟢 **Sign Up button is now GREEN** (emerald-500 → green-600 gradient with shadow). Cassius wanted green; previous purple-blue was wrong.
+- 📱 **Mobile/landscape fix**: bumped desktop-nav breakpoint from `md:` (768px) to `lg:` (1024px) so landscape phones (~896px wide) use the clean mobile layout instead of cramming the full nav (Home/PS/Xbox/PC/Switch/News/Browse All) alongside the auth buttons.
+- 🧷 **Anti-overflow**: `whitespace-nowrap` on both auth buttons, `flex-shrink-0` on the right container, `min-w-0` on the left logo cluster, smaller side padding on small screens (`px-3 sm:px-6`), smaller gaps. Buttons can never wrap to two lines or get pushed off-screen.
+- 🪧 Dropped the absolute-positioned "FREE" pill (caused weird positioning on small screens). Now reads "Sign Up — Free" inline (full breakpoint) or "Sign Up" (compact mode).
+- ✅ Verified at 393×852 (iPhone portrait): both buttons same row, both inside viewport, no wrap.
+
 ### Iteration 45 (2026-04-30 — Prominent Sign Up Free CTA in navbar)
 - 🆕 **Two-button auth UX in `Navbar.jsx`**: text-only "Sign In" + gradient "Sign Up Free" with green "FREE" badge. Hover scale + purple glow. Mobile collapses badge but keeps the button.
 - 🔁 **`AuthModal` accepts `initialMode` prop** ("login" | "signup"). Modal `useEffect` resyncs whenever it re-opens so clicking different buttons opens the right tab.
