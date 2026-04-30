@@ -561,13 +561,25 @@ async def _reconcile_pending_payments() -> int:
     return recovered
 
 
+async def _is_admin(user_id: str) -> bool:
+    """Single source of truth for admin check — matches auth_routes pattern.
+    Admin status lives in db.admins ({user_id, is_admin: True}). Some legacy
+    code reads users.is_admin too, so we check both for compatibility."""
+    admin_doc = await db.admins.find_one({"user_id": user_id}, {"_id": 0, "is_admin": 1})
+    if admin_doc and admin_doc.get("is_admin"):
+        return True
+    user_doc = await db.users.find_one({"id": user_id}, {"_id": 0, "is_admin": 1})
+    if user_doc and user_doc.get("is_admin"):
+        return True
+    return False
+
+
 @router.get("/admin/tips-feed")
 async def admin_tips_feed(
     limit: int = 50,
     current_user: dict = Depends(verify_token),
 ):
-    user = await db.users.find_one({"id": current_user['user_id']}, {"_id": 0, "is_admin": 1})
-    if not user or not user.get('is_admin'):
+    if not await _is_admin(current_user['user_id']):
         raise HTTPException(403, "Admin access required")
 
     # Fire reconciliation in the background — DO NOT block the read query.
@@ -713,8 +725,7 @@ async def admin_all_transactions(
     limit: int = 50,
     current_user: dict = Depends(verify_token),
 ):
-    user = await db.users.find_one({"id": current_user['user_id']}, {"_id": 0, "is_admin": 1})
-    if not user or not user.get('is_admin'):
+    if not await _is_admin(current_user['user_id']):
         raise HTTPException(403, "Admin access required")
     limit = max(1, min(int(limit or 50), 200))
     txs = await db.payment_transactions.find(
