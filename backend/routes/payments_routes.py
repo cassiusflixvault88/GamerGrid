@@ -7,6 +7,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 from datetime import datetime, timezone, timedelta
 from dotenv import load_dotenv
 from pathlib import Path
+import asyncio
 import logging
 import os
 from pydantic import BaseModel
@@ -569,10 +570,13 @@ async def admin_tips_feed(
     if not user or not user.get('is_admin'):
         raise HTTPException(403, "Admin access required")
 
-    # First: reconcile any pending payments that actually succeeded on Stripe.
-    # This catches payments where the user's browser closed before the success
-    # page could poll, OR where Stripe webhooks aren't configured in the dashboard.
-    recovered = await _reconcile_pending_payments()
+    # Fire reconciliation in the background — DO NOT block the read query.
+    # If reconcile is slow/hangs against Stripe, we still serve the user their
+    # existing paid tips immediately. Reconcile updates land on next refresh.
+    try:
+        asyncio.create_task(_reconcile_pending_payments())
+    except Exception:
+        pass
 
     limit = max(1, min(int(limit or 50), 200))
 
@@ -599,13 +603,31 @@ async def admin_tips_feed(
         ):
             users_by_id[u["id"]] = u
 
+    # Bulk-fetch geo for all unique IPs in parallel with a global 3s timeout.
+    # If geo is slow we still return the tips — locations just show empty.
+    unique_ips = list({t.get("client_ip") or "" for t in txs if t.get("client_ip")})
+    geo_by_ip: dict = {}
+    if unique_ips:
+        try:
+            results = await asyncio.wait_for(
+                asyncio.gather(*[_geo_lookup(ip) for ip in unique_ips], return_exceptions=True),
+                timeout=3.0,
+            )
+            for ip, geo in zip(unique_ips, results):
+                if isinstance(geo, dict):
+                    geo_by_ip[ip] = geo
+        except asyncio.TimeoutError:
+            logger.warning("Geo enrichment timed out — returning tips without locations")
+        except Exception as e:
+            logger.warning(f"Geo enrichment failed: {e}")
+
     feed = []
     totals = {"tips": 0.0, "subs": 0.0, "count": 0}
     for t in txs:
         amt = float(t.get("amount") or t.get("amount_total") or 0)
         ptype = t.get("payment_type", "tip")
         u = users_by_id.get(t.get("user_id"), {})
-        enriched = await _enrich_tip_with_geo(t)
+        geo = geo_by_ip.get(t.get("client_ip") or "", {})
         feed.append({
             "session_id": t.get("session_id"),
             "amount": round(amt, 2),
@@ -615,9 +637,9 @@ async def admin_tips_feed(
             "username": u.get("username") or "Anonymous",
             "display_name": u.get("display_name") or u.get("username") or "Anonymous",
             "avatar": u.get("profile_picture_url"),
-            "country": enriched.get("country", ""),
-            "country_code": enriched.get("country_code", ""),
-            "city": enriched.get("city", ""),
+            "country": geo.get("country") or "",
+            "country_code": geo.get("country_code") or "",
+            "city": geo.get("city") or "",
             "created_at": t.get("paid_at") or t.get("created_at"),
         })
         totals["count"] += 1
@@ -634,7 +656,7 @@ async def admin_tips_feed(
             "all": round(totals["tips"] + totals["subs"], 2),
             "count": totals["count"],
         },
-        "recovered": recovered,
+        "recovered": 0,
     }
 
 
