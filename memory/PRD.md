@@ -18,6 +18,13 @@ support payments.
 - Hosting: Emergent (preview + deploy)
 
 ## Implemented (✅ as of 2026-02-28)
+### Iteration 38 (2026-02-28 — GSC "robots blocking indexing" diagnosis)
+- 🔍 **Diagnosed Google Search Console "robots are preventing indexing" alert.**
+  Verified production (`gamer-grid.com`) is fully crawlable: no `x-robots-tag` header, `robots.txt` allows `*`, `<meta name="robots">` says `index, follow`, Googlebot UA gets HTTP 200, sitemap.xml well-formed.
+- ✅ **Conclusion: NO CODE FIX NEEDED.** Alert was based on a stale crawl from before recent CORS/canonical/SW fixes.
+- 📋 Provided Cassius with 5-step GSC manual workflow: confirm Domain property, resubmit sitemap, "Test Live URL" + Request Indexing on key pages, click "Validate Fix" on the GSC alert. Expected recrawl 24–72h.
+- ⚠️ Flagged risk: if Cassius added the Emergent preview URL as a separate GSC property, that one IS noindexed and must be deleted.
+
 ### Iteration 37 (this turn — no more purple-cover placeholders)
 - 🎨 **Added `cover != null` filter to `/api/games/platform/{name}`.** IGDB has entries with no box art (especially in deep-catalog tail); these used to render as "purple cover" placeholder cards. Now only games with real artwork come through. Verified: 100/100 covers present at PS offset=3000.
 - 📊 **Documented 10,000 vs 5,786 behavior:** 10,500 raw platform-listings dedupe to ~5,800 unique cards (cross-platform titles collapse). Expected + correct. The "1,000+" copy the user still sees is stale service-worker cache from pre-redeploy.
