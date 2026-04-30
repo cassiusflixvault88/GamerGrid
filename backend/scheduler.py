@@ -115,6 +115,19 @@ async def _refresh_homepage_caches():
         logger.warning(f"Auto-refresh failed: {e}")
 
 
+async def _weekly_indexnow_ping():
+    """Notify Bing/Yandex/Naver/Seznam/DuckDuckGo about all canonical URLs.
+    Google ignores IndexNow but the others combine for ~30% of search traffic.
+    Fires every Sunday 10am UTC."""
+    try:
+        from routes.seo_routes import submit_indexnow, get_canonical_urls
+        urls = get_canonical_urls()
+        result = await submit_indexnow(urls)
+        logger.info(f"📣 Weekly IndexNow ping: {result}")
+    except Exception as e:
+        logger.warning(f"Weekly IndexNow ping failed: {e}")
+
+
 def start_scheduler():
     """Called once at app startup."""
     if scheduler.running:
@@ -135,8 +148,18 @@ def start_scheduler():
         replace_existing=True,
         misfire_grace_time=600,
     )
+    # IndexNow weekly ping — every Sunday 10am UTC. Notifies Bing/Yandex/etc
+    # that our canonical URLs are fresh. Google ignores it (uses sitemap lastmod
+    # instead, which we serve dynamically at /api/sitemap.xml).
+    scheduler.add_job(
+        _weekly_indexnow_ping,
+        trigger=CronTrigger(day_of_week="sun", hour=10, minute=0),
+        id="indexnow_weekly",
+        replace_existing=True,
+        misfire_grace_time=3600,
+    )
     scheduler.start()
-    logger.info("📅 Scheduler started — weekly digest Mon 9am UTC + cache refresh every 30 min")
+    logger.info("📅 Scheduler started — weekly digest Mon 9am UTC + cache refresh every 30 min + IndexNow Sun 10am UTC")
 
 
 def get_scheduler_status():

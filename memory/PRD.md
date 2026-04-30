@@ -18,6 +18,13 @@ support payments.
 - Hosting: Emergent (preview + deploy)
 
 ## Implemented (✅ as of 2026-02-28)
+### Iteration 39 (2026-04-30 — SEO automation that actually works in 2026)
+- 🆕 **`/app/backend/routes/seo_routes.py`** — dynamic sitemap at `GET /api/sitemap.xml` with always-fresh `<lastmod>` (Google's official replacement for the deprecated 2023 sitemap-ping endpoint). Today's date is baked in on every fetch.
+- 🌐 **IndexNow integration** — bulk-submits all canonical URLs to Bing, Yandex, Naver, Seznam, DuckDuckGo (~30% of search market). Verified live: HTTP 202 returned, 12 URLs accepted. Key file at `/ecbabe14f7b0321585bd2e8d0d7ef569.txt`.
+- ⏰ **Weekly scheduler job** `_weekly_indexnow_ping` — Sundays 10am UTC, automatically notifies all IndexNow engines. Wired into `scheduler.py` alongside existing weekly digest + 30-min cache refresh.
+- 🤖 **Updated `robots.txt`** to point at the dynamic backend sitemap so crawlers always see fresh dates. Static `sitemap.xml` retained as fallback with explicit lastmod tags.
+- ⚠️ **Important: walked back earlier "Google ping" offer** — that endpoint returns 404 since 2023. Replaced with what actually works in 2026 (lastmod + IndexNow).
+
 ### Iteration 38 (2026-02-28 — GSC "robots blocking indexing" diagnosis)
 - 🔍 **Diagnosed Google Search Console "robots are preventing indexing" alert.**
   Verified production (`gamer-grid.com`) is fully crawlable: no `x-robots-tag` header, `robots.txt` allows `*`, `<meta name="robots">` says `index, follow`, Googlebot UA gets HTTP 200, sitemap.xml well-formed.

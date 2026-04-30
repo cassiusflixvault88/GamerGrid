@@ -7,4 +7,6 @@ Disallow: /admin
 Disallow: /payment-success
 Disallow: /api/
 
-Sitemap: https://gamer-grid.com/sitemap.xml
+# Dynamic sitemap (refreshed <lastmod> on every crawl — Google's
+# recommended replacement for the deprecated sitemap-ping endpoint).
+Sitemap: https://gamer-grid.com/api/sitemap.xml
