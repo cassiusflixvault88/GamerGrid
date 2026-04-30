@@ -724,3 +724,36 @@ async def admin_all_transactions(
          "reconciled": 1},
     ).sort("created_at", -1).limit(limit).to_list(limit)
     return {"count": len(txs), "transactions": txs}
+
+
+
+
+# TEMPORARY public diagnostic — reveals exactly what the tips-feed query
+# returns from the LIVE production DB. No auth required so we can debug.
+# REMOVE AFTER DIAGNOSING.
+@router.get("/admin/diag-public")
+async def diag_public():
+    all_txs = await db.payment_transactions.find(
+        {},
+        {"_id": 0, "session_id": 1, "user_id": 1, "amount": 1,
+         "payment_type": 1, "payment_status": 1, "status": 1, "created_at": 1, "paid_at": 1},
+    ).sort("created_at", -1).limit(20).to_list(20)
+
+    or_query_matches = await db.payment_transactions.find(
+        {
+            "$or": [
+                {"payment_status": "paid"},
+                {"status": "completed"},
+            ],
+            "payment_type": {"$in": ["tip", "custom_tip", "pro_subscription"]},
+        },
+        {"_id": 0, "session_id": 1, "amount": 1, "payment_type": 1,
+         "payment_status": 1, "status": 1},
+    ).sort("created_at", -1).limit(20).to_list(20)
+
+    return {
+        "total_transactions": len(all_txs),
+        "all_transactions": all_txs,
+        "or_query_matches": len(or_query_matches),
+        "or_query_results": or_query_matches,
+    }
