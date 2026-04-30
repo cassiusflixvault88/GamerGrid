@@ -314,17 +314,18 @@ async def get_trending_games(
     limit: int = Query(30, ge=1, le=500),
     genre: Optional[int] = None,
     year: Optional[int] = Query(None, ge=1970, le=2100),
+    mode: str = Query("console", pattern="^(console|pc|all)$"),
 ):
     """Trending games — what's HOT right now (Steam concurrent players, IGDB
     currently-playing, Twitch hours watched, top sellers). Auto-rotates every
     30 min via scheduler cache-clear so the homepage feels alive.
 
-    When no filters are applied, uses live blended popularity (surfaces
-    Fortnite, Crimson Desert, Helldivers 2 etc — not 2013 classics).
-    With genre/year filters, falls back to the old IGDB-rated query since
-    blended popularity doesn't expose those filters.
+    `mode` controls which platform tier gets boosted:
+      - "console" (default): PlayStation/Xbox first, then Switch, then PC
+      - "pc": PC/Steam first, then console
+      - "all": no platform bias — pure live popularity ranking
     """
-    cache_key = f"trending:{limit}:{genre}:{year}"
+    cache_key = f"trending:{limit}:{genre}:{year}:{mode}"
     try:
         # Filtered request → use the classic IGDB query (rating + filters).
         if genre or year:
@@ -384,40 +385,55 @@ async def get_trending_games(
         by_id = {g["id"]: g for g in games}
 
         # Console-first reranking: boost games that ship on PlayStation /
-        # Xbox. Cassius is a console gamer; visitors are more likely to be
-        # the same. PC-only and mobile-only titles get pushed down (still
-        # included, just lower).
+        # Xbox. Switched per-user via the `mode` query param so PC players
+        # can flip the priority. Any-platform mode skips the boost entirely
+        # and uses pure live popularity.
         CONSOLE_KEYWORDS = (
             "playstation", "xbox", "ps5", "ps4", "ps3", "xbox 360",
             "xbox one", "xbox series", "xsx",
         )
-        SECONDARY_KEYWORDS = ("nintendo", "switch")
+        SWITCH_KEYWORDS = ("nintendo", "switch")
+        PC_KEYWORDS = ("pc (microsoft windows)", "pc", "windows", "mac", "linux", "steam")
+        if mode == "console":
+            primary_kw, secondary_kw = CONSOLE_KEYWORDS, SWITCH_KEYWORDS
+        elif mode == "pc":
+            primary_kw, secondary_kw = PC_KEYWORDS, SWITCH_KEYWORDS
+        else:  # mode == "all"
+            primary_kw, secondary_kw = (), ()
+
         scored = []
         for b in blended:
             g = by_id.get(int(b["game_id"]))
             if not g:
                 continue
             plats = [p.get("name", "").lower() for p in (g.get("platforms") or [])]
-            has_console = any(any(k in p for k in CONSOLE_KEYWORDS) for p in plats)
-            has_secondary = any(any(k in p for k in SECONDARY_KEYWORDS) for p in plats)
+            has_primary = primary_kw and any(any(k in p for k in primary_kw) for p in plats)
+            has_secondary = secondary_kw and any(any(k in p for k in secondary_kw) for p in plats)
             boost = 0
-            if has_console:
-                boost = 1000  # Massive boost — guarantees PS/Xbox titles surface first
+            if has_primary:
+                boost = 1000  # Massive boost — guarantees primary platforms surface first
             elif has_secondary:
-                boost = 200   # Small Switch boost
-            scored.append({"game": g, "score": b["score"] + boost, "console": has_console})
+                boost = 200   # Small secondary-tier boost
+            scored.append({"game": g, "score": b["score"] + boost})
 
-        # Sort by boosted score, keep top #1 fixed, shuffle the rest for
-        # 30-min freshness.
+        # Sort by boosted score, then split into "boosted tier" (primary
+        # platform) and "unboosted tier" so the shuffle stays WITHIN each tier.
+        # Otherwise a flat shuffle pulls PC-only games into top-3 even when
+        # plenty of boosted PS/Xbox games exist.
         scored.sort(key=lambda x: x["score"], reverse=True)
         if not scored:
             return {"results": [], "total": 0}
 
         import random
+        boosted = [s for s in scored if s["score"] >= 1000]
+        unboosted = [s for s in scored if s["score"] < 1000]
+        # #1 is always the absolute leader — keep it fixed for honesty.
         fixed_top = scored[:1]
-        rotating = scored[1:]
-        random.shuffle(rotating)
-        selected = fixed_top + rotating[: max(0, limit - 1)]
+        rest_boosted = [s for s in boosted if s is not fixed_top[0]]
+        random.shuffle(rest_boosted)
+        random.shuffle(unboosted)
+        # Fill from boosted tier first, then unboosted only if more slots needed.
+        selected = fixed_top + (rest_boosted + unboosted)[: max(0, limit - 1)]
         ordered = [s["game"] for s in selected]
         payload = {"results": [normalize_game(g) for g in ordered], "total": len(ordered)}
         await _cache_col.update_one(

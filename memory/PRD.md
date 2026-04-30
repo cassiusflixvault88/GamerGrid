@@ -18,6 +18,13 @@ support payments.
 - Hosting: Emergent (preview + deploy)
 
 ## Implemented (✅ as of 2026-02-28)
+### Iteration 43 (2026-04-30 — Gaming Mode toggle: per-user platform priority)
+- 🎮 **New per-user setting**: `gaming_mode` field on User (`console` | `pc` | `all`). Stored in MongoDB users collection, defaults to `console`.
+- 🔌 **Backend** (`game_routes.py`): `/api/games/trending` accepts `?mode=` param. Console mode boosts PS/Xbox by +1000, PC mode boosts Steam/Windows by +1000, "all" mode skips boost (pure popularity). Tier-aware shuffle keeps boosted games at top — fixed an earlier bug where flat shuffle leaked PC-only into mode=console results.
+- 🎨 **Frontend** — three-card toggle in Settings → Profile tab, gradient purple/blue card, active state with ring. data-testid: `gaming-mode-{console|pc|all}`. Persists via existing `PUT /user/profile` endpoint.
+- 🏠 **Home.jsx** wiring — passes `user?.gaming_mode || 'console'` to `getTrending()`. Logged-in users see their preferred ordering instantly; guests get console-first default (matches Cassius's audience).
+- ✅ Verified all 3 modes via curl: console mode = 10/10 console games (Diablo IV, Apex, BG3, Hades…); pc mode surfaces Rust/R.E.P.O./Slay the Spire II; all mode shows mixed feed (Roblox, VRChat, CoD BO6 etc).
+
 ### Iteration 42 (2026-04-30 — Console-first reranking)
 - 🎮 **Trending now prioritises PlayStation + Xbox.** Cassius is a console gamer; visitors likely the same. Added a +1000 score boost for any game shipping on PS3/PS4/PS5/Xbox 360/Xbox One/Xbox Series, +200 for Switch. PC-only titles drop to the tail.
 - 📈 **Pool size bumped to limit×4** so console-rerank has plenty to choose from. Verified across 3 calls: Fortnite finally surfaced (was missing before), plus Helldivers 2, Saros, Marvel Rivals, ARC Raiders, Hollow Knight Silksong, Elden Ring Nightreign, EA Sports FC 25, Apex, Baldur's Gate III, God of War.

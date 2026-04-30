@@ -54,6 +54,7 @@ class UserResponse(BaseModel):
     autoplay_trailers: bool = True
     email_notifications: bool = True
     maturity_rating: str = "PG-13"
+    gaming_mode: str = "console"  # "console" | "pc" | "all"
     # Roles
     is_admin: bool = False
     is_pro: bool = False
@@ -68,6 +69,7 @@ class UserProfileUpdate(BaseModel):
     autoplay_trailers: Optional[bool] = None
     email_notifications: Optional[bool] = None
     maturity_rating: Optional[str] = None
+    gaming_mode: Optional[str] = None
 
 
 class WatchlistItem(BaseModel):

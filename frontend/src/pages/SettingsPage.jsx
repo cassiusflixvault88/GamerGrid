@@ -38,6 +38,7 @@ const SettingsPage = () => {
     profile_picture_url: '',
     autoplay_trailers: true,
     email_notifications: true,
+    gaming_mode: 'console',
   });
 
   useEffect(() => {
@@ -61,6 +62,7 @@ const SettingsPage = () => {
               profile_picture_url: r.data.profile_picture_url || '',
               autoplay_trailers: r.data.autoplay_trailers ?? true,
               email_notifications: r.data.email_notifications ?? true,
+              gaming_mode: r.data.gaming_mode || 'console',
             });
           }
         } catch { /* silent */ }

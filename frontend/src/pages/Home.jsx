@@ -139,7 +139,7 @@ const Home = () => {
         openWorldData,
         indieData,
       ] = await Promise.all([
-        getTrending().catch(() => []),
+        getTrending(user?.gaming_mode || 'console').catch(() => []),
         getTop10().catch(() => []),
         getMostPopular().catch(() => []),
         getTopRated().catch(() => []),

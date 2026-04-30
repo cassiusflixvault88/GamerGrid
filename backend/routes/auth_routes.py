@@ -311,7 +311,7 @@ async def get_current_user(token_data: dict = Depends(verify_token)):
         {"id": token_data["user_id"]},
         {"_id": 0, "id": 1, "email": 1, "username": 1, "created_at": 1, "watchlist": 1, "favorites": 1,
          "display_name": 1, "phone": 1, "address": 1, "profile_picture_url": 1,
-         "autoplay_trailers": 1, "email_notifications": 1, "maturity_rating": 1, "is_pro": 1}
+         "autoplay_trailers": 1, "email_notifications": 1, "maturity_rating": 1, "is_pro": 1, "gaming_mode": 1}
     )
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
@@ -326,7 +326,7 @@ async def get_user_profile(token_data: dict = Depends(verify_token)):
     user = await db.users.find_one(
         {"id": token_data["user_id"]},
         {"_id": 0, "display_name": 1, "phone": 1, "address": 1, "profile_picture_url": 1,
-         "autoplay_trailers": 1, "email_notifications": 1, "maturity_rating": 1}
+         "autoplay_trailers": 1, "email_notifications": 1, "maturity_rating": 1, "gaming_mode": 1}
     )
     if not user:
         raise HTTPException(status_code=404, detail="User not found")

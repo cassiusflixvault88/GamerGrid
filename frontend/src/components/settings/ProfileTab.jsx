@@ -225,6 +225,44 @@ const ProfileTab = ({ profileData, setProfileData }) => {
         </div>
       </div>
 
+      {/* Gaming Mode — controls which platform tier gets boosted in Trending */}
+      <div className="mt-6 bg-gradient-to-br from-purple-900/30 via-black to-blue-900/30 backdrop-blur-md rounded-xl p-6 border border-purple-500/20">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-2xl">🎮</span>
+          <h3 className="text-lg font-bold text-white">Gaming Mode</h3>
+        </div>
+        <p className="text-sm text-white/60 mb-4">
+          Pick what shows up first in your Trending row. We still display every platform —
+          this just changes the order so you see your tribe first.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2" data-testid="gaming-mode-toggle">
+          {[
+            { value: 'console', emoji: '🎮', label: 'Console First', sub: 'PlayStation · Xbox' },
+            { value: 'pc', emoji: '💻', label: 'PC First', sub: 'Steam · Windows' },
+            { value: 'all', emoji: '🌐', label: 'No Preference', sub: 'Pure popularity' },
+          ].map((opt) => {
+            const active = (profileData.gaming_mode || 'console') === opt.value;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setProfileData({ ...profileData, gaming_mode: opt.value })}
+                data-testid={`gaming-mode-${opt.value}`}
+                className={`text-left rounded-lg p-3 border transition-all ${
+                  active
+                    ? 'bg-purple-600/30 border-purple-400 ring-2 ring-purple-500/50'
+                    : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20'
+                }`}
+              >
+                <div className="text-xl mb-1">{opt.emoji}</div>
+                <div className="font-semibold text-white text-sm">{opt.label}</div>
+                <div className="text-xs text-white/50">{opt.sub}</div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       <Button
         onClick={handleSave}
         disabled={saving}

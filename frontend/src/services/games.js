@@ -20,7 +20,7 @@ export const getImageUrl = (path /*, size */) => {
 
 const unwrap = (res) => (res?.data?.results ?? []);
 
-export const getTrending = async () => unwrap(await axios.get(`${API}/games/trending?limit=60`));
+export const getTrending = async (mode) => unwrap(await axios.get(`${API}/games/trending?limit=60${mode ? `&mode=${mode}` : ''}`));
 export const getPopular = async () => unwrap(await axios.get(`${API}/games/trending?limit=60`));
 export const getTopRated = async () => unwrap(await axios.get(`${API}/games/top-rated?limit=60`));
 export const getUpcoming = async () => unwrap(await axios.get(`${API}/games/upcoming?limit=60`));
