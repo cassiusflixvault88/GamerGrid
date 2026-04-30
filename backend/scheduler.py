@@ -95,17 +95,21 @@ async def _refresh_homepage_caches():
     """Prewarms the homepage rails so users always hit warm cache.
     Fires every 30 minutes — clears cached entries for trending/top-rated/etc.
     so the very next request to those endpoints triggers a fresh IGDB fetch.
-    Result: visitors at any minute see games that are at most 30 min stale.
     """
     try:
-        # Clear stale cache entries for the rails users see most.
-        # The endpoints will rebuild them on the next request automatically.
         prefixes = [
             "trending:", "toprated:", "top10:", "popular:", "newreleases:",
-            "upcoming:", "platform:", "category:", "goty:",
+            "upcoming:", "platform:", "category:", "goty:", "new:",
         ]
         regex = "^(" + "|".join(prefixes) + ")"
-        r = await db.response_cache.delete_many({"_id": {"$regex": regex}})
+        # Cache lives in `games_cache` (the same collection game_routes uses).
+        # Earlier code wrongly used `response_cache` — which doesn't exist —
+        # so this job was silently a no-op. Now it actually clears stale rails.
+        # NEVER clear `top10_v*` (the email digest depends on it) or
+        # `top10_snapshot:*` (used for delta computation).
+        r = await db.games_cache.delete_many({
+            "_id": {"$regex": regex, "$not": {"$regex": "^top10_(v|snapshot)"}}
+        })
         logger.info(f"🔄 Auto-refresh: cleared {r.deleted_count} cache entries — rails will rebuild on next visit")
     except Exception as e:
         logger.warning(f"Auto-refresh failed: {e}")

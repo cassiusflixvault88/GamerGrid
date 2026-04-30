@@ -31,17 +31,47 @@ def sender_email() -> str:
 
 
 async def fetch_top10_for_email() -> list:
-    """Re-use the cached top10 from games_cache; fall back to empty list."""
-    cache = await db.games_cache.find_one(
-        {"_id": "top10_v4"}, {"_id": 0, "data": 1}
-    )
+    """Get the latest Top 10 list. Tries multiple sources in order so the
+    weekly digest never fails just because the 5-min `/top10` cache expired."""
+    # 1. Live cache (5-min TTL — fastest path when warm)
+    cache = await db.games_cache.find_one({"_id": "top10_v4"}, {"_id": 0, "data": 1})
     if not cache:
-        # Backwards-compat with older cache key
-        cache = await db.games_cache.find_one(
-            {"_id": "top10_v3"}, {"_id": 0, "data": 1}
-        )
+        cache = await db.games_cache.find_one({"_id": "top10_v3"}, {"_id": 0, "data": 1})
     if cache and cache.get("data") and cache["data"].get("results"):
         return cache["data"]["results"][:10]
+
+    # 2. Cache is empty — call the live endpoint to populate it.
+    # This triggers the same logic users get on the homepage.
+    try:
+        import httpx
+        base = site_url()
+        async with httpx.AsyncClient(timeout=20.0) as client:
+            r = await client.get(f"{base}/api/games/top10")
+            if r.status_code == 200:
+                data = r.json()
+                results = data.get("results") or []
+                if results:
+                    return results[:10]
+    except Exception:
+        pass
+
+    # 3. Final fallback — pull from the latest snapshot ID stored in games_cache.
+    # We can use it to fetch fresh metadata via IGDB inside game_routes' helpers.
+    try:
+        from datetime import datetime, timezone, timedelta
+        for offset in range(7):  # check up to 7 days back
+            day = (datetime.now(timezone.utc) - timedelta(days=offset)).strftime("%Y-%m-%d")
+            snap = await db.games_cache.find_one(
+                {"_id": f"top10_snapshot:{day}"}, {"_id": 0, "data": 1}
+            )
+            if snap and snap.get("data"):
+                # snap.data is {game_id: rank}; sort and rebuild minimal list
+                items = sorted(snap["data"].items(), key=lambda kv: kv[1])
+                return [{"id": int(gid), "title": f"Top game #{rank}", "rank": rank}
+                        for gid, rank in items[:10]]
+    except Exception:
+        pass
+
     return []
 
 
