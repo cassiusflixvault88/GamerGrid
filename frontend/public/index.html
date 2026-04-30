@@ -98,6 +98,25 @@
              the "Can't reach our server" error after deploys). Runs once per
              device per app version; flag stored in localStorage. -->
         <script>
+        // Canonicalize www → non-www and HTTP → HTTPS BEFORE anything else
+        // loads, so the rest of the app always runs on the canonical origin.
+        // This solves "logged in on /gamer-grid.com but Google sends users
+        // to www.gamer-grid.com which is a different CORS origin."
+        (function () {
+          try {
+            var h = window.location.hostname;
+            var isHttp = window.location.protocol === 'http:';
+            var isWww = h === 'www.gamer-grid.com';
+            if (isWww || (isHttp && h === 'gamer-grid.com')) {
+              var dest = 'https://gamer-grid.com'
+                + window.location.pathname
+                + window.location.search
+                + window.location.hash;
+              window.location.replace(dest);
+              return;
+            }
+          } catch (_) { /* never block load */ }
+        })();
         (function () {
           try {
             var APP_VERSION = '2026-04-30-passthrough-v2';

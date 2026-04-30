@@ -38,9 +38,21 @@ db = client[os.environ['DB_NAME']]
 app = FastAPI()
 
 # CORS middleware - MUST be before static files mount
+# Explicit origin list — using `["*"]` with allow_credentials=True is INVALID
+# per the CORS spec and causes the browser to silently block POSTs from
+# www.gamer-grid.com (which Google search links to). Listing them explicitly
+# makes preflight pass cleanly.
+_CORS_ALLOWED = [
+    "https://gamer-grid.com",
+    "https://www.gamer-grid.com",
+    "http://gamer-grid.com",
+    "http://www.gamer-grid.com",
+    "https://hbo-max-app.preview.emergentagent.com",
+    "http://localhost:3000",
+]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify exact origins
+    allow_origins=_CORS_ALLOWED,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -366,13 +378,7 @@ async def root():
 # Include the router in the main app
 app.include_router(api_router)
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# (Removed duplicate CORSMiddleware — single middleware above is the source of truth.)
 
 # Configure logging
 logging.basicConfig(
