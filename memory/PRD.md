@@ -18,6 +18,12 @@ support payments.
 - Hosting: Emergent (preview + deploy)
 
 ## Implemented (✅ as of 2026-02-28)
+### Iteration 45 (2026-04-30 — Prominent Sign Up Free CTA in navbar)
+- 🆕 **Two-button auth UX in `Navbar.jsx`**: text-only "Sign In" + gradient "Sign Up Free" with green "FREE" badge. Hover scale + purple glow. Mobile collapses badge but keeps the button.
+- 🔁 **`AuthModal` accepts `initialMode` prop** ("login" | "signup"). Modal `useEffect` resyncs whenever it re-opens so clicking different buttons opens the right tab.
+- 🎯 Goal: make free signup obvious so guests convert. Previously only "Sign In" existed → ambiguous about whether registration was free or required. Now the FREE badge answers that instantly.
+- ✅ Verified live: both `data-testid="navbar-sign-in"` and `data-testid="navbar-sign-up"` present. Lint clean.
+
 ### Iteration 44 (2026-04-30 — Browse All progressive loading)
 - ⚡ **Eliminated the long spinner** on `/games/all` and `/games/{platform}`. Was waiting for ALL 25 simultaneous API calls (~10,500 games) before rendering anything; now lights up the grid the moment the FIRST request returns.
 - 🎯 **Two-phase progressive loader**: Phase 1 fires 4 small endpoints in parallel and stream-appends them (typical first-card-paint < 700ms). Phase 2 deep-paginates PlayStation/Xbox/PC/Switch in the background, appending each chunk as it arrives.

@@ -7,8 +7,13 @@ import { Label } from './ui/label';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../hooks/use-toast';
 
-const AuthModal = ({ isOpen, onClose }) => {
-  const [isLogin, setIsLogin] = useState(true);
+const AuthModal = ({ isOpen, onClose, initialMode = 'login' }) => {
+  const [isLogin, setIsLogin] = useState(initialMode !== 'signup');
+  // Sync mode whenever the parent reopens the modal with a different intent
+  // (e.g. user clicked "Sign Up Free" first, closed it, then clicked "Sign In").
+  React.useEffect(() => {
+    if (isOpen) setIsLogin(initialMode !== 'signup');
+  }, [isOpen, initialMode]);
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');

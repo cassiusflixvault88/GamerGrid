@@ -13,6 +13,11 @@ const Navbar = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authMode, setAuthMode] = useState('login'); // 'login' | 'signup'
+  const openAuth = (mode) => {
+    setAuthMode(mode);
+    setAuthModalOpen(true);
+  };
   const [showUserMenu, setShowUserMenu] = useState(false);
   const navigate = useNavigate();
   const { user, logout } = useAuth();
@@ -308,13 +313,26 @@ const Navbar = () => {
                 )}
               </div>
             ) : (
-              <button
-                onClick={() => setAuthModalOpen(true)}
-                className="px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-md text-sm font-semibold transition-all"
-                data-testid="navbar-sign-in"
-              >
-                Sign In
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => openAuth('login')}
+                  className="px-3 py-2 text-white/80 hover:text-white text-sm font-semibold transition-colors"
+                  data-testid="navbar-sign-in"
+                >
+                  Sign In
+                </button>
+                <button
+                  onClick={() => openAuth('signup')}
+                  className="relative px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-md text-sm font-bold transition-all shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 hover:scale-105"
+                  data-testid="navbar-sign-up"
+                >
+                  <span className="hidden sm:inline">Sign Up Free</span>
+                  <span className="sm:hidden">Sign Up</span>
+                  <span className="absolute -top-2 -right-2 bg-emerald-500 text-white text-[9px] font-extrabold px-1.5 py-0.5 rounded-full uppercase tracking-wide shadow-md hidden sm:block">
+                    Free
+                  </span>
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -335,7 +353,11 @@ const Navbar = () => {
         </div>
       )}
 
-      <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} />
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        initialMode={authMode}
+      />
     </>
   );
 };
