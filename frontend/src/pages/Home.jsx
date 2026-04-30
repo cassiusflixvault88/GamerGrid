@@ -14,6 +14,7 @@ import AutoFetchBadge from '../components/AutoFetchBadge';
 import MeetCreatorCard from '../components/MeetCreatorCard';
 import RecentTippersTicker from '../components/RecentTippersTicker';
 import HomepageTipPing from '../components/HomepageTipPing';
+import SeoSchema from '../components/SeoSchema';
 import { useAuth } from '../context/AuthContext';
 import Footer from '../components/Footer';
 import AdSlot from '../components/AdSlot';
@@ -287,6 +288,22 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-black" data-testid="home-page">
+      {/* JSON-LD structured data — feeds Google rich-result carousels with
+          our top games. Picked up by Googlebot's JS-rendering pass. */}
+      <SeoSchema
+        id="home-top10"
+        type="VideoGameList"
+        games={top10}
+        listName="GamerGrid · Top 10 Games This Week"
+        pageUrl="https://gamer-grid.com/"
+      />
+      <SeoSchema
+        id="home-trending"
+        type="VideoGameList"
+        games={trending}
+        listName="GamerGrid · Trending Games"
+        pageUrl="https://gamer-grid.com/"
+      />
       <HomepageTipPing />
       <Navbar />
       <TopNavBar />

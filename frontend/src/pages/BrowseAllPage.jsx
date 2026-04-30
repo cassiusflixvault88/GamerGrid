@@ -7,6 +7,7 @@ import Footer from '../components/Footer';
 import ContentModal from '../components/ContentModal';
 import ContentCard from '../components/ContentCard';
 import VideoPlayer from '../components/VideoPlayer';
+import SeoSchema from '../components/SeoSchema';
 import { search as searchGames } from '../services/games';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -242,6 +243,15 @@ const BrowseAllPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-900 via-black to-gray-900" data-testid="browse-all-page">
+      {/* Platform-specific JSON-LD list so Google can build rich carousels
+          like "Top PS5 games" / "Top Xbox games" in mobile search. */}
+      <SeoSchema
+        id={`browse-${activePlatform}`}
+        type="VideoGameList"
+        games={games}
+        listName={`GamerGrid · ${(PLATFORMS.find((p) => p.key === activePlatform) || {}).label || 'Games'}`}
+        pageUrl={`https://gamer-grid.com/games/${activePlatform}`}
+      />
       <Navbar />
       <BackNavigation />
 

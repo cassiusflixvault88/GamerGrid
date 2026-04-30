@@ -18,6 +18,13 @@ support payments.
 - Hosting: Emergent (preview + deploy)
 
 ## Implemented (✅ as of 2026-02-28)
+### Iteration 40 (2026-04-30 — JSON-LD VideoGame structured data)
+- 🆕 **`/app/frontend/src/components/SeoSchema.jsx`** — generic JSON-LD injector. Builds schema.org `ItemList` of `VideoGame` nodes with full metadata (cover image, 5-star aggregateRating from vote_average, ratingCount, gamePlatform, genre, datePublished).
+- 🏠 **Home page**: emits two ItemLists — Top 10 (10 games) + Trending (25 games) — eligible for Google "Top games" carousel rich results in mobile search.
+- 🎮 **BrowseAllPage**: emits a platform-specific ItemList (e.g. "Top PlayStation games") that updates as user filters platform/genre/year. Up to 25 games per list.
+- ✅ Verified live in preview: 35 schema items rendered, all with images, 4.5/5 ratings, platforms, genres, release dates. Lint clean.
+- ⏳ Activates after redeploy. Compounds with the GSC validation Cassius kicked off — when Googlebot recrawls, it'll grab the structured data in the same pass.
+
 ### Iteration 39 (2026-04-30 — SEO automation that actually works in 2026)
 - 🆕 **`/app/backend/routes/seo_routes.py`** — dynamic sitemap at `GET /api/sitemap.xml` with always-fresh `<lastmod>` (Google's official replacement for the deprecated 2023 sitemap-ping endpoint). Today's date is baked in on every fetch.
 - 🌐 **IndexNow integration** — bulk-submits all canonical URLs to Bing, Yandex, Naver, Seznam, DuckDuckGo (~30% of search market). Verified live: HTTP 202 returned, 12 URLs accepted. Key file at `/ecbabe14f7b0321585bd2e8d0d7ef569.txt`.
