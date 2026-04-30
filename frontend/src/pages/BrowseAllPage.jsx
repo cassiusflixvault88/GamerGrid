@@ -96,49 +96,67 @@ const BrowseAllPage = () => {
       if (genre) params.set('genre', genre);
       if (year && year !== 'Any') params.set('year', year);
 
-      // Helper: fetch a platform across multiple offsets if total > 500
-      const fetchPlatformPaginated = async (key, total) => {
-        const chunks = [];
-        for (let off = 0; off < total; off += 500) {
-          const p = new URLSearchParams(params);
-          p.set('limit', String(Math.min(500, total - off)));
-          p.set('offset', String(off));
-          p.set('sort', 'popular');
-          chunks.push(
-            axios.get(`${API}/games/platform/${key}?${p.toString()}`)
-              .then((x) => x.data?.results || [])
-              .catch(() => []),
-          );
-        }
-        const pages = await Promise.all(chunks);
-        return pages.flat();
+      // Progressive loader — append new games as each request finishes so the
+      // grid lights up within ~500ms instead of waiting for all 25 calls. The
+      // de-dupe Set survives across appends so a game already shown doesn't
+      // re-render when later platform pages bring it in.
+      const seenIds = new Set();
+      const appendGames = (incoming) => {
+        if (!incoming?.length) return;
+        setGames((prev) => {
+          const fresh = incoming.filter((g) => g && !seenIds.has(g.id));
+          fresh.forEach((g) => seenIds.add(g.id));
+          if (!fresh.length) return prev;
+          return [...prev, ...fresh];
+        });
       };
 
       let url;
       if (activePlatform === 'all') {
         const mkUrl = (endpoint) => `${API}/games/${endpoint}?${params.toString()}`;
-        const [trending, top, popular, newRel, ps, xbox, pc, switchGames] = await Promise.all([
+        // Reset list before progressive append.
+        setGames([]);
+
+        // PHASE 1 — quick wins: 4 small endpoints fire in parallel and stream
+        // results into the grid as each one returns. User typically sees their
+        // first row of games in under 500ms.
+        const phase1 = [
+          axios.get(mkUrl('most-popular')).then((x) => x.data?.results || []).catch(() => []),
           axios.get(mkUrl('trending')).then((x) => x.data?.results || []).catch(() => []),
           axios.get(mkUrl('top-rated')).then((x) => x.data?.results || []).catch(() => []),
-          axios.get(mkUrl('most-popular')).then((x) => x.data?.results || []).catch(() => []),
           axios.get(mkUrl('new-releases')).then((x) => x.data?.results || []).catch(() => []),
-          fetchPlatformPaginated('playstation', platformLimit('playstation')),
-          fetchPlatformPaginated('xbox', platformLimit('xbox')),
-          fetchPlatformPaginated('pc', platformLimit('pc')),
-          fetchPlatformPaginated('switch', platformLimit('switch')),
-        ]);
-        const seen = new Set();
-        const merged = [...popular, ...trending, ...top, ...newRel, ...ps, ...xbox, ...pc, ...switchGames].filter((g) => {
-          if (!g || seen.has(g.id)) return false;
-          seen.add(g.id);
-          return true;
+        ];
+        phase1.forEach((p) => p.then(appendGames));
+        // Stop the spinner the moment phase 1 has anything to show.
+        Promise.race(phase1).then(() => setLoading(false));
+        await Promise.all(phase1);
+
+        // PHASE 2 — deep platform catalogs in the background. Each chunk
+        // appends as it arrives so the count grows naturally while browsing.
+        [
+          ['playstation', platformLimit('playstation')],
+          ['xbox', platformLimit('xbox')],
+          ['pc', platformLimit('pc')],
+          ['switch', platformLimit('switch')],
+        ].forEach(async ([key, total]) => {
+          for (let off = 0; off < total; off += 500) {
+            const p = new URLSearchParams(params);
+            p.set('limit', String(Math.min(500, total - off)));
+            p.set('offset', String(off));
+            p.set('sort', 'popular');
+            try {
+              const res = await axios.get(`${API}/games/platform/${key}?${p.toString()}`);
+              appendGames(res.data?.results || []);
+            } catch { /* skip failed page */ }
+          }
         });
-        setGames(merged);
       } else {
-        // Single-platform view — use paginated fetch when limit > 500
+        // Single-platform view — stream the catalog page-by-page so the grid
+        // lights up after the first 500 games and grows in the background.
         const total = platformLimit(activePlatform);
-        // Server understands rating/popular/release; trending+oldest are client-side
         const serverSort = sort === 'trending' || sort === 'oldest' ? 'rating' : sort;
+        setGames([]);
+
         if (total <= 500) {
           const platParams = new URLSearchParams(params);
           platParams.set('limit', String(total));
@@ -146,34 +164,28 @@ const BrowseAllPage = () => {
           url = `${API}/games/platform/${activePlatform}?${platParams.toString()}`;
           const res = await axios.get(url);
           setGames(res.data?.results || []);
+          setLoading(false);
         } else {
-          // Paginate
-          const chunks = [];
+          // Stream-paginate. Await ONLY the first chunk to clear the spinner;
+          // the rest stream in via appendGames on their own.
           for (let off = 0; off < total; off += 500) {
             const p = new URLSearchParams(params);
             p.set('limit', String(Math.min(500, total - off)));
             p.set('offset', String(off));
             p.set('sort', serverSort);
-            chunks.push(
-              axios.get(`${API}/games/platform/${activePlatform}?${p.toString()}`)
-                .then((x) => x.data?.results || [])
-                .catch(() => []),
-            );
+            const promise = axios.get(`${API}/games/platform/${activePlatform}?${p.toString()}`)
+              .then((x) => appendGames(x.data?.results || []))
+              .catch(() => {});
+            if (off === 0) {
+              await promise;
+              setLoading(false);
+            }
           }
-          const pages = await Promise.all(chunks);
-          const seen = new Set();
-          const merged = pages.flat().filter((g) => {
-            if (!g || seen.has(g.id)) return false;
-            seen.add(g.id);
-            return true;
-          });
-          setGames(merged);
         }
       }
     } catch (err) {
       console.error('Browse load error:', err);
       setGames([]);
-    } finally {
       setLoading(false);
     }
   };
@@ -372,20 +384,28 @@ const BrowseAllPage = () => {
           </form>
         </div>
 
-        {loading ? (
+        {loading && games.length === 0 ? (
           <div className="flex justify-center items-center h-64">
             <div className="w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : (
           <>
-            <p className="text-white/80 mb-6">
-              Showing <span className="text-purple-300 font-semibold">{visibleGames.length}</span> of {filtered.length} game{filtered.length === 1 ? '' : 's'}
+            <p className="text-white/80 mb-6 flex items-center gap-3">
+              <span>
+                Showing <span className="text-purple-300 font-semibold">{visibleGames.length}</span> of {filtered.length} game{filtered.length === 1 ? '' : 's'}
+              </span>
+              {loading && (
+                <span className="inline-flex items-center gap-2 text-xs text-purple-300">
+                  <span className="w-3 h-3 border-2 border-purple-400 border-t-transparent rounded-full animate-spin" />
+                  loading more…
+                </span>
+              )}
             </p>
             <div className="flex flex-wrap gap-4">
               {visibleGames.map((g) => (
                 <ContentCard key={g.id} content={g} onClick={setSelectedContent} />
               ))}
-              {filtered.length === 0 && (
+              {filtered.length === 0 && !loading && (
                 <div className="w-full py-16 text-center">
                   <p className="text-white/60 text-lg mb-4">
                     {searchQuery

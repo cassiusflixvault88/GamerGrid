@@ -18,6 +18,13 @@ support payments.
 - Hosting: Emergent (preview + deploy)
 
 ## Implemented (✅ as of 2026-02-28)
+### Iteration 44 (2026-04-30 — Browse All progressive loading)
+- ⚡ **Eliminated the long spinner** on `/games/all` and `/games/{platform}`. Was waiting for ALL 25 simultaneous API calls (~10,500 games) before rendering anything; now lights up the grid the moment the FIRST request returns.
+- 🎯 **Two-phase progressive loader**: Phase 1 fires 4 small endpoints in parallel and stream-appends them (typical first-card-paint < 700ms). Phase 2 deep-paginates PlayStation/Xbox/PC/Switch in the background, appending each chunk as it arrives.
+- 🔄 De-dupe `Set` lives outside `setGames` so re-renders stay cheap as the catalog grows from ~150 → 4,044 games.
+- 📊 **Verified live in preview**: time-to-first-card 0.68s, 100 visible @ 3s, full 4,044 catalog populated by 8s.
+- 🎨 Replaced full-screen spinner with a tiny inline "loading more…" badge next to the count, so the user stays scrolling.
+
 ### Iteration 43 (2026-04-30 — Gaming Mode toggle: per-user platform priority)
 - 🎮 **New per-user setting**: `gaming_mode` field on User (`console` | `pc` | `all`). Stored in MongoDB users collection, defaults to `console`.
 - 🔌 **Backend** (`game_routes.py`): `/api/games/trending` accepts `?mode=` param. Console mode boosts PS/Xbox by +1000, PC mode boosts Steam/Windows by +1000, "all" mode skips boost (pure popularity). Tier-aware shuffle keeps boosted games at top — fixed an earlier bug where flat shuffle leaked PC-only into mode=console results.
