@@ -733,27 +733,55 @@ async def admin_all_transactions(
 # REMOVE AFTER DIAGNOSING.
 @router.get("/admin/diag-public")
 async def diag_public():
-    all_txs = await db.payment_transactions.find(
-        {},
-        {"_id": 0, "session_id": 1, "user_id": 1, "amount": 1,
-         "payment_type": 1, "payment_status": 1, "status": 1, "created_at": 1, "paid_at": 1},
-    ).sort("created_at", -1).limit(20).to_list(20)
+    import traceback
+    debug = {"steps": []}
 
-    or_query_matches = await db.payment_transactions.find(
-        {
-            "$or": [
-                {"payment_status": "paid"},
-                {"status": "completed"},
-            ],
-            "payment_type": {"$in": ["tip", "custom_tip", "pro_subscription"]},
-        },
-        {"_id": 0, "session_id": 1, "amount": 1, "payment_type": 1,
-         "payment_status": 1, "status": 1},
-    ).sort("created_at", -1).limit(20).to_list(20)
+    try:
+        debug["steps"].append("step1: querying or-match")
+        txs = await db.payment_transactions.find(
+            {
+                "$or": [
+                    {"payment_status": "paid"},
+                    {"status": "completed"},
+                ],
+                "payment_type": {"$in": ["tip", "custom_tip", "pro_subscription"]},
+            },
+            {"_id": 0, "session_id": 1, "user_id": 1, "amount": 1, "payment_type": 1,
+             "package": 1, "client_ip": 1, "created_at": 1, "paid_at": 1, "amount_total": 1,
+             "payment_status": 1, "status": 1},
+        ).sort("created_at", -1).limit(50).to_list(50)
+        debug["steps"].append(f"step1 ok: {len(txs)} txs")
 
-    return {
-        "total_transactions": len(all_txs),
-        "all_transactions": all_txs,
-        "or_query_matches": len(or_query_matches),
-        "or_query_results": or_query_matches,
-    }
+        debug["steps"].append("step2: bulk user lookup")
+        user_ids = list({t["user_id"] for t in txs if t.get("user_id")})
+        debug["user_ids"] = user_ids
+        users_by_id = {}
+        if user_ids:
+            async for u in db.users.find(
+                {"id": {"$in": user_ids}},
+                {"_id": 0, "id": 1, "username": 1, "display_name": 1, "profile_picture_url": 1},
+            ):
+                users_by_id[u["id"]] = u
+        debug["users_found"] = len(users_by_id)
+        debug["steps"].append(f"step2 ok: {len(users_by_id)} users")
+
+        debug["steps"].append("step3: build feed")
+        feed = []
+        for t in txs:
+            amt = float(t.get("amount") or t.get("amount_total") or 0)
+            u = users_by_id.get(t.get("user_id"), {})
+            feed.append({
+                "amount": amt,
+                "payment_type": t.get("payment_type"),
+                "username": u.get("username") or "Anonymous",
+                "client_ip": t.get("client_ip") or "",
+            })
+        debug["steps"].append(f"step3 ok: {len(feed)} feed items")
+        debug["feed_preview"] = feed[:3]
+
+        return debug
+    except Exception as e:
+        debug["error"] = str(e)
+        debug["error_type"] = type(e).__name__
+        debug["traceback"] = traceback.format_exc()
+        return debug
