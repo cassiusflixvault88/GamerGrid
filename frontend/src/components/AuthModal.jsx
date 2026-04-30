@@ -48,7 +48,17 @@ const AuthModal = ({ isOpen, onClose }) => {
       let description = 'Something went wrong. Please try again.';
       let isNetwork = false;
 
-      if (typeof detail === 'string') {
+      // 401 ALWAYS means wrong credentials — show a clear, friendly message
+      // even if the response detail is missing or malformed.
+      if (status === 401) {
+        description = isLogin
+          ? 'Wrong email or password. Try again or use "Forgot password?" below.'
+          : 'Authentication failed. Please try again.';
+      } else if (status === 409) {
+        description = isLogin
+          ? 'Account conflict. Please refresh and try again.'
+          : 'An account with this email or username already exists. Try signing in instead.';
+      } else if (typeof detail === 'string') {
         description = detail;
       } else if (Array.isArray(detail) && detail.length > 0) {
         description = detail
@@ -59,7 +69,7 @@ const AuthModal = ({ isOpen, onClose }) => {
           .join(' · ');
       } else if (error.code === 'ECONNABORTED' || error.message === 'Network Error' || !error.response) {
         isNetwork = true;
-        description = "Can't reach our server right now. Check your internet, or try refreshing this page.";
+        description = "Can't reach our server. If this keeps happening, fully close the app and reopen it once.";
       } else if (error.message) {
         description = error.message;
       }

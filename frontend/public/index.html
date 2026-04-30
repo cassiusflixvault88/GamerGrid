@@ -93,6 +93,44 @@
         <meta name="google-adsense-account" content="ca-pub-4470395930184452" />
         <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4470395930184452" crossorigin="anonymous"></script>
 
+        <!-- One-time service-worker self-heal. Forcibly unregisters any old
+             cache-first SW that may be hijacking POST requests (the cause of
+             the "Can't reach our server" error after deploys). Runs once per
+             device per app version; flag stored in localStorage. -->
+        <script>
+        (function () {
+          try {
+            var APP_VERSION = '2026-04-30-passthrough-v2';
+            var KEY = 'gg_sw_healed_' + APP_VERSION;
+            if (localStorage.getItem(KEY) === '1') return;
+            if (!('serviceWorker' in navigator)) return;
+            navigator.serviceWorker.getRegistrations().then(function (regs) {
+              var killed = 0;
+              var done = function () {
+                try {
+                  if ('caches' in window) {
+                    caches.keys().then(function (names) {
+                      Promise.all(names.map(function (n) { return caches.delete(n); })).then(function () {
+                        try { localStorage.setItem(KEY, '1'); } catch (_) {}
+                      });
+                    });
+                  } else {
+                    try { localStorage.setItem(KEY, '1'); } catch (_) {}
+                  }
+                } catch (_) {}
+              };
+              if (!regs.length) { done(); return; }
+              regs.forEach(function (r) {
+                r.unregister().finally(function () {
+                  killed++;
+                  if (killed === regs.length) done();
+                });
+              });
+            });
+          } catch (_) { /* never block page load */ }
+        })();
+        </script>
+
         <!--
           GOOGLE ANALYTICS 4 (GA4) - OPTIONAL
           To enable: replace G-XXXXXXXXXX below with your real GA4 Measurement ID
