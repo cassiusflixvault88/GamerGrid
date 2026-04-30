@@ -365,28 +365,60 @@ async def get_trending_games(
         # energy. Newer titles (last 18 months) get a small score boost so
         # current hits like Crimson Desert / Helldivers 2 / Elden Ring
         # Nightreign climb above 2010s evergreens.
-        pool_size = max(limit * 3, 60)
+        # Pull a LARGER pool so the console-first rerank has plenty to choose
+        # from. We over-fetch (limit * 4) then console-bias filter down to
+        # `limit`. This way the homepage prioritises PlayStation / Xbox titles
+        # without throwing away the live-popularity signal.
+        pool_size = max(limit * 4, 80)
         blended = await _fetch_blended_popularity(pool_size)
         if not blended:
             return {"results": [], "total": 0}
 
-        import random
-        # Apply a recency boost so newer hits float up. We don't have
-        # release dates yet (we'd need another IGDB call), so we pick the
-        # top N by score and shuffle just the tail.
-        fixed_top = blended[:1]
-        rotating = blended[1:]
-        random.shuffle(rotating)
-        selected = fixed_top + rotating[: max(0, limit - 1)]
-
-        game_ids = [str(b["game_id"]) for b in selected]
-        ids_str = ",".join(game_ids)
+        # Fetch full game data for the entire pool so we can see platforms.
+        pool_ids = [str(b["game_id"]) for b in blended]
+        ids_str = ",".join(pool_ids)
         games = await igdb_query(
             "games",
-            f"fields {LIST_FIELDS}; where id = ({ids_str}); limit {len(game_ids)};",
+            f"fields {LIST_FIELDS}; where id = ({ids_str}); limit {len(pool_ids)};",
         )
         by_id = {g["id"]: g for g in games}
-        ordered = [by_id[int(gid)] for gid in game_ids if int(gid) in by_id]
+
+        # Console-first reranking: boost games that ship on PlayStation /
+        # Xbox. Cassius is a console gamer; visitors are more likely to be
+        # the same. PC-only and mobile-only titles get pushed down (still
+        # included, just lower).
+        CONSOLE_KEYWORDS = (
+            "playstation", "xbox", "ps5", "ps4", "ps3", "xbox 360",
+            "xbox one", "xbox series", "xsx",
+        )
+        SECONDARY_KEYWORDS = ("nintendo", "switch")
+        scored = []
+        for b in blended:
+            g = by_id.get(int(b["game_id"]))
+            if not g:
+                continue
+            plats = [p.get("name", "").lower() for p in (g.get("platforms") or [])]
+            has_console = any(any(k in p for k in CONSOLE_KEYWORDS) for p in plats)
+            has_secondary = any(any(k in p for k in SECONDARY_KEYWORDS) for p in plats)
+            boost = 0
+            if has_console:
+                boost = 1000  # Massive boost — guarantees PS/Xbox titles surface first
+            elif has_secondary:
+                boost = 200   # Small Switch boost
+            scored.append({"game": g, "score": b["score"] + boost, "console": has_console})
+
+        # Sort by boosted score, keep top #1 fixed, shuffle the rest for
+        # 30-min freshness.
+        scored.sort(key=lambda x: x["score"], reverse=True)
+        if not scored:
+            return {"results": [], "total": 0}
+
+        import random
+        fixed_top = scored[:1]
+        rotating = scored[1:]
+        random.shuffle(rotating)
+        selected = fixed_top + rotating[: max(0, limit - 1)]
+        ordered = [s["game"] for s in selected]
         payload = {"results": [normalize_game(g) for g in ordered], "total": len(ordered)}
         await _cache_col.update_one(
             {"_id": cache_key},
