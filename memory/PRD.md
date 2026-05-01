@@ -18,6 +18,13 @@ support payments.
 - Hosting: Emergent (preview + deploy)
 
 ## Implemented (✅ as of 2026-02-28)
+### Iteration 47 (2026-04-30 — Top10 carousel mobile UX overhaul)
+- ⬅️➡️ **Arrows now visible on every screen size** (was `hidden md:block`). On mobile they sit anchored at `bottom-32` so they don't overlap the title; on desktop they remain centered vertically. Smaller padding + smaller chevron on phones, plus stronger `bg-black/60` + border so they pop against any backdrop.
+- 👆 **Native touch-swipe** — onTouchStart/onTouchEnd handlers detect a 40px+ horizontal drag and switch slides. Lets users swipe through Top 10 like a native app, not just tap arrows.
+- ⏺ **Pagination dots moved off the founder card** — relocated from `bottom-6` to `bottom-40` on mobile (`bottom-10` on desktop). No longer hidden under the Cassius Fox creator banner.
+- 📖 **Read more / Show less toggle** — game overview is `line-clamp-3` by default but a purple "Read more →" button under it expands to the full IGDB synopsis (and collapses again with "Show less"). Auto-collapses when carousel rotates so the user always starts with a tidy preview.
+- ✅ Verified at 393×852 (iPhone portrait): both arrows visible, dots at y=904 well above founder card, read-more present. Lint clean.
+
 ### Iteration 46 (2026-04-30 — Sign Up button: green + mobile-safe)
 - 🟢 **Sign Up button is now GREEN** (emerald-500 → green-600 gradient with shadow). Cassius wanted green; previous purple-blue was wrong.
 - 📱 **Mobile/landscape fix**: bumped desktop-nav breakpoint from `md:` (768px) to `lg:` (1024px) so landscape phones (~896px wide) use the clean mobile layout instead of cramming the full nav (Home/PS/Xbox/PC/Switch/News/Browse All) alongside the auth buttons.

@@ -11,12 +11,15 @@ import { getImageUrl } from '../services/games';
 const Top10HeroCarousel = ({ items = [], onPlayClick, onInfoClick, intervalMs = 6000 }) => {
   const [idx, setIdx] = useState(0);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const touchStartX = React.useRef(null);
 
   useEffect(() => {
     if (!items.length || items.length <= 1) return undefined;
     const t = setInterval(() => {
       setIdx((p) => (p + 1) % items.length);
       setImageLoaded(false);
+      setExpanded(false); // collapse description on auto-advance
     }, intervalMs);
     return () => clearInterval(t);
   }, [items, intervalMs]);
@@ -32,10 +35,28 @@ const Top10HeroCarousel = ({ items = [], onPlayClick, onInfoClick, intervalMs = 
   const go = (delta) => {
     setIdx((p) => (p + delta + items.length) % items.length);
     setImageLoaded(false);
+    setExpanded(false);
+  };
+
+  // Touch swipe — track first/last X to switch slides on a drag.
+  const onTouchStart = (e) => {
+    touchStartX.current = e.touches[0]?.clientX ?? null;
+  };
+  const onTouchEnd = (e) => {
+    if (touchStartX.current == null) return;
+    const dx = (e.changedTouches[0]?.clientX ?? 0) - touchStartX.current;
+    touchStartX.current = null;
+    if (Math.abs(dx) < 40) return; // ignore taps / tiny drags
+    go(dx < 0 ? 1 : -1);
   };
 
   return (
-    <div className="relative h-[88vh] w-full overflow-hidden bg-black" data-testid="top10-hero">
+    <div
+      className="relative h-[88vh] w-full overflow-hidden bg-black"
+      data-testid="top10-hero"
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+    >
       <div
         key={current.id}
         className={`absolute inset-0 transition-opacity duration-700 ${
@@ -76,9 +97,26 @@ const Top10HeroCarousel = ({ items = [], onPlayClick, onInfoClick, intervalMs = 
                 by <span className="text-white font-semibold">{current.developer}</span>
               </p>
             )}
-            <p className="text-base lg:text-lg text-white/85 line-clamp-3 drop-shadow-lg">
-              {overview}
-            </p>
+            <div className="space-y-1">
+              <p
+                className={`text-base lg:text-lg text-white/85 drop-shadow-lg ${
+                  expanded ? '' : 'line-clamp-3'
+                }`}
+                data-testid="top10-overview"
+              >
+                {overview}
+              </p>
+              {overview && overview.length > 180 && (
+                <button
+                  type="button"
+                  onClick={() => setExpanded((v) => !v)}
+                  data-testid="top10-read-more"
+                  className="text-purple-300 hover:text-purple-200 text-sm font-semibold underline-offset-2 hover:underline transition-colors"
+                >
+                  {expanded ? 'Show less' : 'Read more →'}
+                </button>
+              )}
+            </div>
             <div className="flex items-center space-x-3 pt-2 flex-wrap gap-y-2">
               <Button
                 onClick={() => onPlayClick && onPlayClick(current)}
@@ -101,32 +139,40 @@ const Top10HeroCarousel = ({ items = [], onPlayClick, onInfoClick, intervalMs = 
         </div>
       </div>
 
-      {/* Navigation arrows */}
+      {/* Navigation arrows — visible on every screen size now (mobile users
+          need them most since they don't get hover affordances). Smaller
+          padding + bottom-anchored on mobile so they don't overlap the title. */}
       <button
         onClick={() => go(-1)}
         data-testid="top10-prev"
-        className="absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-black/40 hover:bg-black/70 backdrop-blur-sm rounded-full p-3 transition-all border border-white/20 hidden md:block"
+        className="absolute left-2 sm:left-4 top-auto bottom-32 md:top-1/2 md:bottom-auto md:-translate-y-1/2 z-20 bg-black/60 hover:bg-black/80 backdrop-blur-sm rounded-full p-2 sm:p-3 transition-all border border-white/30 shadow-lg"
         aria-label="Previous game"
       >
-        <ChevronLeft className="w-6 h-6 text-white" />
+        <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
       </button>
       <button
         onClick={() => go(1)}
         data-testid="top10-next"
-        className="absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-black/40 hover:bg-black/70 backdrop-blur-sm rounded-full p-3 transition-all border border-white/20 hidden md:block"
+        className="absolute right-2 sm:right-4 top-auto bottom-32 md:top-1/2 md:bottom-auto md:-translate-y-1/2 z-20 bg-black/60 hover:bg-black/80 backdrop-blur-sm rounded-full p-2 sm:p-3 transition-all border border-white/30 shadow-lg"
         aria-label="Next game"
       >
-        <ChevronRight className="w-6 h-6 text-white" />
+        <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
       </button>
 
-      {/* Dots */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-10" data-testid="top10-dots">
+      {/* Dots — anchored above the overlapping content section. The Home page
+          pulls the next block up with `-mt-32`; we sit at `bottom-40` so the
+          dots stay clearly visible above the Founder card on mobile. */}
+      <div
+        className="absolute bottom-40 md:bottom-10 left-1/2 -translate-x-1/2 flex gap-2 z-20"
+        data-testid="top10-dots"
+      >
         {items.map((it, i) => (
           <button
             key={it?.id ?? `dot-${i}`}
             onClick={() => {
               setIdx(i);
               setImageLoaded(false);
+              setExpanded(false);
             }}
             className={`h-1.5 rounded-full transition-all ${
               i === idx ? 'w-8 bg-white' : 'w-2 bg-white/40 hover:bg-white/70'
