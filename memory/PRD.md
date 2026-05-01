@@ -18,6 +18,11 @@ support payments.
 - Hosting: Emergent (preview + deploy)
 
 ## Implemented (✅ as of 2026-02-28)
+### Iteration 50 (2026-05-01 — Copy correction + Play Store manifest hardening)
+- 🔢 **"10,000+" → "5,000+" everywhere** in user-facing copy. Cassius: dedupe means 5K visible games is the truthful number (10K was raw-IGDB count w/ edition duplicates). Updated `manifest.json` description, `play-store-feature-graphic.png` (regenerated), `og-cover.png` + `og-cover-v2.png` (regenerated), and `play-store-listing.md` (short + full description).
+- 📱 **Manifest hardening** for PWABuilder score: added `iarc_rating_id`, `launch_handler.client_mode = "navigate-existing"`, `edge_side_panel.preferred_width`, `share_target` (so OS share-sheet can target /share), and `screenshots` array with two phone-frame entries (Cassius will host actual PNGs after taking screenshots from his phone).
+- ℹ️ Service-worker note: PWABuilder's "did not find" warning is cosmetic — our SW intentionally registers AFTER `window.onload` (via `serviceWorkerRegistration.register()` in `index.js`) and the static crawler doesn't wait. The `passthrough` SW is correct and shipped; full PWABuilder package built successfully (Cassius's screenshot showed READY TO PACKAGE).
+
 ### Iteration 49 (2026-05-01 — Server-side title dedupe + TWA/Play Store prep)
 - 🔧 **Title-based dedupe applied server-side** to all 12 game endpoints. New `_norm_title()` strips edition suffixes (Deluxe/Standard/Ultimate/Premium/GOTY/etc) + parenthetical tags; new `dedupe_games()` collapses IGDB's per-region duplicate IDs. Verified: 0 dupes on trending?limit=30 + platform/playstation?limit=100 (was surfacing "Alan Wake II" alongside "Alan Wake II: Deluxe Edition").
 - 🔧 **Client-side dedupe in `BrowseAllPage`** also normalises titles so progressive-loaded chunks can't reintroduce dupes across Phase 1/Phase 2 appends.

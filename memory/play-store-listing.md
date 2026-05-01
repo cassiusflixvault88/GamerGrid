@@ -11,12 +11,12 @@ GamerGrid
 
 ## Short description (max 80 chars — used 78)
 ```
-Discover 10,000+ games on PS5, Xbox, PC & Switch. Trailers, news, deals, more.
+Discover 5,000+ games on PS5, Xbox, PC & Switch. Trailers, news, deals, more.
 ```
 
 ## Full description (max 4,000 chars — uses ~2,950 for skim-friendly density)
 ```
-GamerGrid is the ultimate discovery hub for console and PC gamers. Browse 10,000+ titles across PlayStation 5, Xbox Series X|S, PC, and Nintendo Switch — all in one beautifully-designed app, free forever.
+GamerGrid is the ultimate discovery hub for console and PC gamers. Browse 5,000+ titles across PlayStation 5, Xbox Series X|S, PC, and Nintendo Switch — all in one beautifully-designed app, free forever.
 
 Whether you're hunting your next obsession, chasing the cheapest deal on a AAA release, or just trying to keep up with what's actually trending right now, GamerGrid pulls live data from Steam, IGDB, Twitch, and the major retailers so you always see what real players are playing today — not last year's leftovers.
 
@@ -93,6 +93,6 @@ Download GamerGrid now. Your next favorite game is one swipe away. 🎮
 - Slate → purple → blue gradient (matches the brand)
 - Gold GG controller logo with soft purple glow
 - "GamerGrid" 96pt bold white wordmark
-- "10,000+ GAMES · TRAILERS · DEALS" tagline in lavender
+- "5,000+ GAMES · TRAILERS · DEALS" tagline in lavender
 - "PS5 · Xbox · PC · Switch" subline
 - Emerald green CTA pill: "Discover. Track. Play." (matches Sign Up Free button)
