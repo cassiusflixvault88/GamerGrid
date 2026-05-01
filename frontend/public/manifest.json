@@ -13,7 +13,6 @@
   "lang": "en-US",
   "dir": "ltr",
   "categories": ["entertainment", "games"],
-  "iarc_rating_id": "",
   "launch_handler": {
     "client_mode": "navigate-existing"
   },
@@ -29,37 +28,15 @@
       "url": "url"
     }
   },
+  "scope_extensions": [
+    { "origin": "https://www.gamer-grid.com" }
+  ],
   "icons": [
-    {
-      "src": "/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icon-maskable-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "/icon-maskable-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "/gamergrid-icon.svg",
-      "type": "image/svg+xml",
-      "sizes": "any",
-      "purpose": "any"
-    }
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "/gamergrid-icon.svg", "type": "image/svg+xml", "sizes": "any", "purpose": "any" }
   ],
   "screenshots": [
     {
@@ -75,6 +52,20 @@
       "type": "image/png",
       "form_factor": "narrow",
       "label": "Browse — 5,000+ games across all platforms"
+    },
+    {
+      "src": "/screenshot-home-wide.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Home — Featured Top 10 hero on desktop"
+    },
+    {
+      "src": "/screenshot-top10-wide.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Top 10 — Live Steam-powered popularity rankings"
     }
   ],
   "shortcuts": [

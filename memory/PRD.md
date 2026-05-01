@@ -18,6 +18,14 @@ support payments.
 - Hosting: Emergent (preview + deploy)
 
 ## Implemented (✅ as of 2026-02-28)
+### Iteration 51 (2026-05-01 — PWABuilder warning + info items resolved)
+- 📸 **Real screenshot PNGs** captured via Playwright headless against production: `screenshot-home.png` (1080×1920 narrow), `screenshot-browse.png` (1080×1920 narrow), `screenshot-home-wide.png` (1920×1080 wide), `screenshot-top10-wide.png` (1920×1080 wide). Optimised via PIL RGB conversion + PNG optimize. Fixes the only ⚠️ warning ("screenshots returning text/html" from manifest's broken placeholder paths).
+- 🪟 **Wide form_factor screenshots added** — fulfils PWABuilder's "Add wide screenshots" info item AND is required for desktop Play Store / Microsoft Store listings.
+- 🌐 **`scope_extensions`** added pointing at `www.gamer-grid.com` so the PWA can navigate the www subdomain without leaving the app shell.
+- 🧹 Removed empty `iarc_rating_id` (empty string was triggering the optional-field warning; field is now absent which is valid).
+- 🛠 Added `/tmp/capture_screenshots.py` — re-runnable script for future major UI changes (just `python3 /tmp/capture_screenshots.py` to refresh all 4 PNGs).
+- ℹ️ Skipped low-value enhancement items: `file_handlers`, `protocol_handlers`, `widgets`, `tabbed`, `note_taking`, `windows-control-overlay`, `related_applications`, push notifications, periodic background sync, offline caching. None affect Play Store submission; offline caching deliberately avoided to preserve passthrough SW (prevents post-deploy cache hell).
+
 ### Iteration 50 (2026-05-01 — Copy correction + Play Store manifest hardening)
 - 🔢 **"10,000+" → "5,000+" everywhere** in user-facing copy. Cassius: dedupe means 5K visible games is the truthful number (10K was raw-IGDB count w/ edition duplicates). Updated `manifest.json` description, `play-store-feature-graphic.png` (regenerated), `og-cover.png` + `og-cover-v2.png` (regenerated), and `play-store-listing.md` (short + full description).
 - 📱 **Manifest hardening** for PWABuilder score: added `iarc_rating_id`, `launch_handler.client_mode = "navigate-existing"`, `edge_side_panel.preferred_width`, `share_target` (so OS share-sheet can target /share), and `screenshots` array with two phone-frame entries (Cassius will host actual PNGs after taking screenshots from his phone).
