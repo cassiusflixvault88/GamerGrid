@@ -18,6 +18,10 @@ support payments.
 - Hosting: Emergent (preview + deploy)
 
 ## Implemented (✅ as of 2026-02-28)
+### Iteration 48 (2026-04-30 — WhatsNew label overlap fix)
+- 🔧 **"NEW FEATURES" label hidden on phones** — was overlapping the GamerGrid logo wordmark on portrait mobile. Now only the ✨ sparkle icon + pink notification dot show under `sm:` (640px); the text label returns on tablet/desktop.
+- 🧷 Added `flex-shrink-0` + `whitespace-nowrap` so the button can never compress or wrap onto two lines.
+
 ### Iteration 47 (2026-04-30 — Top10 carousel mobile UX overhaul)
 - ⬅️➡️ **Arrows now visible on every screen size** (was `hidden md:block`). On mobile they sit anchored at `bottom-32` so they don't overlap the title; on desktop they remain centered vertically. Smaller padding + smaller chevron on phones, plus stronger `bg-black/60` + border so they pop against any backdrop.
 - 👆 **Native touch-swipe** — onTouchStart/onTouchEnd handlers detect a 40px+ horizontal drag and switch slides. Lets users swipe through Top 10 like a native app, not just tap arrows.

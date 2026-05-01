@@ -57,7 +57,7 @@ const WhatsNewButton = () => {
         onClick={handleOpen}
         title="What's new"
         aria-label="What's new"
-        className="relative flex flex-col items-center gap-0.5 px-2 py-1 text-white/80 hover:text-white transition-colors group"
+        className="relative flex flex-col items-center gap-0.5 px-1.5 sm:px-2 py-1 text-white/80 hover:text-white transition-colors group flex-shrink-0"
         data-testid="whats-new-btn"
       >
         <div className="relative">
@@ -72,7 +72,7 @@ const WhatsNewButton = () => {
           )}
         </div>
         <span
-          className={`text-[10px] font-bold uppercase tracking-wider leading-none ${
+          className={`hidden sm:inline text-[10px] font-bold uppercase tracking-wider leading-none whitespace-nowrap ${
             hasUnseen ? 'text-pink-400' : 'text-white/60 group-hover:text-white/80'
           }`}
         >
