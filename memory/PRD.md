@@ -18,6 +18,9 @@ support payments.
 - Hosting: Emergent (preview + deploy)
 
 ## Implemented (✅ as of 2026-02-28)
+### Iteration 52 (2026-05-01 — Real SHA256 committed, ready for Play Store)
+- 🔐 **`/.well-known/assetlinks.json` finalized** with PWABuilder's real SHA256: `AF:7E:C7:63:82:AF:68:D1:88:61:8C:32:E5:68:7D:70:2B:2A:02:CD:AB:06:FE:4E:93:5D:5B:5C:51:E1:87:55`. Package name `com.gamergrid.twa` matches the .aab Cassius downloaded. After redeploy, Android will verify the domain↔app link and TWA URL bar will be hidden in the published app.
+
 ### Iteration 51 (2026-05-01 — PWABuilder warning + info items resolved)
 - 📸 **Real screenshot PNGs** captured via Playwright headless against production: `screenshot-home.png` (1080×1920 narrow), `screenshot-browse.png` (1080×1920 narrow), `screenshot-home-wide.png` (1920×1080 wide), `screenshot-top10-wide.png` (1920×1080 wide). Optimised via PIL RGB conversion + PNG optimize. Fixes the only ⚠️ warning ("screenshots returning text/html" from manifest's broken placeholder paths).
 - 🪟 **Wide form_factor screenshots added** — fulfils PWABuilder's "Add wide screenshots" info item AND is required for desktop Play Store / Microsoft Store listings.

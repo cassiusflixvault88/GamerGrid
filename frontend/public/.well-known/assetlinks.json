@@ -4,7 +4,7 @@
     "target": {
       "namespace": "android_app",
       "package_name": "com.gamergrid.twa",
-      "sha256_cert_fingerprints": ["__REPLACE_WITH_SHA256_FROM_PWABUILDER__"]
+      "sha256_cert_fingerprints": ["AF:7E:C7:63:82:AF:68:D1:88:61:8C:32:E5:68:7D:70:2B:2A:02:CD:AB:06:FE:4E:93:5D:5B:5C:51:E1:87:55"]
     }
   }
 ]
