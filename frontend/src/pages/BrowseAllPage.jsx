@@ -98,14 +98,29 @@ const BrowseAllPage = () => {
 
       // Progressive loader — append new games as each request finishes so the
       // grid lights up within ~500ms instead of waiting for all 25 calls. The
-      // de-dupe Set survives across appends so a game already shown doesn't
-      // re-render when later platform pages bring it in.
+      // de-dupe uses BOTH id AND normalised-title because IGDB often returns
+      // the same physical game under different IDs per region/edition (e.g.
+      // "Alan Wake II" vs "Alan Wake II: Deluxe Edition" — same game, 2 cards).
       const seenIds = new Set();
+      const seenTitles = new Set();
+      const normTitle = (t) => (t || '')
+        .toLowerCase()
+        .replace(/\s*[-–—:]\s*(deluxe|standard|digital|gold|premium|ultimate|complete|definitive|goty|game of the year|special|collector'?s?|anniversary|remaster(?:ed)?)\s*edition.*$/i, '')
+        .replace(/\s*\(.*?\)\s*$/g, '')
+        .replace(/[^\w\s]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
       const appendGames = (incoming) => {
         if (!incoming?.length) return;
         setGames((prev) => {
-          const fresh = incoming.filter((g) => g && !seenIds.has(g.id));
-          fresh.forEach((g) => seenIds.add(g.id));
+          const fresh = incoming.filter((g) => {
+            if (!g || seenIds.has(g.id)) return false;
+            const nt = normTitle(g.title || g.name);
+            if (nt && seenTitles.has(nt)) return false;
+            seenIds.add(g.id);
+            if (nt) seenTitles.add(nt);
+            return true;
+          });
           if (!fresh.length) return prev;
           return [...prev, ...fresh];
         });

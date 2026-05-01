@@ -13,6 +13,7 @@ from datetime import datetime, timezone, timedelta
 from urllib.parse import quote_plus
 import asyncio
 import logging
+import re
 import time
 import httpx
 import os
@@ -247,6 +248,46 @@ def normalize_game(game: dict) -> dict:
     }
 
 
+# Title-based dedupe — IGDB returns the same physical game under different IDs
+# per region/edition ("Alan Wake II", "Alan Wake II: Deluxe Edition", etc).
+# Strips edition suffixes + bracketed platform tags so duplicates collapse.
+_EDITION_SUFFIX_RE = re.compile(
+    r"\s*[-–—:]\s*(deluxe|standard|digital|gold|premium|ultimate|complete|"
+    r"definitive|goty|game of the year|special|collector'?s?|anniversary|"
+    r"remaster(?:ed)?|enhanced|next[- ]gen)\s*edition.*$",
+    re.IGNORECASE,
+)
+_PAREN_TAIL_RE = re.compile(r"\s*\([^)]*\)\s*$")
+_NON_WORD_RE = re.compile(r"[^\w\s]")
+_WHITESPACE_RE = re.compile(r"\s+")
+
+
+def _norm_title(t: str) -> str:
+    if not t:
+        return ""
+    t = _EDITION_SUFFIX_RE.sub("", t)
+    t = _PAREN_TAIL_RE.sub("", t)
+    t = _NON_WORD_RE.sub("", t.lower())
+    return _WHITESPACE_RE.sub(" ", t).strip()
+
+
+def dedupe_games(games: list) -> list:
+    """Drop duplicate entries that share the same normalised title. Keeps the
+    first occurrence (which is the higher-ranked one since callers sort before
+    passing in)."""
+    seen = set()
+    out = []
+    for g in games:
+        if not g:
+            continue
+        key = _norm_title(g.get("title") or g.get("name"))
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        out.append(g)
+    return out
+
+
 # Standard list fields (now including primary developer/publisher for card display)
 LIST_FIELDS = (
     "id,name,summary,rating,total_rating,total_rating_count,aggregated_rating,"
@@ -342,7 +383,7 @@ async def get_trending_games(
                 f" limit {limit};"
             )
             games = await cached_query(cache_key, "games", q, ttl_seconds=30 * 60)
-            return {"results": [normalize_game(g) for g in games], "total": len(games)}
+            return {"results": dedupe_games([normalize_game(g) for g in games]), "total": len(games)}
 
         # Default homepage trending → blended popularity, rotated.
         await _maybe_init_ttl()
@@ -435,7 +476,7 @@ async def get_trending_games(
         # Fill from boosted tier first, then unboosted only if more slots needed.
         selected = fixed_top + (rest_boosted + unboosted)[: max(0, limit - 1)]
         ordered = [s["game"] for s in selected]
-        payload = {"results": [normalize_game(g) for g in ordered], "total": len(ordered)}
+        payload = {"results": dedupe_games([normalize_game(g) for g in ordered]), "total": len(ordered)}
         await _cache_col.update_one(
             {"_id": cache_key},
             {"$set": {
@@ -520,7 +561,7 @@ async def get_most_popular(limit: int = Query(30, ge=1, le=500)):
     by_id = {g["id"]: g for g in games}
     ordered = [by_id[int(gid)] for gid in game_ids if int(gid) in by_id]
 
-    payload = {"results": [normalize_game(g) for g in ordered], "total": len(ordered)}
+    payload = {"results": dedupe_games([normalize_game(g) for g in ordered]), "total": len(ordered)}
     await _cache_col.update_one(
         {"_id": cache_key},
         {"$set": {
@@ -575,7 +616,7 @@ async def get_top10():
     )
     by_id = {g["id"]: g for g in games}
     ordered = [by_id[int(gid)] for gid in game_ids if int(gid) in by_id]
-    normalized = [normalize_game(g) for g in ordered]
+    normalized = dedupe_games([normalize_game(g) for g in ordered])
 
     # Daily snapshot for delta computation
     today_key = datetime.now(timezone.utc).strftime("%Y-%m-%d")
@@ -633,7 +674,7 @@ async def get_game_of_the_year(year: Optional[int] = Query(None, ge=1990, le=210
     )
     try:
         games = await cached_query(f"goty:{year}:{limit}", "games", q, ttl_seconds=60 * 60 * 24)
-        return {"year": year, "results": [normalize_game(g) for g in games], "total": len(games)}
+        return {"year": year, "results": dedupe_games([normalize_game(g) for g in games]), "total": len(games)}
     except Exception as e:
         logger.error(f"goty error: {e}")
         raise HTTPException(500, f"Failed to fetch GOTY: {e}")
@@ -659,7 +700,7 @@ async def get_top_rated(
     )
     try:
         games = await cached_query(f"toprated:{limit}:{genre}:{year}", "games", q, ttl_seconds=60 * 60 * 6)
-        return {"results": [normalize_game(g) for g in games], "total": len(games)}
+        return {"results": dedupe_games([normalize_game(g) for g in games]), "total": len(games)}
     except Exception as e:
         logger.error(f"top-rated error: {e}")
         raise HTTPException(500, f"Failed to fetch top-rated: {e}")
@@ -684,7 +725,7 @@ async def get_upcoming_releases(
     )
     try:
         games = await cached_query(f"upcoming:{days_ahead}:{limit}:{genre}", "games", q, ttl_seconds=60 * 30)
-        return {"results": [normalize_game(g) for g in games], "total": len(games)}
+        return {"results": dedupe_games([normalize_game(g) for g in games]), "total": len(games)}
     except Exception as e:
         logger.error(f"upcoming error: {e}")
         raise HTTPException(500, f"Failed to fetch upcoming: {e}")
@@ -709,7 +750,7 @@ async def get_new_releases(
     )
     try:
         games = await cached_query(f"new:{days_back}:{limit}:{genre}", "games", q, ttl_seconds=60 * 30)
-        return {"results": [normalize_game(g) for g in games], "total": len(games)}
+        return {"results": dedupe_games([normalize_game(g) for g in games]), "total": len(games)}
     except Exception as e:
         logger.error(f"new-releases error: {e}")
         raise HTTPException(500, f"Failed to fetch new releases: {e}")
@@ -767,7 +808,7 @@ async def get_games_by_platform(
             f"platform:{platform_name}:{sort}:{limit}:{offset}:{genre}:{year}",
             "games", q, ttl_seconds=60 * 60 * 2,
         )
-        return {"results": [normalize_game(g) for g in games], "total": len(games), "offset": offset}
+        return {"results": dedupe_games([normalize_game(g) for g in games]), "total": len(games), "offset": offset}
     except Exception as e:
         logger.error(f"platform error: {e}")
         raise HTTPException(500, f"Failed to fetch {platform_name}: {e}")
@@ -847,7 +888,7 @@ async def get_for_you(current_user: dict = Depends(verify_token)):
     try:
         games = await igdb_query("games", q)
         result = {
-            "results": [normalize_game(g) for g in games],
+            "results": dedupe_games([normalize_game(g) for g in games]),
             "reason": "Based on your watchlist" if top_genres else "Popular with gamers",
             "top_genres": top_genres,
         }
@@ -909,7 +950,7 @@ async def get_by_category(
     try:
         cache_key = f"category:{genre}:{theme}:{sort}:{limit}:{min_rating}"
         games = await cached_query(cache_key, "games", q, ttl_seconds=60 * 60 * 6)
-        return {"results": [normalize_game(g) for g in games], "total": len(games)}
+        return {"results": dedupe_games([normalize_game(g) for g in games]), "total": len(games)}
     except Exception as e:
         logger.error(f"category error: {e}")
         raise HTTPException(500, f"Failed to fetch category: {e}")
@@ -926,7 +967,7 @@ async def search_games(q: str = Query(..., min_length=1), limit: int = Query(20,
     try:
         # Search results are NOT cached (queries vary too much) but underlying token is cached
         games = await igdb_query("games", query)
-        return {"results": [normalize_game(g) for g in games], "total": len(games)}
+        return {"results": dedupe_games([normalize_game(g) for g in games]), "total": len(games)}
     except Exception as e:
         logger.error(f"search error: {e}")
         raise HTTPException(500, f"Search failed: {e}")

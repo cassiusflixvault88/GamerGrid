@@ -1,19 +1,72 @@
 {
   "short_name": "GamerGrid",
-  "name": "GamerGrid - Your Gaming Hub",
-  "description": "Discover 5,000+ games, watch HD trailers, track releases. PS5, Xbox, PC & Switch.",
+  "name": "GamerGrid — Gaming Discovery Hub",
+  "description": "Discover 10,000+ games across PS5, Xbox, PC & Switch. Watch HD trailers, track new releases, read reviews, compare prices and find live deals. Built by gamers, for gamers.",
+  "id": "/?source=pwa",
+  "scope": "/",
+  "start_url": "/?source=pwa",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "any",
+  "theme_color": "#8B5CF6",
+  "background_color": "#0F172A",
+  "lang": "en-US",
+  "dir": "ltr",
+  "categories": ["entertainment", "games"],
   "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
     {
       "src": "/gamergrid-icon.svg",
       "type": "image/svg+xml",
       "sizes": "any",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ],
-  "start_url": "/",
-  "display": "standalone",
-  "theme_color": "#8B5CF6",
-  "background_color": "#0F172A",
-  "orientation": "any",
-  "categories": ["entertainment", "gaming", "games"]
+  "shortcuts": [
+    {
+      "name": "Browse All Games",
+      "short_name": "Browse",
+      "description": "Browse the full GamerGrid catalog",
+      "url": "/games/all?source=pwa-shortcut",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Top 10 This Week",
+      "short_name": "Top 10",
+      "description": "See what's trending",
+      "url": "/top10?source=pwa-shortcut",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Gaming News",
+      "short_name": "News",
+      "description": "Latest gaming news",
+      "url": "/news?source=pwa-shortcut",
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "prefer_related_applications": false
 }

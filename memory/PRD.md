@@ -18,6 +18,13 @@ support payments.
 - Hosting: Emergent (preview + deploy)
 
 ## Implemented (✅ as of 2026-02-28)
+### Iteration 49 (2026-05-01 — Server-side title dedupe + TWA/Play Store prep)
+- 🔧 **Title-based dedupe applied server-side** to all 12 game endpoints. New `_norm_title()` strips edition suffixes (Deluxe/Standard/Ultimate/Premium/GOTY/etc) + parenthetical tags; new `dedupe_games()` collapses IGDB's per-region duplicate IDs. Verified: 0 dupes on trending?limit=30 + platform/playstation?limit=100 (was surfacing "Alan Wake II" alongside "Alan Wake II: Deluxe Edition").
+- 🔧 **Client-side dedupe in `BrowseAllPage`** also normalises titles so progressive-loaded chunks can't reintroduce dupes across Phase 1/Phase 2 appends.
+- 📱 **Full PWA manifest rewrite** for Play Store TWA: 4 icon variants (any + maskable at 192 + 512), shortcuts (Browse / Top 10 / News), proper `id`, `scope`, `display_override`, `lang`, description ≥ 100 chars.
+- 🎨 **Generated maskable icons** (`icon-maskable-192.png` + `icon-maskable-512.png`) with 20% safe-zone padding against brand dark BG (#0F172A) so Android launcher masks don't clip the logo.
+- 🔐 **`/.well-known/assetlinks.json` placeholder** created — needs SHA256 fingerprint from PWABuilder before final upload. Package name locked to `com.gamergrid.twa`.
+
 ### Iteration 48 (2026-04-30 — WhatsNew label overlap fix)
 - 🔧 **"NEW FEATURES" label hidden on phones** — was overlapping the GamerGrid logo wordmark on portrait mobile. Now only the ✨ sparkle icon + pink notification dot show under `sm:` (640px); the text label returns on tablet/desktop.
 - 🧷 Added `flex-shrink-0` + `whitespace-nowrap` so the button can never compress or wrap onto two lines.
