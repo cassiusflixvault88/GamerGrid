@@ -97,15 +97,17 @@ const BrowseAllPage = () => {
       if (year && year !== 'Any') params.set('year', year);
 
       // Progressive loader — append new games as each request finishes so the
-      // grid lights up within ~500ms instead of waiting for all 25 calls. The
-      // de-dupe uses BOTH id AND normalised-title because IGDB often returns
-      // the same physical game under different IDs per region/edition (e.g.
-      // "Alan Wake II" vs "Alan Wake II: Deluxe Edition" — same game, 2 cards).
-      const seenIds = new Set();
-      const seenTitles = new Set();
+      // grid lights up within ~500ms instead of waiting for all 25 calls.
+      // The dedupe runs INSIDE the React state updater (not via a closure-
+      // captured Set) so it survives:
+      //   • parallel Phase-1 + Phase-2 fetches racing each other
+      //   • a re-load triggered by a filter change while older fetches are
+      //     still in flight (stale closures appending into the new state)
+      // Every append re-derives `seenIds` + `seenTitles` from the live
+      // `prev` array, so duplicates are mathematically impossible.
       const normTitle = (t) => (t || '')
         .toLowerCase()
-        .replace(/\s*[-–—:]\s*(deluxe|standard|digital|gold|premium|ultimate|complete|definitive|goty|game of the year|special|collector'?s?|anniversary|remaster(?:ed)?)\s*edition.*$/i, '')
+        .replace(/\s*[-–—:]\s*(deluxe|standard|digital|gold|premium|ultimate|complete|definitive|goty|game of the year|special|collector'?s?|anniversary|remaster(?:ed)?|enhanced)\s*edition.*$/i, '')
         .replace(/\s*\(.*?\)\s*$/g, '')
         .replace(/[^\w\s]/g, '')
         .replace(/\s+/g, ' ')
@@ -113,14 +115,19 @@ const BrowseAllPage = () => {
       const appendGames = (incoming) => {
         if (!incoming?.length) return;
         setGames((prev) => {
-          const fresh = incoming.filter((g) => {
-            if (!g || seenIds.has(g.id)) return false;
+          const seenIds = new Set(prev.map((g) => g?.id).filter(Boolean));
+          const seenTitles = new Set(
+            prev.map((g) => normTitle(g?.title || g?.name)).filter(Boolean),
+          );
+          const fresh = [];
+          for (const g of incoming) {
+            if (!g || seenIds.has(g.id)) continue;
             const nt = normTitle(g.title || g.name);
-            if (nt && seenTitles.has(nt)) return false;
+            if (nt && seenTitles.has(nt)) continue;
             seenIds.add(g.id);
             if (nt) seenTitles.add(nt);
-            return true;
-          });
+            fresh.push(g);
+          }
           if (!fresh.length) return prev;
           return [...prev, ...fresh];
         });

@@ -18,6 +18,10 @@ support payments.
 - Hosting: Emergent (preview + deploy)
 
 ## Implemented (✅ as of 2026-02-28)
+### Iteration 53 (2026-05-01 — Race-condition dedupe in BrowseAllPage)
+- 🐛 **Real-world dupe bug crushed.** Cassius reported "Death Howl" + "Skate Story" appearing back-to-back as duplicates on his APK. Root cause: previous dedupe used a closure-captured `seenIds` Set. Phase-2 fetches that finished AFTER a filter change were appending with their stale empty Set, allowing already-displayed games to re-append.
+- ✅ **Fix**: dedupe runs INSIDE the `setGames(prev => ...)` updater, deriving fresh `seenIds` + `seenTitles` from the live `prev` array on every append. No closure state. Survives parallel races, filter changes, and stale in-flight fetches. Mathematically can't dupe.
+
 ### Iteration 52 (2026-05-01 — Real SHA256 committed, ready for Play Store)
 - 🔐 **`/.well-known/assetlinks.json` finalized** with PWABuilder's real SHA256: `AF:7E:C7:63:82:AF:68:D1:88:61:8C:32:E5:68:7D:70:2B:2A:02:CD:AB:06:FE:4E:93:5D:5B:5C:51:E1:87:55`. Package name `com.gamergrid.twa` matches the .aab Cassius downloaded. After redeploy, Android will verify the domain↔app link and TWA URL bar will be hidden in the published app.
 
